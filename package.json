@@ -1,0 +1,8 @@
+{
+  "name": "ople",
+  "version": "0.0.0",
+  "keywords": [ "observable", "react", "state", "state manager", "state management","events","event emitter"],
+  "author": "Alec Larson",
+  "license": "MIT",
+  "repository": "alloc/ople"
+}
