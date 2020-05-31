@@ -1,8 +1,54 @@
 {
   "name": "ople",
   "version": "0.0.0",
-  "keywords": [ "observable", "react", "state", "state manager", "state management","events","event emitter"],
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p .",
+    "lint": "concurrently -n tsc,tslint 'tsc -p . --noEmit' 'tslint -p .'",
+    "prepublishOnly": "yarn lint && yarn build",
+    "test": "jest",
+    "test:cov": "jest --coverage && codecov"
+  },
+  "repository": "alloc/ople",
   "author": "Alec Larson",
   "license": "MIT",
-  "repository": "alloc/ople"
+  "files": [
+    "src",
+    "dist"
+  ],
+  "dependencies": {
+    "@types/react": "^16.9.35",
+    "ee-ts": "^1.0.1",
+    "is": "npm:@alloc/is@^2.1.1",
+    "types": "npm:@alloc/types@^1.2.6",
+    "wana": "^0.11.7"
+  },
+  "devDependencies": {
+    "@types/jest": "^25.2.3",
+    "codecov": "^3.7.0",
+    "concurrently": "^5.2.0",
+    "jest": "^24.9.0",
+    "prettier": "^2.0.5",
+    "react": "^16.13.1",
+    "ts-jest": "^24.3.0",
+    "tslint": "^6.1.2",
+    "tslint-mango": "^0.1.12",
+    "typescript": "^3.9.3"
+  },
+  "peerDependencies": {
+    "react": "*"
+  },
+  "keywords": [
+    "transparent",
+    "observable",
+    "reactive",
+    "reactjs",
+    "react",
+    "state",
+    "state manager",
+    "state management",
+    "events",
+    "event-driven",
+    "event emitter"
+  ]
 }
