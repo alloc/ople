@@ -2,6 +2,7 @@ dependencies:
   '@types/react': 16.9.35
   ee-ts: 1.0.1_typescript@3.9.3
   is: /@alloc/is/2.1.1
+  react-layout-effect: 1.0.5_react@16.13.1
   types: /@alloc/types/1.2.6
   wana: 0.11.7_react@16.13.1
 devDependencies:
@@ -4081,6 +4082,7 @@ specifiers:
   jest: ^24.9.0
   prettier: ^2.0.5
   react: ^16.13.1
+  react-layout-effect: ^1.0.5
   ts-jest: ^24.3.0
   tslint: ^6.1.2
   tslint-mango: ^0.1.12

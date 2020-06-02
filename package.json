@@ -20,6 +20,7 @@
     "@types/react": "^16.9.35",
     "ee-ts": "^1.0.1",
     "is": "npm:@alloc/is@^2.1.1",
+    "react-layout-effect": "^1.0.5",
     "types": "npm:@alloc/types@^1.2.6",
     "wana": "^0.11.7"
   },

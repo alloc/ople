@@ -1,5 +1,5 @@
-import { Auto, AutoConfig } from 'wana'
-import { ople } from './global'
+import { auto as createAuto, AutoConfig } from 'wana'
+import { getOple } from './global'
 
 /**
  * Invoke the given function immediately and whenever the
@@ -8,10 +8,7 @@ import { ople } from './global'
  * The returned `Auto` object is managed for you.
  */
 export function auto(effect: () => void, config?: AutoConfig) {
-  const auto = new Auto(config)
-  auto.run(effect)
-  if (ople.context) {
-    ople.dispose(auto)
-  }
+  const auto = createAuto(effect, config)
+  getOple()?.dispose(auto)
   return auto
 }
