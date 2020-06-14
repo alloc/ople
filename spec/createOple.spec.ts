@@ -15,7 +15,7 @@ describe('createOple', () => {
 
     it('can be used in an event handler', () => {
       const ople = createOple((state, set) => {
-        state.one('test', () => {
+        state.on('test', () => {
           set({ a: 1 })
           expect(state.a).toBe(1)
         })
@@ -26,7 +26,8 @@ describe('createOple', () => {
     })
 
     it('can define a computed getter', () => {
-      const ople = createOple((state, set) => {
+      type State = { a: number; b: number }
+      const ople = createOple<State>((state, set) => {
         set({
           a: 1,
           get b() {
@@ -47,7 +48,7 @@ describe('createOple', () => {
       expect(ople).toBeInstanceOf(EventEmitter)
 
       const onTest = jest.fn()
-      ople.one('test', onTest)
+      ople.on('test', onTest)
       expect(onTest).not.toBeCalled()
 
       ople.emit('test', 1, 2)
