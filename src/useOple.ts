@@ -1,64 +1,25 @@
 import { useMemo } from 'react'
-import { ListenerMap } from 'ee-ts'
 import { useLayoutEffect } from 'react-layout-effect'
-import { OpleObject } from './types'
+import { OpleCreateFn } from './types'
+import { createOple } from './createOple'
+import { restoreEffects } from './Ople'
 
-/** Subscribe to events from an `Ople` object */
-export function useOple<Events extends object>(
-  ople: OpleObject<any, Events>,
-  effects: ListenerMap<Events>,
-  deps?: readonly any[]
-): void
-
-export function useOple(
-  ople: OpleObject,
-  effects: ListenerMap,
+/** Create an `Ople` object as component state */
+export function useOple<State extends object, Events extends object>(
+  create: OpleCreateFn<State, Events>,
   deps?: readonly any[]
 ) {
-  const opleDeps = [ople].concat(deps || [])
+  const ople = useMemo(() => {
+    const ople = createOple(create)
+    ople.dispose()
+    return ople
+  }, [deps])
 
-  // When the `ople` or `deps` arguments are changed, treat all effects as
-  // newly added. Otherwise, accumulate effects from each render.
-  const usedEffects = useMemo((): ListenerMap => ({}), opleDeps)
-
-  // To ensure call order remains stable, these listeners are created to
-  // dynamically access the latest effect from the `usedEffects` cache.
-  const listeners = useMemo((): ListenerMap => ({}), opleDeps)
-
-  // Added keys are true, deleted keys are false
-  const changedKeys: { [key: string]: boolean } = {}
-
-  // Changed effects are only used if deps have changed.
-  const changedEffects: ListenerMap = {}
-
-  // Collect the changes.
-  for (const key in effects) {
-    const effect = effects[key]
-    const usedEffect = usedEffects[key]
-    if (effect && usedEffect) {
-      if (effect != usedEffect) {
-        changedEffects[key] = effect
-      }
-    } else if (effect || usedEffect) {
-      changedKeys[key] = !usedEffect
-    }
-  }
-
-  // Merge added/deleted keys.
+  // Restore any effects once mounted.
   useLayoutEffect(() => {
-    for (const key in changedKeys) {
-      if (changedKeys[key]) {
-        usedEffects[key] = effects[key]
-        ople.on(key, (listeners[key] = (...args) => usedEffects[key]!(...args)))
-      } else {
-        ople.off(key, listeners[key])
-        usedEffects[key] = undefined
-      }
-    }
-  }, opleDeps)
+    restoreEffects(ople)
+    return () => ople.dispose()
+  }, [])
 
-  // Merge changed effects.
-  useLayoutEffect(() => {
-    Object.assign(usedEffects, changedEffects)
-  }, deps)
+  return ople
 }

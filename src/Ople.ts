@@ -1,21 +1,19 @@
-import {
-  Disposable,
-  EventEmitter as EE,
-  EventKey,
-  ListenerMap,
-  Listener,
-  $addListener,
-} from 'ee-ts'
+import { EventEmitter, EventKey, Listener } from 'ee-ts'
 import { no } from 'wana'
-import { UnknownProps } from 'types'
+import { getOple, withOple, expectOple } from './global'
 import { OpleEffect, OpleObject } from './types'
-import { getOple, expectOple } from './global'
-import { enhanceState } from './enhanceState'
-import { $effects } from './symbols'
+import { setState } from './setState'
+import { $effects, $disposed } from './symbols'
+import { Disposable } from 'types'
+
+interface OpleListener extends Listener, Disposable {
+  effect: Function
+}
 
 /** The base class of objects created by `createOple` */
-export class Ople<Events extends object = any> extends EE<Events> {
-  protected [$effects]: OpleEffect[] = []
+export class Ople<Events extends object = any> extends EventEmitter<Events> {
+  protected [$effects] = new Map<object, OpleEffect>()
+  protected [$disposed] = false
 
   /**
    * Use the properties defined in the given `state` object to update
@@ -23,46 +21,55 @@ export class Ople<Events extends object = any> extends EE<Events> {
    * memoized getters (via `get` syntax).
    */
   set<State extends object>(state: Partial<State>) {
-    const self: any = this
-    const getters = enhanceState(state)
-    for (const key in state) {
-      const desc = getters[key]
-      if (desc) {
-        // Pure getters are defined.
-        Object.defineProperty(self, key, desc)
-      } else {
-        // Remaining values are assigned.
-        self[key] = state[key]
-      }
-    }
+    withOple(this, setState, [state])
   }
 
-  /**
-   * When `effect` is defined, it will be disposed when this object is.
-   * When undefined, this object is disposed along with any effects.
-   */
-  dispose(effect?: Disposable) {
-    const effects = this[$effects]
-    if (effect) {
-      effects.push(effect)
-    } else {
-      effects.forEach(effect => effect.dispose())
+  /** Disable all effects managed by this object. */
+  dispose() {
+    if (!this[$disposed]) {
+      this[$disposed] = true
+      this[$effects].forEach(effect => effect(false))
     }
   }
 
   // @override
-  protected [$addListener](
-    arg: EventKey<Events> | ListenerMap<Events>,
-    fn?: Listener<Events>,
-    disposables?: Disposable[],
-    once?: boolean
-  ): this | Listener<Events> {
-    const ople = getOple()
-    // TODO: make `dispose` affect one-time listeners
-    if (ople && !disposables && !once) {
-      disposables = ople[$effects]
+  protected _addListener(key: EventKey<Events>, fn: Listener) {
+    const parent = getOple()
+    if (parent) {
+      const listener = ((...args) => withOple(parent, fn, args)) as OpleListener
+      listener.effect = fn
+      listener.dispose = () => withOple(parent, setEffect, [fn, null])
+
+      setEffect(fn, active => {
+        if (active) {
+          super._addListener(key, listener)
+        } else {
+          super._removeListener(key, listener)
+        }
+      })
+
+      super._addListener(key, listener)
+    } else {
+      super._addListener(key, fn)
     }
-    return super[$addListener](arg, fn, disposables, once)
+  }
+
+  // @override
+  protected _removeListener(key: EventKey<Events>, fn: OpleListener) {
+    if (fn.dispose) {
+      fn.dispose()
+    }
+    if (!super._removeListener(key, fn)) {
+      const listeners = this.getListeners(key) as Set<OpleListener>
+      for (const listener of Array.from(listeners)) {
+        if (listener.effect == fn) {
+          super._removeListener(key, listener)
+          return true
+        }
+      }
+      return false
+    }
+    return true
   }
 }
 
@@ -70,3 +77,36 @@ const proto = Ople.prototype
 
 // Avoid observation of event listeners.
 proto.emit = no(proto.emit)
+
+/**
+ * Tell the active `Ople` context to update the `effect` associated
+ * with the given `owner` object. The `owner` is retained until its
+ * `effect` is set to null. The `effect` will be called immediately
+ * if the `Ople` context is not disposed.
+ */
+export function setEffect(owner: object, effect: OpleEffect | null) {
+  const ople = no<OpleObject>(expectOple())
+  const effects = ople[$effects]
+  const prevEffect = effects.get(owner)
+  if (prevEffect && effect) {
+    throw Error('Cannot overwrite an existing effect')
+  }
+  const active = !!effect
+  if (effect) {
+    effects.set(owner, effect)
+  } else if (prevEffect) {
+    effects.delete(owner)
+    effect = prevEffect
+  }
+  if (!ople[$disposed] && effect) {
+    effect(active)
+  }
+}
+
+/** Restore any effects after being disposed. */
+export function restoreEffects(ople: Ople) {
+  if (ople[$disposed]) {
+    ople[$disposed] = false
+    ople[$effects].forEach(effect => effect(true))
+  }
+}

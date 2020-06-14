@@ -6,11 +6,15 @@ import { Ople } from './Ople'
 let current: Ople | null = null
 
 /** Activate the `context` while executing the `effect` */
-export function withOple(state: Ople, effect: () => void) {
+export function withOple<Events extends object, In extends any[], Out>(
+  state: Ople<Events>,
+  effect: (...args: In) => Out,
+  args?: In
+) {
   const parent = current
   current = state
   try {
-    effect()
+    return effect.apply(null, args!)
   } finally {
     current = parent
   }

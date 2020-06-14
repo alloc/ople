@@ -1,8 +1,8 @@
 import { UnknownProps } from 'types'
-import { Disposable } from 'ee-ts'
 import { Ople } from './Ople'
 
-export type OpleEffect = Disposable
+/** Pass `true` to enable the effect. Pass `false` to disable. */
+export type OpleEffect = (active: boolean) => void
 
 export type OpleObject<
   State extends object = UnknownProps,
