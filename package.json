@@ -18,7 +18,7 @@
   ],
   "dependencies": {
     "@types/react": "^16.9.35",
-    "ee-ts": "2.0.0-rc.1",
+    "ee-ts": "2.0.0-rc.3",
     "is": "npm:@alloc/is@^2.1.1",
     "react-layout-effect": "^1.0.5",
     "types": "npm:@alloc/types@^1.2.6",
