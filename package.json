@@ -22,7 +22,7 @@
     "is": "npm:@alloc/is@^2.1.1",
     "react-layout-effect": "^1.0.5",
     "types": "npm:@alloc/types@^1.2.6",
-    "wana": "^0.12.0"
+    "wana": "^0.13.1"
   },
   "devDependencies": {
     "@types/jest": "^25.2.3",
