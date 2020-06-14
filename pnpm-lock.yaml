@@ -4,7 +4,7 @@ dependencies:
   is: /@alloc/is/2.1.1
   react-layout-effect: 1.0.5_react@16.13.1
   types: /@alloc/types/1.2.6
-  wana: 0.11.7_react@16.13.1
+  wana: 0.13.1_react@16.13.1
 devDependencies:
   '@types/jest': 25.2.3
   codecov: 3.7.0
@@ -2997,10 +2997,10 @@ packages:
       node: '>=0.6'
     resolution:
       integrity: sha512-N5ZAX4/LxJmF+7wN74pUD6qAh9/wnvdQcjq9TZjevvXzSUo7bfmw91saqMjzGS2xq91/odN2dW/WOl7qQHNDGA==
-  /queue-microtask/1.1.2:
+  /queue-microtask/1.1.3:
     dev: false
     resolution:
-      integrity: sha512-F9wwNePtXrzZenAB3ax0Y8TSKGvuB7Qw16J30hspEUTbfUM+H827XyN3rlpwhVmtm5wuZtbKIHjOnwDn7MUxWQ==
+      integrity: sha512-zC1ZDLKFhZSa8vAdFbkOGouHcOUMgUAI/2/3on/KktpY+BaVqABkzDSsCSvJfmLbICOnrEuF9VIMezZf+T0mBA==
   /react-is/16.13.1:
     resolution:
       integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
@@ -3947,12 +3947,12 @@ packages:
     dev: true
     resolution:
       integrity: sha1-L3+bj9ENZ3JisYqITijRlhjgKPs=
-  /wana/0.11.7_react@16.13.1:
+  /wana/0.13.1_react@16.13.1:
     dependencies:
       '@alloc/is': 2.1.1
       '@alloc/is-dev': 1.2.0
       '@babel/runtime': 7.10.2
-      queue-microtask: 1.1.2
+      queue-microtask: 1.1.3
       react: 16.13.1
       react-layout-effect: 1.0.5_react@16.13.1
       use-memo-one: 1.1.1_react@16.13.1
@@ -3960,7 +3960,7 @@ packages:
     peerDependencies:
       react: '>=16.9'
     resolution:
-      integrity: sha512-WnXTtE5rWu/VL3uyUF2UHZVz7w2DOzm5tL6/ilrXhwz/Cif0ZupmP1RNZdAXOPWniEeL60e7d0wQMdEhpEoLLw==
+      integrity: sha512-SnYb6GlFkFgODlIwvlt7jSTCEXMTLVTvwFHbdNGVB1RJygj4UAx1ReJ3aEOSrUnImO+vVX6JDkxcs32q4Qe9Dw==
   /webidl-conversions/4.0.2:
     dev: true
     resolution:
@@ -4088,4 +4088,4 @@ specifiers:
   tslint-mango: ^0.1.12
   types: 'npm:@alloc/types@^1.2.6'
   typescript: ^3.9.3
-  wana: ^0.11.7
+  wana: ^0.13.1
