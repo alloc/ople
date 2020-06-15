@@ -9,6 +9,7 @@ export function createOple<
   Events extends object = any
 >(create: OpleCreateFn<State, Events>) {
   const self: OpleObject<State, Events> = o(new Ople()) as any
-  withOple(self, create, [self, self.set.bind(self)])
+  const bindSelf = <T extends Function>(fn: T): T => fn.bind(self)
+  withOple(self, create, [self, bindSelf(self.set), bindSelf(self.emit)])
   return self
 }
