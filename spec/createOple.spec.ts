@@ -3,6 +3,26 @@ import { EventEmitter } from 'ee-ts'
 import { flushSync } from 'wana'
 
 describe('createOple', () => {
+  it('gains ownership of Ople objects it created', () => {
+    const effect = jest.fn()
+    const createChild = () =>
+      createOple(() => {
+        setEffect(null, effect)
+      })
+
+    const parent = createOple((_self, set) => {
+      set({ child: createChild() })
+    })
+
+    // 1. Child effects are mounted.
+    expect(effect.mock.calls).toEqual([[true]])
+    effect.mockReset()
+
+    // 2. Child effects are unmounted.
+    parent.dispose()
+    expect(effect.mock.calls).toEqual([[false]])
+  })
+
   describe('the set function', () => {
     it('updates the state', () => {
       const ople = createOple((state, set) => {
