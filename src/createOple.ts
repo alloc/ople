@@ -1,5 +1,5 @@
-import { Ople } from './Ople'
-import { withOple } from './global'
+import { Ople, setEffect, restoreEffects } from './Ople'
+import { withOple, getOple } from './global'
 import { OpleInitFn, ReadonlyOpleObject } from './types'
 import { UnknownProps, Lookup } from 'types'
 
@@ -45,6 +45,12 @@ const initOple = <
     bindMethod(self, 'set'),
     bindMethod(self, 'emit'),
   ])
+  if (getOple()) {
+    setEffect(self, active => {
+      if (active) restoreEffects(self)
+      else self.dispose()
+    })
+  }
   return self
 }
 
