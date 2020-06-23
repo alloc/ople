@@ -1,6 +1,6 @@
 import { Ople } from './Ople'
 import { withOple } from './global'
-import { OpleInitFn, OpleObject } from './types'
+import { OpleInitFn, ReadonlyOpleObject } from './types'
 import { UnknownProps, Lookup } from 'types'
 
 export function createOple<
@@ -20,7 +20,7 @@ const initOple = <
 >(
   self: any,
   init: OpleInitFn<State, Events>
-): OpleObject<State, Events> => {
+): ReadonlyOpleObject<State, Events> => {
   withOple(self, init, [
     self,
     bindMethod(self, 'set'),
