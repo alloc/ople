@@ -10,6 +10,25 @@ export function createOple<
   return initOple(new Ople(), init)
 }
 
+export function createClass<
+  State extends object = UnknownProps,
+  Events extends object = any,
+  Args extends ReadonlyArray<any> = any[]
+>(
+  name: string,
+  create: (...args: Args) => OpleCreateFn<State, Events>
+): new (...args: Args) => ReadonlyOpleObject<State, Events> {
+  function ctr(this: Ople, ...args: Args) {
+    const self = initOple(Ople.call(this), create(...args))
+    Object.setPrototypeOf(self, ctr.prototype)
+    return self
+  }
+  const nameDesc = Object.getOwnPropertyDescriptor(ctr, 'name')
+  Object.defineProperty(ctr, 'name', { ...nameDesc, value: name })
+  Object.setPrototypeOf(ctr.prototype, Ople.prototype)
+  return ctr as any
+}
+
 //
 // Internal
 //
