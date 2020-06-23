@@ -5,6 +5,7 @@ import { OpleEffect, OpleObject } from './types'
 import { setState } from './setState'
 import { $effects, $disposed } from './symbols'
 import { Disposable } from 'types'
+import { setHidden } from './common'
 
 interface OpleListener extends Listener, Disposable {
   effect: Function
@@ -12,8 +13,14 @@ interface OpleListener extends Listener, Disposable {
 
 /** The base class of objects created by `createOple` */
 export class Ople<Events extends object = any> extends EventEmitter<Events> {
-  protected [$effects] = new Map<object, OpleEffect>()
-  protected [$disposed] = false
+  protected [$effects]: Map<object, OpleEffect>
+  protected [$disposed]: boolean
+
+  constructor() {
+    super()
+    setHidden(this, $effects, new Map())
+    setHidden(this, $disposed, false)
+  }
 
   /**
    * Use the properties defined in the given `state` object to update
