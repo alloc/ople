@@ -14,7 +14,7 @@ export function auto(effect: () => void, config: AutoConfig = {}) {
 
   const parent = getOple()
   if (parent) {
-    effect = withOple.bind(null, parent, effect as any)
+    effect = (withOple as any).bind(null, parent, effect)
     attachAuto(auto)
   }
 
