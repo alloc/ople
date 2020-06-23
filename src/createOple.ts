@@ -16,10 +16,10 @@ export function createClass<
   Args extends ReadonlyArray<any> = any[]
 >(
   name: string,
-  create: (...args: Args) => OpleCreateFn<State, Events>
+  getInit: (...args: Args) => OpleInitFn<State, Events>
 ): new (...args: Args) => ReadonlyOpleObject<State, Events> {
   function ctr(this: Ople, ...args: Args) {
-    const self = initOple(Ople.call(this), create(...args))
+    const self = initOple(Ople.call(this), getInit(...args))
     Object.setPrototypeOf(self, ctr.prototype)
     return self
   }
