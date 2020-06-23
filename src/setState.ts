@@ -23,15 +23,18 @@ export function setState(state: object) {
     if (is.string(key) && !getKeyRE.test(key)) {
       const { value, get, set } = desc
       if (set) {
-        desc.set = no(set)
+        desc.set = bindAction(parent, set)
       } else if (get) {
         const memo = (desc.get = o(get.bind(parent)))
         attachAuto(memo.auto)
       } else if (is.function(value) && !is.asyncFunction(value)) {
-        desc.value = no(value)
+        desc.value = bindAction(parent, value)
       }
     }
     defineProperty(parent, key, desc)
   }
 }
 
+/** Disable implicit observation and set the `Ople` context. */
+const bindAction = (parent: OpleObject, fn: AnyFn): AnyFn =>
+  no((...args) => withOple(parent, fn, args))
