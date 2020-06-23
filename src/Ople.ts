@@ -1,5 +1,5 @@
 import { EventEmitter, EventKey, Listener } from 'ee-ts'
-import { no } from 'wana'
+import { no, o } from 'wana'
 import { getOple, withOple, expectOple } from './global'
 import { OpleEffect, OpleObject } from './types'
 import { setState } from './setState'
@@ -20,6 +20,7 @@ export class Ople<Events extends object = any> extends EventEmitter<Events> {
     super()
     setHidden(this, $effects, new Map())
     setHidden(this, $disposed, false)
+    return o(this)
   }
 
   /**
