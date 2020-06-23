@@ -66,7 +66,7 @@ export function useEvents(
           (listeners[key] = (...args) => usedEffects[key]!(...args))
         )
       } else {
-        source.off(key, listeners[key])
+        source.off(key, listeners[key]!)
         usedEffects[key] = undefined
       }
     }

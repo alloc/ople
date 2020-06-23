@@ -17,7 +17,7 @@ export function useOple<State extends object, Events extends object>(
 
   // Restore any effects once mounted.
   useLayoutEffect(() => {
-    restoreEffects(ople)
+    restoreEffects(ople as any)
     return () => ople.dispose()
   }, [])
 
