@@ -1,21 +1,26 @@
 import { is } from 'is'
 import { no, o, isDerived } from 'wana'
-import { expectOple } from './global'
+import { expectOple, withOple } from './global'
 import { attachAuto } from './auto'
+import { OpleObject } from './types'
+import { AnyFn } from 'types'
 
 const { defineProperty } = Object
+
+const getKeyRE = /^get[A-Z]/
 
 export function setState(state: object) {
   const parent = expectOple()
 
-  const props = Object.getOwnPropertyDescriptors(state)
-  for (const [key, desc] of Object.entries(props)) {
+  const descs = Object.getOwnPropertyDescriptors(state)
+  for (const key in descs) {
     const prevDesc = Object.getOwnPropertyDescriptor(parent, key)
     const prevGet = prevDesc && prevDesc.get
     if (isDerived(prevGet)) {
       prevGet.dispose()
     }
-    if (isEnhancedProperty(key, desc)) {
+    const desc = descs[key]
+    if (is.string(key) && !getKeyRE.test(key)) {
       const { value, get, set } = desc
       if (set) {
         desc.set = no(set)
@@ -30,11 +35,3 @@ export function setState(state: object) {
   }
 }
 
-function isEnhancedProperty(key: string, desc: PropertyDescriptor) {
-  return (
-    desc.configurable !== false &&
-    is.string(key) &&
-    key[0] !== '_' &&
-    !/^get[A-Z]/.test(key)
-  )
-}
