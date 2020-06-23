@@ -20,7 +20,7 @@ export interface OpleContext<
   dispose(effect: OpleEffect): void
 }
 
-export type OpleCreateFn<
+export type OpleInitFn<
   State extends object = UnknownProps,
   Events extends object = any
 > = (

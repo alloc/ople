@@ -1,15 +1,35 @@
-import { o } from 'wana'
 import { Ople } from './Ople'
 import { withOple } from './global'
-import { OpleCreateFn, OpleObject } from './types'
-import { UnknownProps } from 'types'
+import { OpleInitFn, OpleObject } from './types'
+import { UnknownProps, Lookup } from 'types'
 
 export function createOple<
   State extends object = UnknownProps,
   Events extends object = any
->(create: OpleCreateFn<State, Events>) {
-  const self: OpleObject<State, Events> = o(new Ople()) as any
-  const bindSelf = <T extends Function>(fn: T): T => fn.bind(self)
-  withOple(self, create, [self, bindSelf(self.set), bindSelf(self.emit)])
+>(init: OpleInitFn<State, Events>) {
+  return initOple(new Ople(), init)
+}
+
+//
+// Internal
+//
+
+const initOple = <
+  State extends object = UnknownProps,
+  Events extends object = any
+>(
+  self: any,
+  init: OpleInitFn<State, Events>
+): OpleObject<State, Events> => {
+  withOple(self, init, [
+    self,
+    bindMethod(self, 'set'),
+    bindMethod(self, 'emit'),
+  ])
   return self
 }
+
+const bindMethod = <T extends Lookup, K extends keyof T>(
+  obj: T,
+  key: K
+): T[K] => obj[key].bind(obj)
