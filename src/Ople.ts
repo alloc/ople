@@ -6,6 +6,7 @@ import { setState } from './setState'
 import { $effects, $disposed } from './symbols'
 import { Disposable } from 'types'
 import { setHidden } from './common'
+import { globals } from './globals'
 
 interface OpleListener extends Listener, Disposable {
   effect: Function
@@ -38,6 +39,14 @@ export class Ople<Events extends object = any> extends EventEmitter<Events> {
       this[$disposed] = true
       this[$effects].forEach(effect => effect(false))
     }
+  }
+
+  // @override
+  protected _emit(key: string, args: any[]) {
+    if (globals.onEmit && key !== 'emit') {
+      globals.onEmit(this, key, args)
+    }
+    super._emit(key, args)
   }
 
   // @override

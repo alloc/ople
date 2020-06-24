@@ -8,6 +8,7 @@ export { initOple } from './initOple'
 export { getOple, expectOple } from './context'
 export { setEffect, restoreEffects } from './Ople'
 export { setState } from './setState'
+export { globals } from './globals'
 export {
   OpleInitFn,
   OpleSetFn,
