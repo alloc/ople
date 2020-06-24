@@ -18,16 +18,6 @@ export type ReadonlyOpleObject<
   Events extends object = any
 > = ReadonlyOple<Events> & Immutable<State>
 
-export interface OpleContext<
-  State extends object = UnknownProps,
-  Events extends object = any
-> {
-  /** The current state being created or modified */
-  state: OpleObject<State, Events> | null
-  /** Call the given `effect` when `ople.state` is disposed */
-  dispose(effect: OpleEffect): void
-}
-
 export type OpleInitFn<
   State extends object = UnknownProps,
   Events extends object = any
