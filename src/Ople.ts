@@ -1,6 +1,6 @@
 import { EventEmitter, EventKey, Listener } from 'ee-ts'
 import { no, o } from 'wana'
-import { getOple, withOple, expectOple } from './global'
+import { getOple, withOple, expectOple } from './context'
 import { OpleEffect, OpleObject } from './types'
 import { setState } from './setState'
 import { $effects, $disposed } from './symbols'

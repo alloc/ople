@@ -1,6 +1,6 @@
 import { is } from 'is'
 import { no, o, isDerived } from 'wana'
-import { expectOple, withOple } from './global'
+import { expectOple, withOple } from './context'
 import { attachAuto } from './auto'
 import { OpleObject } from './types'
 import { AnyFn } from 'types'

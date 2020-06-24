@@ -5,7 +5,7 @@ import { Ople } from './Ople'
 // The current `Ople` being created or modified.
 let current: Ople | null = null
 
-/** Activate the `context` while executing the `effect` */
+/** Use `state` as the Ople context until `effect` returns */
 export function withOple<Events extends object, In extends any[], Out>(
   state: Ople<Events>,
   effect: (...args: In) => Out,

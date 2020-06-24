@@ -1,5 +1,5 @@
 import { Auto, mountAuto, AutoConfig } from 'wana'
-import { getOple, withOple, expectOple } from './global'
+import { getOple, withOple, expectOple } from './context'
 import { setEffect } from './Ople'
 
 /**

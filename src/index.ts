@@ -5,7 +5,7 @@ export { useEvents } from './useEvents'
 export { createOple } from './createOple'
 export { createClass } from './createClass'
 export { initOple } from './initOple'
-export { getOple, expectOple } from './global'
+export { getOple, expectOple } from './context'
 export { setEffect, restoreEffects } from './Ople'
 export { setState } from './setState'
 export {

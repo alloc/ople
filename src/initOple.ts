@@ -1,6 +1,6 @@
 import { OpleInitFn, ReadonlyOpleObject } from './types'
 import { UnknownProps, Lookup } from 'types'
-import { withOple, getOple } from './global'
+import { withOple, getOple } from './context'
 import { setEffect, restoreEffects } from './Ople'
 
 export const initOple = <
