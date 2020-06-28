@@ -16,7 +16,7 @@ export interface ReadonlyOple<Events extends object = any>
 export type ReadonlyOpleObject<
   State extends object = UnknownProps,
   Events extends object = any
-> = ReadonlyOple<Events> & Immutable<State>
+> = ReadonlyOple<Events> & { readonly [P in keyof State]: Immutable<State[P]> }
 
 export type OpleInitFn<
   State extends object = UnknownProps,
@@ -37,30 +37,10 @@ export type OpleEmitFn<T extends object = any> = <K extends EventKey<T>>(
 ) => void
 
 /** Convert a mutable type into a readonly type */
-export type Immutable<T> = T extends AtomicObject
-  ? T
-  : T extends ReadonlyMap<infer K, infer V> // Map extends ReadonlyMap
-  ? ReadonlyMap<Immutable<K>, Immutable<V>>
-  : T extends ReadonlySet<infer V> // Set extends ReadonlySet
-  ? ReadonlySet<Immutable<V>>
-  : T extends WeakReferences
-  ? T
-  : T extends object
+export type Immutable<T> = T extends ReadonlyArray<any>
   ? { readonly [K in keyof T]: Immutable<T[K]> }
+  : T extends ReadonlyMap<infer K, infer V>
+  ? ReadonlyMap<Immutable<K>, Immutable<V>>
+  : T extends ReadonlySet<infer V>
+  ? ReadonlySet<Immutable<V>>
   : T
-
-/** Object types that should never be mapped */
-type AtomicObject =
-  | Function
-  | Promise<any>
-  | Date
-  | RegExp
-  | Boolean
-  | Number
-  | String
-
-/**
- * These should also never be mapped but must be tested after regular Map and
- * Set
- */
-type WeakReferences = WeakMap<any, any> | WeakSet<any>
