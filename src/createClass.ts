@@ -11,13 +11,17 @@ export function createClass<
   name: string,
   getInit: (...args: Args) => OpleInitFn<State, Events>
 ): new (...args: Args) => ReadonlyOpleObject<State, Events> {
-  function ctr(this: Ople, ...args: Args) {
-    const self = initOple(Ople.call(this), getInit(...args))
-    Object.setPrototypeOf(self, ctr.prototype)
-    return self
-  }
-  const nameDesc = Object.getOwnPropertyDescriptor(ctr, 'name')
-  Object.defineProperty(ctr, 'name', { ...nameDesc, value: name })
+  const ctr = new Function(
+    'initOple',
+    'Ople',
+    'getInit',
+    `return function ${name}() {
+       return initOple(
+         Ople.call(this),
+         getInit.apply(null, arguments)
+       )
+     }`
+  )(initOple, Ople, getInit)
   Object.setPrototypeOf(ctr.prototype, Ople.prototype)
   return ctr as any
 }
