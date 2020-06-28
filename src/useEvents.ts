@@ -3,15 +3,17 @@ import { ListenerMap, EventEmitter, Listener } from 'ee-ts'
 import { useLayoutEffect } from 'react-layout-effect'
 import { Falsy } from 'types'
 
+interface EventSource<T = any> extends Omit<EventEmitter<T>, 'emit'> {}
+
 /** Subscribe to events from an `Ople` object */
 export function useEvents<Events extends object>(
-  source: EventEmitter<Events> | Falsy,
+  source: EventSource<Events> | Falsy,
   effects: ListenerMap<Events>,
   deps?: readonly any[]
 ): void
 
 export function useEvents(
-  source: EventEmitter<any> | Falsy,
+  source: EventSource<any> | Falsy,
   effects: ListenerMap,
   deps?: readonly any[]
 ) {
