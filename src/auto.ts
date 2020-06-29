@@ -27,6 +27,7 @@ export function auto(effect: () => void, config: AutoConfig = {}) {
  * but not vice versa. Call `auto.dispose()` to stop the reaction early.
  */
 export function attachAuto(auto: Auto) {
+  const parent = expectOple()
   const setState = mountAuto(auto)
 
   const { onCommit, onDispose } = auto
@@ -36,7 +37,6 @@ export function attachAuto(auto: Auto) {
     onCommit(observer)
   }
 
-  const parent = expectOple()
   auto.onDispose = () => {
     if (!updating) {
       withOple(parent, setEffect, [auto, null])
