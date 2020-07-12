@@ -109,3 +109,18 @@ them from within an Ople context (eg: inside a `createOple` initializer).
 
 For more info, see the [Mixins](./docs/mixins.md) page.
 
+&nbsp;
+
+## FAQ
+
+These questions are common for beginners to ask. If you have a question not yet
+listed here, feel free to open a pull request, and I'll add an answer to it.
+
+- **Why are Ople objects readonly outside their initializer?**
+
+  To keep mutations local to the state they are acting upon. This makes it
+  easy to remember which module contains the code you are concerned with.
+  It also encourages you to declare reusable methods instead of duplicating
+  logic across your project. Your methods will be implicitly bound to their
+  local state, which means you won't have to manually `.bind` them before
+  using them as React element props (eg: `onClick`).
