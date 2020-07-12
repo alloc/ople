@@ -9,6 +9,18 @@
 
 Event-driven, observable data flow for React 💥👀
 
+**Features**
+
+- Transparent observability for seamless, reactive data flow
+- Automatic disposal of event listeners and `auto` reactions
+- Compatible with all [`wana`](https://github.com/alloc/wana) functions
+- Mixins for sharable behavior (inspired by React hooks)
+- Strict type safety with TypeScript
+- Objects are readonly outside their initializer
+- Objects have built-in event emitting
+- Highly minifiable code
+- Concise, distilled API
+
 &nbsp;
 
 ## Usage
