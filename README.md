@@ -26,11 +26,66 @@ Event-driven, observable data flow for React 💥👀
 ## Usage
 
 The `createOple` function constructs an Ople object, which is both observable
-and readonly to React components. Expose methods for React components to call, 
+and readonly to React components. Expose methods for React components to call,
 and expose events for React components to subscribe to.
 
-```
-TODO: document the "createOple" function
+```tsx
+import {createOple, auto} from 'ople'
+
+// Pass an initializer function to receive a state object,
+// a set function, and an emit function.
+const state = createOple((self, set, emit) => {
+  // The state is mutable.
+  self.a = 1
+
+  // The state is observable.
+  auto(() => {
+    console.log('a:', self.a)
+  })
+
+  // The set function is a shortcut for `Object.assign(self, {...})`
+  set({ b: 1, c: 1 })
+
+  // The set function converts every getter into an observable getter (unless a setter exists).
+  set({
+    get sum() {
+      return self.a + self.b + self.c
+    }
+  })
+  auto(() => {
+    console.log('sum:', self.sum)
+  })
+
+  // The set function is the recommended way of declaring methods.
+  set({
+    // Methods declared with `set` are wrapped to disable implicit observation
+    // and to set the Ople context until the method returns.
+    add(key: string, n: number) {
+      self[key] += n
+
+      // The emit function is a shortcut for `self.emit(...)`
+      emit('add', key, n)
+    }
+  })
+
+  // Subscribe to your own events or the events of another Ople object.
+  // Your listeners are removed when the built-in `dispose` method is called.
+  self.on({
+    add(key, n) {
+      console.log('add:', key, n)
+    }
+  })
+})
+
+// The state is observable outside the initializer, too.
+auto(() => {
+  console.log('b:', state.b)
+})
+
+state.add('b', 2)
+
+// Clean up any side effects.
+state.dispose()
 ```
 
 &nbsp;
