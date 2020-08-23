@@ -1,9 +1,7 @@
 import { useMemo } from 'react'
-import { ListenerMap, EventEmitter, Listener } from 'ee-ts'
+import { EventSource, ListenerMap, Listener } from 'ee-ts'
 import { useLayoutEffect } from 'react-layout-effect'
 import { Falsy } from 'types'
-
-interface EventSource<T = any> extends Omit<EventEmitter<T>, 'emit'> {}
 
 /** Subscribe to events from an `Ople` object */
 export function useEvents<Events extends object>(
