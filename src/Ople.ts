@@ -29,7 +29,7 @@ export class Ople<Events extends object = any> extends EventEmitter<Events> {
    * this object's values. Like `Object.assign` but with support for
    * memoized getters (via `get` syntax).
    */
-  set<State extends object>(state: Partial<State>) {
+  set(state: object) {
     withOple(this, setState, [state])
   }
 
