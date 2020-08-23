@@ -13,6 +13,7 @@ export type {
   OpleInitFn,
   OpleSetFn,
   OpleEmitFn,
+  OpleEffect,
   OpleObject,
   ReadonlyOple,
   ReadonlyOpleObject,
