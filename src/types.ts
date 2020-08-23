@@ -10,13 +10,16 @@ export type OpleObject<
   Events extends object = any
 > = Ople<Events> & State
 
+type OmitWrites<T> = Omit<T, 'set' | 'emit'>
+
 export interface ReadonlyOple<Events extends object = any>
-  extends Omit<Ople<Events>, 'set' | 'emit'> {}
+  extends OmitWrites<Ople<Events>> {}
 
 export type ReadonlyOpleObject<
   State extends object = UnknownProps,
   Events extends object = any
-> = ReadonlyOple<Events> & { readonly [P in keyof State]: Immutable<State[P]> }
+> = ReadonlyOple<Events> &
+  { readonly [P in keyof OmitWrites<State>]: Immutable<State[P]> }
 
 export type OpleInitFn<
   State extends object = UnknownProps,
