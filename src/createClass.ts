@@ -13,7 +13,7 @@ export function createClass<
   getInit: (...args: Args) => OpleInitFn<State, Events>,
   Super: Class = Ople
 ): new (...args: Args) => ReadonlyOpleObject<State, Events> {
-  if (!(Super.prototype instanceof Ople)) {
+  if (Super != Ople && !(Super.prototype instanceof Ople)) {
     throw TypeError('Super class must extend the Ople class')
   }
   const ctr = new Function(
