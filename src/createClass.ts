@@ -20,11 +20,11 @@ export function createClass<
     'initOple',
     'Ople',
     'getInit',
-    `return function ${name}() {
-       return initOple(
-         Ople.call(this),
-         getInit.apply(null, arguments)
-       )
+    `return class ${name} extends Ople {
+  constructor(...args) {
+    super(...args)
+    initOple(this, getInit(...args))
+  }
      }`
   )(initOple, Super, getInit)
   Object.setPrototypeOf(ctr.prototype, Super.prototype)

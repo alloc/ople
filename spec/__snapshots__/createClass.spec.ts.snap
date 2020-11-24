@@ -1,15 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`createClass creates a named constructor 1`] = `
-"function ctr() {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        var self = initOple_1.initOple(Ople_1.Ople.call(this), getInit.apply(void 0, args));
-        Object.setPrototypeOf(self, ctr.prototype);
-        return self;
-    }"
+"function Test() {
+       return initOple(
+         Ople.call(this),
+         getInit.apply(null, arguments)
+       )
+     }"
 `;
 
 exports[`createClass creates a named constructor 3`] = `

@@ -1,4 +1,3 @@
-import { EventSource } from 'ee-ts'
 import { Class } from 'is'
 import { expectOple, withOple } from '../context'
 import { Ople } from '../Ople'
@@ -25,25 +24,14 @@ export function onPrepare(effect: OnPrepare) {
   classContext!.onPrepare.push(effect)
 }
 
-export type OpleMixin<T extends Ople = OpleObject> = (self: T) => void
-
-// TODO: replace EventSource with CopyEvents
-export interface OpleClass<T extends Ople = OpleObject>
-  extends Class<T>,
-    EventSource<T> {
-  /**
-   * Call this in another `createClass` mixin to copy all state/behavior.
-   */
-  mixin: OpleMixin<T>
-  /**
-   * Prepare a revived instance of this class.
-   */
-  prepare: OnPrepare
+export interface OpleClass<T extends Ople = OpleObject> extends Class<T> {
+  /** Prepare an object without arguments. */
+  revive(self: object): T
 }
 
 export function createClass<T extends Ople>(
   name: string,
-  setup: OpleMixin<T>
+  setup: (self: T) => void
 ): OpleClass<T> {
   classContext = { onCreate: [], onPrepare: [] }
   const { onCreate, onPrepare } = classContext
@@ -63,9 +51,9 @@ export function createClass<T extends Ople>(
   Class.prototype = new Proxy(Class.prototype, selfProxy)
 
   withOple(Class as any, setup, [Class.prototype])
-  Class.mixin = setup
-  Class.prepare = self => {
+  Class.revive = self => {
     for (const prepare of onPrepare) prepare(self)
+    return self as T
   }
 
   classContext = null
