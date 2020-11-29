@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { useLayoutEffect } from 'react-layout-effect'
-import { OpleInitFn } from './types'
-import { createOple } from './createOple'
-import { restoreEffects } from './Ople'
+import { OpleInitFn } from '../../client/src/types'
+import { createOple } from '../../client/src/createOple'
+import { restoreEffects } from '../../client/src/Ople'
 
 /** Create an `Ople` object as component state */
 export function useOple<State extends object, Events extends object>(

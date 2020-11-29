@@ -1,9 +1,8 @@
 import { Any, Disposable } from 'types'
 import { no } from 'wana'
-import { setHidden } from '../common'
-import { expectOple, getOple } from '../context'
-import { Ople, setEffect } from '../Ople'
-import { makeFunctionType } from './common'
+import { makeFunctionType, setHidden } from './common'
+import { expectOple, getOple } from './context'
+import { Ople, setEffect } from './Ople'
 
 // NOTE: Global listeners can only be created by the prototype.
 //       For others to listen he prototype has to forward those events to

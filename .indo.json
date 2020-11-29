@@ -1,1 +1,11 @@
-{}
+{
+  "repos": {
+    "packages/fauna-lite": {
+      "url": "https://github.com/aleclarson/fauna-lite"
+    },
+    "packages/faunadb": {
+      "url": "https://github.com/aleclarson/faunadb-js.git",
+      "head": "ople"
+    }
+  }
+}

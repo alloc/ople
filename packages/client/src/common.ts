@@ -1,3 +1,10 @@
+import { Ref } from 'fauna-lite'
+import { $R } from './symbols'
+
+export function setHidden(self: object, key: keyof any, value: any) {
+  Object.defineProperty(self, key, { value, writable: true })
+}
+
 /**
  * The `getImpl` function __cannot__ have special syntax in its argument
  * list. No destructuring, rest parameters, or default values. But the
@@ -19,3 +26,9 @@ export function makeFunctionType<T extends any[], U extends Function>(
       `var ${self}; return ${self} = function ${name}${impl}`
     )(...args.concat(values))
 }
+
+export const getRef = (arg: Ref | { [$R]?: Ref }) =>
+  (arg instanceof Ref && arg) || arg[$R] || null
+
+export const getRefs = (args: object[]) =>
+  args.map(getRef).filter(Boolean) as Ref[]

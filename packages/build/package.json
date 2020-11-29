@@ -1,0 +1,19 @@
+{
+  "name": "@ople/build",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "prettier": "@alloc/prettier-config",
+  "dependencies": {
+    "dedent": "^0.7.0",
+    "is": "npm:@alloc/is@^2.1.1",
+    "resolve": "^1.17.0",
+    "ts-morph": "^7.1.2",
+    "uid": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/dedent": "^0.7.0",
+    "@types/resolve": "^1.17.1",
+    "typescript": "link:../../node_modules/typescript"
+  }
+}

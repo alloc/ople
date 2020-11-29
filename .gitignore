@@ -1,3 +1,5 @@
-/dist/
-/vendor/
-/node_modules/
+dist/
+vendor/
+node_modules/
+packages/faunadb/
+packages/fauna-lite/
