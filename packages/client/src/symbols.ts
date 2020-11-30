@@ -9,3 +9,6 @@ export const $R = Symbol('ople:ref')
 
 /** For storing the unsaved patch queue */
 export const $P = Symbol('ople:patches')
+
+/** Configuration from a `setup` call */
+export const $prepareFns = Symbol('ople.prepareFns')

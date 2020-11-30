@@ -1,15 +1,14 @@
 import { Any, Disposable } from 'types'
 import { no } from 'wana'
 import { makeFunctionType, setHidden } from './common'
-import { expectOple, getOple } from './context'
+import { expectOple, getOple, withOple } from './context'
 import { Ople, setEffect } from './Ople'
-
-// NOTE: Global listeners can only be created by the prototype.
-//       For others to listen he prototype has to forward those events to
-//       an `Ople` instance that is globally accessible.
+import { globals } from './globals'
 
 const makeCacheKey = (signal: Signal): any =>
   Symbol.for(signal.name + '.listeners')
+
+export const signalKeyRE = /^(on|will|did)[A-Z]/
 
 export const makeSignal = makeFunctionType(
   <T>(): Signal<T> =>
@@ -18,9 +17,6 @@ export const makeSignal = makeFunctionType(
       if ('signal' in handler) {
         throw Error('Signal handlers cannot be reused')
       }
-
-      const listener = Object.setPrototypeOf(handler, ListenerType)
-      listener.signal = signal
 
       const ople = getOple()
       let target = no(this !== globalThis ? this : ople)
@@ -35,6 +31,11 @@ export const makeSignal = makeFunctionType(
       if (!cache) {
         setHidden(target, cacheKey, (cache = new Set()))
       }
+
+      const listener = handler as Listener
+      listener.signal = signal
+      listener.target = target
+      listener.dispose = disposeListener
 
       if (ople) {
         setEffect(listener, active => {
@@ -58,15 +59,24 @@ export const makeSignal = makeFunctionType(
 /**
  * Cannot be called outside an `Ople` context.
  */
-export function emit<T>(signal: Signal<T>, ...args: SignalArgs<T>) {
-  const target: any = no(expectOple())
+export const emit = no(<T>(signal: Signal<T>, ...args: SignalArgs<T>) => {
+  const target: any = expectOple()
   const cacheKey = makeCacheKey(signal)
-  let cache: Set<Handler> = target.constructor[cacheKey]
+  let cache = target.constructor[cacheKey] as Set<Listener> | undefined
+  if (cache && cache.size) {
+    for (const listener of cache) {
+      if (listener.ople) {
+        withOple(listener.ople, listener, args)
+      } else {
+        listener(...args)
+      }
+    }
+  }
   cache = target[cacheKey]
   if (cache && cache.size) {
-    // TODO: set `target` as Ople context when notifying global listeners
+    withOple(target, classEmit, [cache, args])
   }
-}
+})
 
 /**
  * The source of a single event type.
@@ -80,7 +90,9 @@ export interface Signal<T = any> {
  */
 export interface Listener<T = any> extends Handler<T>, Disposable {
   /** The signal being listened to. */
-  readonly signal: Signal<T>
+  signal: Signal<T>
+  /** The signal target. */
+  target: any
   /**
    * The `Ople` context this listener was created in.
    *
@@ -89,15 +101,29 @@ export interface Listener<T = any> extends Handler<T>, Disposable {
   ople?: Ople
 }
 
+//
+// Internal
+//
+
 type SignalArgs<T> = [T] extends [Any] ? any[] : T extends any[] ? T : [T]
 
 interface Handler<T = any> {
   (...args: SignalArgs<T>): boolean | void
 }
 
-const ListenerType = {
-  constructor: Function,
-  dispose(this: Listener) {
-    // TODO
-  },
+function disposeListener(this: Listener) {
+  if (this.ople) {
+    withOple(this.ople, setEffect, [this, null])
+  } else {
+    const cacheKey = makeCacheKey(this.signal)
+    this.target[cacheKey].delete(this)
+  }
+}
+
+// Ople classes may have class-wide listeners, which run when any
+// instance emits the associated signal.
+function classEmit(cache: Set<Listener>, args: any[]) {
+  for (const listener of cache) {
+    listener(...args)
+  }
 }
