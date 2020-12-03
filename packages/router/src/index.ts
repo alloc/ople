@@ -1,26 +1,29 @@
-import { Ople, setup, prepare, onPrepare, Signal } from 'ople'
+import { auto, o, prepare, Ople, Signal } from 'ople'
 
 class Router extends Ople {
   constructor() {
     super()
-    prepare()
+    prepare(this, Router)
   }
 }
 
 interface Router {
-  onPrepare: Signal<void>
+  readonly fullName: string
+  onFocus: Signal<void>
+  onBlur: Signal<void>
 }
 
-setup(Router, self => {
-  onPrepare(() => {
-    console.log(self)
+prepare(Router, self => {
+  // Listen to self.
+  self.onFocus(() => {})
+
+  // Listen to new property values.
+  auto(() => {
+    self.thing.onStuff(() => {})
   })
 
-  auto(
-    () => self.thing,
-    thing => {
-      // Listen to new property values.
-      thing.onStuff(() => {...})
-    }
-  )
+  // Define a memoized getter.
+  self.fullName = o(() => {
+    return self.firstName + ' ' + self.lastName
+  })
 })
