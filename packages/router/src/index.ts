@@ -1,13 +1,14 @@
 import { auto, o, prepare, Ople, Signal } from 'ople'
 
-class Router extends Ople {
+export class Router extends Ople {
   constructor() {
     super()
     prepare(this, Router)
   }
 }
 
-interface Router {
+// Signals and memoized getters must be typed like this.
+export interface Router {
   readonly fullName: string
   onFocus: Signal<void>
   onBlur: Signal<void>
