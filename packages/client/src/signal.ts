@@ -1,29 +1,19 @@
 import { Any, Disposable } from 'types'
 import { no } from 'wana'
 import { makeFunctionType, setHidden } from './common'
-import { expectOple, getOple, withOple } from './context'
+import { getOple, withOple } from './context'
 import { Ople, setEffect } from './Ople'
-import { globals } from './globals'
 
-const makeCacheKey = (signal: Signal): any =>
+const makeCacheKey = (signal: Function): any =>
   Symbol.for(signal.name + '.listeners')
 
 export const signalKeyRE = /^(on|will|did)[A-Z]/
 
 export const makeSignal = makeFunctionType(
-  <T>(): Signal<T> =>
-    function signal(this: any, handler: Handler<T>): Listener<T> {
-      // TODO: skip this check in production?
-      if ('signal' in handler) {
+  <T>(target: any): Signal<T> =>
+    function signal(listener: Listener) {
+      if ('signal' in (listener as any)) {
         throw Error('Signal handlers cannot be reused')
-      }
-
-      const ople = getOple()
-      let target = no(this !== globalThis ? this : ople)
-
-      // TODO: skip this check in production?
-      if (!target) {
-        throw Error('Signal has no target')
       }
 
       const cacheKey = makeCacheKey(signal)
@@ -32,11 +22,10 @@ export const makeSignal = makeFunctionType(
         setHidden(target, cacheKey, (cache = new Set()))
       }
 
-      const listener = handler as Listener
-      listener.signal = signal
-      listener.target = target
+      listener.signal = signal as any
       listener.dispose = disposeListener
 
+      const ople = getOple()
       if (ople) {
         setEffect(listener, active => {
           if (active) {
@@ -52,7 +41,7 @@ export const makeSignal = makeFunctionType(
       }
 
       return listener
-    },
+    } as any,
   { getOple, makeCacheKey }
 )
 
@@ -60,9 +49,8 @@ export const makeSignal = makeFunctionType(
  * Cannot be called outside an `Ople` context.
  */
 export const emit = no(<T>(signal: Signal<T>, ...args: SignalArgs<T>) => {
-  const target: any = expectOple()
   const cacheKey = makeCacheKey(signal)
-  let cache = target.constructor[cacheKey] as Set<Listener> | undefined
+  const cache: Set<Listener> = signal.target[cacheKey]
   if (cache && cache.size) {
     for (const listener of cache) {
       if (listener.ople) {
@@ -72,10 +60,6 @@ export const emit = no(<T>(signal: Signal<T>, ...args: SignalArgs<T>) => {
       }
     }
   }
-  cache = target[cacheKey]
-  if (cache && cache.size) {
-    withOple(target, classEmit, [cache, args])
-  }
 })
 
 /**
@@ -83,6 +67,8 @@ export const emit = no(<T>(signal: Signal<T>, ...args: SignalArgs<T>) => {
  */
 export interface Signal<T = any> {
   (handler: Handler<T>): Listener<T>
+  /** The signal target. */
+  target: any
 }
 
 /**
@@ -91,8 +77,6 @@ export interface Signal<T = any> {
 export interface Listener<T = any> extends Handler<T>, Disposable {
   /** The signal being listened to. */
   signal: Signal<T>
-  /** The signal target. */
-  target: any
   /**
    * The `Ople` context this listener was created in.
    *

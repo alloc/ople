@@ -5,7 +5,7 @@ import { setHidden } from './common'
 import { setState } from './setState'
 import { $effects, $disposed } from './symbols'
 import { Class, is } from 'is'
-import { signalKeyRE } from './signal'
+import { signalKeyRE, makeSignal, Signal } from './Signal'
 
 /** The base class of objects created by `createOple` */
 export class Ople {
@@ -35,6 +35,19 @@ export class Ople {
     }
   }
 }
+
+const signalTraps: ProxyHandler<any> = {
+  get(_, key, target) {
+    if (is.string(key) && signalKeyRE.test(key)) {
+      const signal = makeSignal(key, target)
+      signal.target = target
+      return signal
+    }
+  },
+}
+
+// Bind signals to Ople instances on-demand.
+Object.setPrototypeOf(Ople.prototype, new Proxy({}, signalTraps))
 
 /**
  * Tell the active `Ople` context to update the `effect` associated

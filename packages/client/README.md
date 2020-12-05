@@ -28,7 +28,75 @@ so unused patches are not sent, but the partial is never stale.
 When a ref is materialized, the partial is graduated into a full
 instance of the ref's class.
 
+### Records
+
+```ts
+import { Record, Signal, prepare } from '@ople/client'
+import { User } from './User'
+
+class Todo extends Record {
+  date = new Date()
+  author = User.current
+  constructor(public text: string) {
+    super()
+    prepare(this, Todo)
+  }
+}
+
+// Transient properties are declared here.
+// These are never saved to the database.
+interface Todo {
+  // Derived properties go here.
+  isEmpty: boolean
+  // Signal properties with names matching /^(on|did|will)[A-Z]/ are 
+  // initialized by each instance on-demand.
+  didComplete: Signal<void>
+}
+
+prepare(Todo, (todo, set) => {
+  // Define a lazily derived property.
+  set('isEmpty', () => todo.text.length == 0)
+  // Define a reaction.
+  auto(() => console.log(todo.text))
+  // Define an event handler.
+  todo.author.onDelete(() => todo.delete())
+})
+```
+
+Records have these properties:
+- `isModified: boolean`
+- `lastSyncTime: FaunaTime | null`
+
+Records have these methods:
+- `save(): Promise<void>`
+- `sync(): Promise<void>`
+- `delete(): Promise<void>`
+- Ople methods
+  - `set(values: object): void`
+  - `set(key: string, value: any): void`
+  - `dispose(): void`
+
+Records have these signals:
+- `onSave` (This record will be saved. Handlers receive the `save` promise.)
+- `onSync` (This record will be synchronized. Handlers receive the `sync` promise.)
+- `onDelete` (This record will be deleted. Handlers receive the `delete` promise.)
+
+These signals are sent by their collections, too.
+
 ### Collections
+
+Collections are declared by the client. At build time, the client is parsed 
+and searched for `new Collection` calls, whose binding name and index config
+is copied into a JSON file for bootstrapping purposes. The parsed calls are
+also used to generate server-based `Collection` instances, which are used to
+define access control, respond to mutation events, and query the database
+from RPC handlers.
+
+```ts
+const todos = new Collection<Todo>()
+```
+
+#### Method examples
 
 ```ts
 todos.get(ref) // => Query<Todo>
