@@ -1,5 +1,3 @@
 dist/
 vendor/
 node_modules/
-packages/faunadb/
-packages/fauna-lite/

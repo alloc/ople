@@ -1,60 +1,27 @@
 {
   "name": "ople",
-  "version": "0.4.4",
-  "main": "dist/ople.js",
-  "module": "dist/ople.mjs",
-  "typings": "dist/ople.d.ts",
+  "version": "0.0.0-dev",
+  "private": true,
   "scripts": {
     "build": "rollup -c",
-    "lint": "concurrently -n tsc,tslint 'tsc -p . --noEmit' 'tslint -p .'",
-    "prepublishOnly": "yarn lint && yarn build",
     "test": "jest",
     "test:cov": "jest --coverage && codecov"
   },
   "repository": "alloc/ople",
   "author": "Alec Larson",
-  "license": "MIT",
-  "files": [
-    "src",
-    "dist"
-  ],
-  "dependencies": {
-    "@types/react": "^16.9.35",
-    "ee-ts": "2.0.0-rc.6",
-    "is": "npm:@alloc/is@^2.1.1",
-    "react-layout-effect": "^1.0.5",
-    "types": "npm:@alloc/types@^1.2.6",
-    "wana": "^0.13.1"
-  },
   "devDependencies": {
+    "@alloc/prettier-config": "^1.0.0",
+    "@sucrase/jest-plugin": "^2.0.0",
     "@types/jest": "^25.2.3",
     "codecov": "^3.7.0",
     "concurrently": "^5.2.0",
-    "esbuild": "^0.6.17",
+    "esbuild": "^0.8.20",
     "jest": "^24.9.0",
     "prettier": "^2.0.5",
-    "react": "^16.13.1",
+    "recrawl-sync": "^2.0.0",
     "rollup": "^2.23.0",
     "rollup-plugin-dts": "^1.4.10",
     "rollup-plugin-esbuild": "^2.4.2",
-    "ts-jest": "^24.3.0",
-    "tslint-mango": "^0.1.12",
     "typescript": "^4.1.2"
-  },
-  "peerDependencies": {
-    "react": "*"
-  },
-  "keywords": [
-    "transparent",
-    "observable",
-    "reactive",
-    "reactjs",
-    "react",
-    "state",
-    "state manager",
-    "state management",
-    "events",
-    "event-driven",
-    "event emitter"
-  ]
+  }
 }

@@ -1,12 +1,7 @@
 module.exports = {
-  preset: 'ts-jest',
-  collectCoverageFrom: ['src/**/*.ts'],
-  testEnvironment: 'jsdom',
-  testPathIgnorePatterns: ['packages'],
-  globals: {
-    'ts-jest': {
-      diagnostics: false,
-      packageJson: 'package.json',
-    },
+  collectCoverageFrom: ['packages/**/*.ts'],
+  testEnvironment: 'node',
+  transform: {
+    '.(js|jsx|ts|tsx)': '@sucrase/jest-plugin',
   },
 }
