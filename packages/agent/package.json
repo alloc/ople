@@ -1,0 +1,10 @@
+{
+  "name": "@ople/agent",
+  "version": "0.1.0",
+  "dependencies": {
+    "@alloc/is": "^2.1.2",
+    "@alloc/queue-microtask": "^1.1.4",
+    "fauna-lite": "^0.1.1",
+    "uid": "^2.0.0"
+  }
+}

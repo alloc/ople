@@ -1,11 +1,9 @@
 import { no, o } from 'wana'
-import { getOple, withOple, expectOple } from './context'
+import { withOple, expectOple } from './context'
 import { OpleEffect, OpleObject } from './types'
 import { setHidden } from './common'
 import { setState } from './setState'
 import { $effects, $disposed } from './symbols'
-import { Class, is } from 'is'
-import { signalKeyRE, makeSignal, Signal } from './Signal'
 
 /** The base class of objects created by `createOple` */
 export class Ople {
@@ -34,16 +32,6 @@ export class Ople {
       this[$effects].forEach(effect => effect(false))
     }
   }
-}
-
-const signalTraps: ProxyHandler<any> = {
-  get(_, key, target) {
-    if (is.string(key) && signalKeyRE.test(key)) {
-      const signal = makeSignal(key, target)
-      signal.target = target
-      return signal
-    }
-  },
 }
 
 // Bind signals to Ople instances on-demand.
@@ -81,16 +69,3 @@ export function restoreEffects(ople: Ople) {
     ople[$effects].forEach(effect => effect(true))
   }
 }
-
-// // Bind signals to each instance when accessed.
-// Object.setPrototypeOf(
-//   Ople.prototype,
-//   new Proxy(Object.prototype as any, {
-//     get(prototype, key, self) {
-//       if (is.string(key) && signalKeyRE.test(key)) {
-//         return Object.hasOwnProperty(self.__proto__, key)
-//       }
-//       return prototype[key]
-//     }
-//   })
-// )

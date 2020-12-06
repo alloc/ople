@@ -1,0 +1,32 @@
+{
+  "name": "@ople/client",
+  "version": "0.1.0",
+  "main": "dist/ople.js",
+  "module": "dist/ople.mjs",
+  "typings": "dist/ople.d.ts",
+  "repository": "alloc/ople",
+  "author": "Alec Larson",
+  "files": [
+    "src",
+    "dist"
+  ],
+  "dependencies": {
+    "@alloc/is": "^2.1.1",
+    "@alloc/types": "^1.2.6",
+    "fauna-lite": "^0.1.1",
+    "wana": "^0.13.1"
+  },
+  "keywords": [
+    "ople",
+    "faunadb",
+    "transparent",
+    "observable",
+    "reactive",
+    "state",
+    "state manager",
+    "state management",
+    "events",
+    "event-driven",
+    "event emitter"
+  ]
+}

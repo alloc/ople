@@ -1,5 +1,7 @@
+import { ChangeObserver } from 'wana'
 import { Record } from '../Record'
 import { $R, $P } from '../symbols'
+import { expectOple } from '../context'
 
 // Effects for automatic patch queueing.
 const autoQueues = new WeakMap<Record, OpleEffect>()

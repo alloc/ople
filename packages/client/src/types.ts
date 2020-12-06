@@ -1,43 +1,28 @@
-import { UnknownProps } from 'types'
+import { Pick, UnknownProps } from 'types'
 import { Ople } from './Ople'
-import { EventArgs, EventKey } from 'ee-ts'
+import { Signal } from './Signal'
 
 /** Pass `true` to enable the effect. Pass `false` to disable. */
 export type OpleEffect = (active: boolean) => void
 
-export type OpleObject<
-  State extends object = UnknownProps,
-  Events extends object = any
-> = Ople<Events> & State
+/** An `Ople` object with added state. */
+export type OpleObject<State extends object = UnknownProps> = ReadonlyOple &
+  State & { set: OpleSetFn<State> }
 
-type OmitWrites<T> = Omit<T, 'set' | 'emit'>
+/** An `Ople` object without its `set` method. */
+export interface ReadonlyOple extends Omit<Ople, 'set'> {}
 
-export interface ReadonlyOple<Events extends object = any>
-  extends OmitWrites<Ople<Events>> {}
-
+/** An `Ople` object with immutable state. */
 export type ReadonlyOpleObject<
-  State extends object = UnknownProps,
-  Events extends object = any
-> = ReadonlyOple<Events> &
-  { readonly [P in keyof OmitWrites<State>]: Immutable<State[P]> }
+  State extends object = UnknownProps
+> = ReadonlyOple & { readonly [P in keyof State]: Immutable<State[P]> }
 
-export type OpleInitFn<
-  State extends object = UnknownProps,
-  Events extends object = any
-> = (
-  self: OpleObject<State, Events>,
-  set: OpleSetFn<State>,
-  emit: OpleEmitFn<Events>
-) => void
+/** Get the observable state of an `Ople` object. */
+export type OpleState<T extends ReadonlyOple> = Pick<T, StateKeys<T>>
 
-export type OpleSetFn<State extends object = UnknownProps> = (
-  state: Partial<State>
-) => void
+export type OpleInitFn<T extends Ople> = (self: T, set: OpleSetFn<T>) => void
 
-export type OpleEmitFn<T extends object = any> = <K extends EventKey<T>>(
-  key: K,
-  ...args: EventArgs<T, K>
-) => void
+export type OpleSetFn<State extends object> = (state: Partial<State>) => void
 
 /** Convert a mutable type into a readonly type */
 export type Immutable<T> = T extends ReadonlyArray<any>
@@ -47,3 +32,7 @@ export type Immutable<T> = T extends ReadonlyArray<any>
   : T extends ReadonlySet<infer V>
   ? ReadonlySet<Immutable<V>>
   : T
+
+type StateKeys<T> = {
+  [P in keyof T]: P extends keyof Ople ? never : T[P] extends Signal ? never : P
+}[keyof T]

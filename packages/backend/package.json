@@ -1,7 +1,6 @@
 {
-  "name": "@ople/server",
+  "name": "@ople/backend",
   "version": "0.1.0",
-  "private": true,
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "typings": "dist/index.d.ts",

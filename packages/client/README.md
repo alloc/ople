@@ -1,6 +1,6 @@
 ## Postponed
 
-- document subscribers are notified about mutations by RPC handlers 
+- document subscribers are notified about mutations by RPC handlers
 - server-side queries in idiomatic TypeScript
 - built-in Redis caching in RPC handlers
 - RPC handlers have a REST api too?
@@ -48,7 +48,7 @@ class Todo extends Record {
 interface Todo {
   // Derived properties go here.
   isEmpty: boolean
-  // Signal properties with names matching /^(on|did|will)[A-Z]/ are 
+  // Signal properties with names matching /^(on|did|will)[A-Z]/ are
   // initialized by each instance on-demand.
   didComplete: Signal<void>
 }
@@ -64,10 +64,12 @@ prepare(Todo, (todo, set) => {
 ```
 
 Records have these properties:
+
 - `isModified: boolean`
 - `lastSyncTime: FaunaTime | null`
 
 Records have these methods:
+
 - `save(): Promise<void>`
 - `sync(): Promise<void>`
 - `delete(): Promise<void>`
@@ -77,15 +79,21 @@ Records have these methods:
   - `dispose(): void`
 
 Records have these signals:
+
 - `onSave` (This record will be saved. Handlers receive the `save` promise.)
 - `onSync` (This record will be synchronized. Handlers receive the `sync` promise.)
 - `onDelete` (This record will be deleted. Handlers receive the `delete` promise.)
 
 These signals are sent by their collections, too.
 
+#### Server-sent events
+
+On the backend, refs have signals that can be passed to `emit` to notify
+document subscribers.
+
 ### Collections
 
-Collections are declared by the client. At build time, the client is parsed 
+Collections are declared by the client. At build time, the client is parsed
 and searched for `new Collection` calls, whose binding name and index config
 is copied into a JSON file for bootstrapping purposes. The parsed calls are
 also used to generate server-based `Collection` instances, which are used to
@@ -151,11 +159,16 @@ await completed.map(todo => todo.only('id', 'text'))
 await completed.map(todo => todo.omit('notes'))
 
 // Transform the results
-await completed.map(todo => 
+await completed.map(todo =>
   todo.merge({
-    author: todo('author').only('name', 'avatar').merge({
-      todos: todos.where({ author: todo.author }).sortBy({ date: 'newer' }).limit(10),
-    }),
+    author: todo('author')
+      .only('name', 'avatar')
+      .merge({
+        todos: todos
+          .where({ author: todo.author })
+          .sortBy({ date: 'newer' })
+          .limit(10),
+      }),
     assigned: todo('assigned').map(user => user.only('name', 'avatar')),
   })
 )

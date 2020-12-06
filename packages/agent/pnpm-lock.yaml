@@ -1,0 +1,32 @@
+dependencies:
+  '@alloc/is': 2.1.2
+  '@alloc/queue-microtask': 1.1.4
+  uid: 2.0.0
+lockfileVersion: 5.1
+packages:
+  /@alloc/is/2.1.2:
+    dev: false
+    resolution:
+      integrity: sha512-/qJui7XCIMEDOzpMPZUXYTy4hHdBKsx6sQnSDIOw8cFW/BL4AqZSt0B/DkB+eW9PDa0zD27zp7jyziQfeaYycQ==
+  /@alloc/queue-microtask/1.1.4:
+    dev: false
+    resolution:
+      integrity: sha512-RQ73vSCZyYWoCORvA5rT/Xg99Zt+MyRhoVhYY2Xm/lXAyx5nsWCPB3xDiS+3fmll3iZ3tDHmtOdiCBX8n2RdVg==
+  /@lukeed/csprng/1.0.0:
+    dev: false
+    engines:
+      node: '>=8'
+    resolution:
+      integrity: sha512-ruuGHsnabmObBdeMg3vKdGRmh06Oog3eFpf/Tk6X0kDSJDpJTDCj2dqdp1+0VjzIUgHlFF9GBm7uFqfYhhdX9g==
+  /uid/2.0.0:
+    dependencies:
+      '@lukeed/csprng': 1.0.0
+    dev: false
+    engines:
+      node: '>=8'
+    resolution:
+      integrity: sha512-hFw+zKBA1szYdbZWj6FjTxZzJnKNf+wTDcsxlJaXS64MCy9LQEmJUVieGYHCKek/WRyFIcs0cEXtGIQmfvHe2A==
+specifiers:
+  '@alloc/is': ^2.1.2
+  '@alloc/queue-microtask': ^1.1.4
+  uid: ^2.0.0

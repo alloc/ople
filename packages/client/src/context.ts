@@ -29,12 +29,10 @@ export const expectOple: ExpectOple = () => {
   return current as any
 }
 
-type GetOple = <
-  State extends object = UnknownProps,
-  Events extends object = any
->() => OpleObject<State, Events> | null
+interface GetOple {
+  <State extends object = UnknownProps>(): OpleObject<State> | null
+}
 
-type ExpectOple = <
-  State extends object = UnknownProps,
-  Events extends object = any
->() => OpleObject<State, Events>
+interface ExpectOple {
+  <State extends object = UnknownProps>(): OpleObject<State>
+}
