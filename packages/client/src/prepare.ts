@@ -1,4 +1,4 @@
-import { Class } from 'is'
+import { Class } from '@alloc/is'
 import { getOple, withOple } from './context'
 import { setState } from './setState'
 import { Ople, restoreEffects, setEffect } from './Ople'
@@ -20,17 +20,24 @@ export function prepare<T extends Ople>(
 /** @internal */
 export function prepare(self: Ople | OpleClass, ctr: any) {
   if (self instanceof Ople) {
-    const args = [self, setState]
-    for (const onPrepare of ctr[$prepareFns]) {
-      withOple(self, onPrepare, args)
+    // Only the `onPrepare` listeners of the given class are invoked,
+    // because any superclass constructors may call `prepare` too.
+    if (ctr[$prepareFns]) {
+      const args = [self, setState]
+      for (const onPrepare of ctr[$prepareFns]) {
+        withOple(self, onPrepare, args)
+      }
     }
-    if (getOple()) {
+    // When an Ople object is prepared within another Ople context,
+    // its effects are toggled in tandem with its context.
+    if (self.constructor == ctr && getOple()) {
       setEffect(self, active => {
         if (active) restoreEffects(self)
         else self.dispose()
       })
     }
   } else {
+    // Multiple `onPrepare` listeners may exist for an Ople class.
     const prepareFns = self[$prepareFns] || (self[$prepareFns] = [])
     prepareFns.push(ctr)
   }

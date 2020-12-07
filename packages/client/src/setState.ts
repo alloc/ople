@@ -1,9 +1,9 @@
-import { is } from 'is'
+import { is } from '@alloc/is'
 import { no, o, isDerived } from 'wana'
 import { expectOple, withOple } from './context'
 import { attachAuto } from './auto'
 import { OpleObject } from './types'
-import { AnyFn } from 'types'
+import { AnyFn } from '@alloc/types'
 
 const { defineProperty } = Object
 

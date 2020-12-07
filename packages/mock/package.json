@@ -1,5 +1,7 @@
 {
   "name": "@ople/mock",
   "version": "0.1.0",
-  "description": "Fake the backend"
+  "dependencies": {
+    "@ople/agent": "*"
+  }
 }

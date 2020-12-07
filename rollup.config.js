@@ -22,7 +22,7 @@ crawl('.', {
     configs.push({
       input: `${pkgRoot}/src/index.ts`,
       output: {
-        file: pkg[entry[format]],
+        file: `${pkgRoot}/${pkg[entry[format]]}`,
         format: format == 'cjs' ? 'cjs' : 'es',
         sourcemap: format != 'dts',
       },
@@ -30,7 +30,7 @@ crawl('.', {
       external: id => !/^[./]/.test(id),
     })
 
-  bundle('es')
-  bundle('cjs')
-  bundle('dts')
+  if (pkg.module) bundle('es')
+  if (pkg.main) bundle('cjs')
+  if (pkg.typings) bundle('dts')
 })

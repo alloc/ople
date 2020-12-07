@@ -13,6 +13,7 @@
   "dependencies": {
     "@alloc/is": "^2.1.1",
     "@alloc/types": "^1.2.6",
+    "@ople/agent": "*",
     "fauna-lite": "^0.1.1",
     "wana": "^0.13.1"
   },

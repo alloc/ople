@@ -1,4 +1,4 @@
-import { Pick, UnknownProps } from 'types'
+import { Pick, UnknownProps } from '@alloc/types'
 import { Ople } from './Ople'
 import { Signal } from './Signal'
 

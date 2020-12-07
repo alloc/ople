@@ -1,5 +1,5 @@
-import { is } from 'is'
-import { Any, Disposable } from 'types'
+import { is } from '@alloc/is'
+import { Any, Disposable } from '@alloc/types'
 import { makeFunctionType, setHidden } from './common'
 import { getOple, withOple } from './context'
 import { Ople, setEffect } from './Ople'

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { EventSource, ListenerMap, Listener } from 'ee-ts'
 import { useLayoutEffect } from 'react-layout-effect'
-import { Falsy } from 'types'
+import { Falsy } from '@alloc/types'
 
 /** Subscribe to events from an `Ople` object */
 export function useEvents<Events extends object>(

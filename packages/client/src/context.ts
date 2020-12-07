@@ -1,4 +1,4 @@
-import { UnknownProps } from 'types'
+import { UnknownProps } from '@alloc/types'
 import { OpleObject } from './types'
 import { Ople } from './Ople'
 
