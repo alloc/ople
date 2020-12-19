@@ -1,7 +1,9 @@
-import { ChangeObserver } from 'wana'
+import { $O, ChangeObserver } from 'wana'
 import { Record } from '../Record'
-import { $R, $P } from '../symbols'
-import { expectOple } from '../context'
+import { $R, $U } from '../symbols'
+import { expectRecord } from '../context'
+import { OpleEffect } from '../types'
+import { setEffect } from '../Ople'
 
 // Effects for automatic patch queueing.
 const autoQueues = new WeakMap<Record, OpleEffect>()
@@ -12,12 +14,11 @@ export const isAutoSaved = (record: any) => autoSaves.has(record)
 
 /** Push local changes, and pull remote changes */
 export function autoSave(enabled = true) {
-  const self = expectOple()
-  if (!(self instanceof Record)) {
-    throw TypeError('The "autoSave" mixin expects a Record type')
-  }
+  const self = expectRecord()
+
   let queueEffect = autoQueues.get(self)
   let saveEffect = autoSaves.get(self)
+
   if (enabled) {
     if (saveEffect) return
     const batch = self['_batch']
@@ -27,8 +28,8 @@ export function autoSave(enabled = true) {
       : self.save().then(
           () => {
             // TODO: bail if `autoSave(false)` was called
-            self[$P]!.forEach(batch.push)
-            self[$P] = saving = null
+            self[$U]!.forEach(batch.push)
+            self[$U] = saving = null
           },
           err => {
             // TODO: handle failed save
@@ -37,8 +38,8 @@ export function autoSave(enabled = true) {
         )
 
     if (!saving) {
-      self[$P]!.forEach(batch.push)
-      self[$P] = null
+      self[$U]!.forEach(batch.push)
+      self[$U] = null
     }
 
     let observer: ChangeObserver
@@ -48,7 +49,7 @@ export function autoSave(enabled = true) {
         if (active) {
           observer = self[$O].observe($O, change => {
             if (saving) {
-              self[$P]!.push(change)
+              self[$U]!.push(change)
             } else {
               batch.push(change)
             }
@@ -60,7 +61,7 @@ export function autoSave(enabled = true) {
     )
   } else {
     if (queueEffect) return
-    self[$P] = []
+    self[$U] = []
 
     let observer: ChangeObserver
     autoQueues.set(
@@ -68,7 +69,7 @@ export function autoSave(enabled = true) {
       (queueEffect = active => {
         if (active) {
           observer = self[$O].observe($O, change => {
-            self[$P]!.push(change)
+            self[$U]!.push(change)
           })
         } else {
           observer.dispose()
@@ -76,6 +77,7 @@ export function autoSave(enabled = true) {
       })
     )
   }
+
   if (queueEffect) {
     setEffect(queueEffect, enabled ? null : queueEffect)
   }

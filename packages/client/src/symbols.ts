@@ -5,7 +5,7 @@ export const $effects = Symbol('ople.effects')
 export const $disposed = Symbol('ople.disposed')
 
 /** For storing an underlying FaunaDB ref */
-export const $R = Symbol('ople:ref')
+export const $R = Symbol('ople.ref')
 
-/** For storing the unsaved patch queue */
-export const $P = Symbol('ople:patches')
+/** For tracking modified keys */
+export const $M = Symbol('ople.modified')

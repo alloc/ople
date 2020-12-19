@@ -1,6 +1,3 @@
-import { Ref } from 'fauna-lite'
-import { $R } from './symbols'
-
 export function setHidden(self: object, key: keyof any, value: any) {
   Object.defineProperty(self, key, { value, writable: true })
 }
@@ -27,8 +24,7 @@ export function makeFunctionType<T extends any[], U extends Function>(
     )(...args.concat(values))
 }
 
-export const getRef = (arg: Ref | { [$R]?: Ref }) =>
-  (arg instanceof Ref && arg) || arg[$R] || null
-
-export const getRefs = (args: object[]) =>
-  args.map(getRef).filter(Boolean) as Ref[]
+export function isEmptyObject(obj: object) {
+  for (const _ in obj) return false
+  return true
+}

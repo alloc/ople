@@ -1,19 +1,19 @@
-import { no, o } from 'wana'
+import { $O, no, o, Observable } from 'wana'
 import { withOple, expectOple } from './context'
 import { OpleEffect, OpleObject } from './types'
 import { setHidden } from './common'
 import { setState } from './setState'
 import { $effects, $disposed } from './symbols'
+import { signalTraps } from './Signal'
 
 /** The base class of objects created by `createOple` */
 export class Ople {
+  protected [$O]: Observable
   protected [$effects]: Map<object, OpleEffect>
   protected [$disposed]: boolean
 
   constructor() {
-    setHidden(this, $effects, new Map())
-    setHidden(this, $disposed, false)
-    return o(this)
+    return reviveOple(this)
   }
 
   /**
@@ -36,6 +36,12 @@ export class Ople {
 
 // Bind signals to Ople instances on-demand.
 Object.setPrototypeOf(Ople.prototype, new Proxy({}, signalTraps))
+
+export function reviveOple(self: Ople) {
+  setHidden(self, $effects, new Map())
+  setHidden(self, $disposed, false)
+  return o(self)
+}
 
 /**
  * Tell the active `Ople` context to update the `effect` associated

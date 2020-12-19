@@ -14,7 +14,7 @@ export function prepare<T extends Ople>(self: T, ctr: Class<T>): void
 /** Add a `prepare` callback to the given class. */
 export function prepare<T extends Ople>(
   ctr: Class<T>,
-  onPrepare: OnPrepare<T>
+  onPrepare?: OnPrepare<T>
 ): void
 
 /** @internal */

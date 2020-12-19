@@ -1,8 +1,8 @@
 import { is } from '@alloc/is'
 import { uid as makeId } from 'uid'
-import type { AgentConfig, Reply, ReplyQueue } from './types'
+import type { AgentConfig, UserConfig, Reply, ReplyQueue } from './types'
 
-export { AgentConfig }
+export { AgentConfig, UserConfig }
 
 export interface Agent {
   readonly host: string

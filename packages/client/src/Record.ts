@@ -1,8 +1,12 @@
-import { Ople, Change, $O, Observable } from 'ople'
+import { o, $O, Change } from 'wana'
 import { FaunaTime, Ref } from 'fauna-lite'
-import { RecordType } from './types'
-import { $R, $P } from './symbols'
+import { $R, $M } from './symbols'
 import { Batch } from './batch'
+import { Ople } from './Ople'
+import { emit, Signal } from './Signal'
+import { isEmptyObject } from './common'
+import { clientByRef, PrivateClient } from './Ref'
+import { Client } from './client'
 
 export type RecordEvents = {
   /** This record was changed. */
@@ -15,26 +19,27 @@ export type RecordEvents = {
 
 export interface Record {
   set(state: Partial<Omit<this, keyof Record>>): void
-  constructor: RecordType
+  /** This record is being saved. */
+  onSave: Signal<[saving: Promise<void>]>
+  /** This record is pulling changes from the backend. */
+  onSync: Signal<[syncing: Promise<void>]>
+  /** This record is being deleted. */
+  onDelete: Signal<[deleting: Promise<void>]>
 }
 
 /**
  * An observable copy of a server-managed JSON document with server-sent events.
  */
-export class Record<Events extends object = any> extends Ople<
-  RecordEvents & Events
-> {
-  // All records are observable.
-  protected [$O]: Observable
-  // Unsaved records have no ref.
+export class Record extends Ople {
   protected [$R]: Ref | null = null
-  // Unsaved changes are kept here.
-  protected [$P]: Change[] | null = null
+  protected [$M]: (Object & { [key: string]: unknown }) | null = null
 
   /**
    * When `true`, there are unsaved changes to this record.
    */
-  isModified = false
+  get isModified() {
+    return !!this[$M]
+  }
 
   /**
    * The nanosecond-precision timestamp of the last patch received
@@ -45,7 +50,6 @@ export class Record<Events extends object = any> extends Ople<
   constructor(ts?: FaunaTime) {
     super()
     this.lastSyncTime = ts || null
-    // TODO: populate the patch queue
   }
 
   /**
@@ -53,24 +57,21 @@ export class Record<Events extends object = any> extends Ople<
    *
    * By using the `autoSave` mixin, you can avoid calling this.
    */
-  async save() {
-    if (!this.isModified) return
-    this.isModified = false
-
+  async save(client?: Client) {
     const ref = this[$R]
-    const patches = this[$P]
     if (ref) {
-      // TODO: flush the patch queue
-    } else {
-      if (patches) {
-        patches.length = 0
+      if (!client) {
+        client = clientByRef.get(ref)
+      } else if (clientByRef.get(ref) !== client) {
+        throw Error('Records can only be saved to one client')
       }
-      // TODO: omit getters
-      this[$R] = await this._batch.invoke('ople.create', [
-        this.constructor[$R],
-        // Ensure client-only properties are omitted.
-        { ...this, isModified: void 0, lastSyncTime: void 0 },
-      ])
+    } else if (!client) {
+      throw Error('New records must be saved with a client')
+    }
+    if (!ref || this.isModified) {
+      const saving = saveRecord(this, client as PrivateClient)
+      emit(this.onSave, saving)
+      await saving
     }
   }
 
@@ -99,4 +100,52 @@ export class Record<Events extends object = any> extends Ople<
   }
 
   private _batch!: Batch
+
+  protected _applyPatch(patch: any) {
+    isPatching = true
+    Object.assign(this, patch)
+    isPatching = false
+  }
+}
+
+const modifiedRE = /^(add|replace|remove)$/
+let isPatching = false
+
+function setModified(change: Change) {
+  if (modifiedRE.test(change.op)) {
+    const { target, key } = change as { target: Record; key: string }
+
+    let modified = target[$M]
+    if (modified && modified.hasOwnProperty(key)) {
+      // The modified key may equal its last synced value.
+      if (isPatching || change.value === modified[key]) {
+        delete modified[key]
+        if (isEmptyObject(modified)) {
+          target[$M] = null
+        }
+      }
+    } else if (!isPatching) {
+      if (!modified) {
+        modified = target[$M] = {}
+      }
+      modified[key] = change.oldValue
+    }
+  }
+}
+
+async function saveRecord(self: Record, client: PrivateClient) {
+  const ref = self[$R]
+  if (ref) {
+    client.push(self)
+  } else {
+    // TODO: omit getters
+    self[$R] = await this._batch.invoke('ople.create', [
+      this.constructor[$R],
+      // Ensure client-only properties are omitted.
+      { ...this, lastSyncTime: void 0 },
+    ])
+    this[$M] = o(new Map())
+    this[$O].observe($O, setModified)
+    // TODO: call `autoSave(false)` if not auto-saved
+  }
 }
