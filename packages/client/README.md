@@ -154,7 +154,15 @@ define access control, respond to mutation events, and query the database
 from RPC handlers.
 
 ```ts
-const todos = new Collection<Todo>()
+import api from '../api'
+
+// Create a collection. The name cannot be dynamic.
+api.set('todos', new Collection<Todo>())
+
+// Locally created records must be bound to a collection
+// when saved for the first time.
+const todo = new Todo()
+todo.save(api.get('todos'))
 ```
 
 #### Method examples

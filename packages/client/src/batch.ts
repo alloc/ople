@@ -1,6 +1,7 @@
 import queueMicrotask from '@alloc/queue-microtask'
 import { Agent } from '@ople/agent'
 import type { Record } from './Record'
+import { RecordCache } from './types'
 import { getRefs } from './Ref'
 import { $M, $R } from './symbols'
 
@@ -13,12 +14,21 @@ export interface Batch extends ReturnType<typeof makeBatch> {}
  * Batching reduces the number of messages sent to the server
  * by waiting for the next microtask.
  */
-export const makeBatch = (agent: Agent, cache: any) => {
+export const makeBatch = (agent: Agent, cache: RecordCache) => {
   const calls: BatchedCall[] = []
   const watched = new Set<Record>()
   const unwatched = new Set<Record>()
   const pushed = new Set<Record>()
   const pulled = new Set<Record>()
+
+  function updateCache(updates: { [ref: string]: any }) {
+    for (const ref in updates) {
+      const record = cache[ref]
+      if (record) {
+        Object.assign(record, updates[ref])
+      }
+    }
+  }
 
   let isQueued = false
   function queueFlush() {
@@ -35,22 +45,16 @@ export const makeBatch = (agent: Agent, cache: any) => {
         }
         if (pushed.size) {
           // TODO: space out huge batches
-          const payload = flushSet(pushed).reduce(getPushArgs, {})
-          agent.invoke('ople.push', [payload]).then((rejected: any[]) => {
-            // TODO: handle rejected patches
-          })
+          push({})
         }
         if (calls.length) {
           calls.forEach(flushCall)
           calls.length = 0
         }
         if (pulled.size) {
-          const payload = flushSet(pulled).map(getPullArgs)
-          agent.invoke('ople.pull', [payload]).then((response: any[]) => {
-            for (let i = 0; i < response.length; i += 2) {
-              Object.assign(cache[response[i]], response[i + 1])
-            }
-          })
+          // TODO: space out huge batches
+          const payload = flushSet(pulled).reduce(getPullArgs, {})
+          agent.invoke('ople.pull', [payload]).then(updateCache)
         }
       })
     }
@@ -59,6 +63,21 @@ export const makeBatch = (agent: Agent, cache: any) => {
   /** Invoke a batched call */
   function flushCall([action, args, resolve]: BatchedCall) {
     resolve(agent.invoke(action, args))
+  }
+
+  /** Push a payload after merging pending changes */
+  function push(payload: any) {
+    flushSet(pushed).reduce(getPushArgs, payload)
+    agent.invoke('ople.push', [payload]).then(updateCache, () => {
+      for (const ref in payload) {
+        if (cache[ref]) {
+          getPushArgs(payload, cache[ref])
+        } else {
+          payload[ref] = undefined
+        }
+      }
+      push(payload)
+    })
   }
 
   return {
@@ -102,13 +121,12 @@ function flushSet<T>(set: Set<T>) {
 }
 
 function getPushArgs(payload: any, record: Record & { [key: string]: any }) {
-  const changes: any = {}
+  const changes: any =
+    payload[record[$R] as any] || (payload[record[$R] as any] = {})
+
   for (const key in record[$M]) {
     changes[key] = record[key]
   }
-
-  payload[record[$R] as any] = changes
-  return payload
 }
 
 function getPullArgs(payload: any, record: Record) {

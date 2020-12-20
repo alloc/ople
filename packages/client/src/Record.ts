@@ -69,6 +69,7 @@ export class Record extends Ople {
       throw Error('New records must be saved with a client')
     }
     if (!ref || this.isModified) {
+      // TODO: wait for pending save
       const saving = saveRecord(this, client as PrivateClient)
       emit(this.onSave, saving)
       await saving

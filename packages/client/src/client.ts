@@ -1,6 +1,6 @@
 import { is } from '@alloc/is'
 import { makeAgent, UserConfig as AgentConfig } from '@ople/agent'
-import { Ref } from 'fauna-lite'
+import { FaunaTime, Ref } from 'fauna-lite'
 import { Batch, makeBatch } from './batch'
 import { Record } from './Record'
 import { $R } from './symbols'
@@ -56,12 +56,20 @@ export function makeClient(config: { types: TypeConfig[] }) {
 
     protected invoke!: Batch['invoke']
 
-    protected _parseRecord({ ref, data, ts }: any) {
-      let self = this._cache[ref]
+    protected _parseRecord({
+      ref,
+      data,
+      ts,
+    }: {
+      ref: Ref
+      data: any
+      ts: FaunaTime
+    }) {
+      let self = this._cache[ref as any]
       // Avoid overwriting a cached record.
       if (!self) {
-        const type = types[ref.collection]
-        this._cache[ref] = self = o({
+        const type = types[ref.collection as any]
+        this._cache[ref as any] = self = o({
           ...data,
           [$R]: ref,
           lastSyncTime: ts,
