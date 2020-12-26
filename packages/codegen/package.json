@@ -6,6 +6,7 @@
   "typings": "dist/index.d.ts",
   "dependencies": {
     "dedent": "^0.7.0",
+    "faunadb": "npm:@aleclarson/faunadb@^2.14.2",
     "is": "npm:@alloc/is@^2.1.1",
     "resolve": "^1.17.0",
     "ts-morph": "^7.1.2",

@@ -1,0 +1,57 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`queries declare variable 1`] = `
+Object {
+  "foo": Object {
+    "name": "foo",
+    "query": "{\\"lambda\\":[],\\"expr\\":{\\"let\\":[{\\"a\\":1}],\\"in\\":null}}",
+  },
+}
+`;
+
+exports[`queries early return 1`] = `
+Object {
+  "foo": Object {
+    "name": "foo",
+    "query": "{\\"lambda\\":[],\\"expr\\":1}",
+  },
+}
+`;
+
+exports[`queries empty if block 1`] = `
+Object {
+  "foo": Object {
+    "name": "foo",
+    "query": "{\\"lambda\\":[],\\"expr\\":{\\"do\\":[{\\"if\\":true,\\"then\\":null,\\"else\\":null},null]}}",
+  },
+}
+`;
+
+exports[`queries export function 1`] = `
+Object {
+  "foo": Object {
+    "name": "foo",
+    "query": "{\\"lambda\\":[],\\"expr\\":null}",
+  },
+}
+`;
+
+exports[`queries if else return 1`] = `null`;
+
+exports[`queries if then return 1`] = `
+Object {
+  "foo": Object {
+    "name": "foo",
+    "query": "{\\"lambda\\":[],\\"expr\\":{\\"if\\":true,\\"then\\":1,\\"else\\":2}}",
+  },
+}
+`;
+
+exports[`queries literal values 1`] = `
+Object {
+  "foo": Object {
+    "name": "foo",
+    "query": "{\\"lambda\\":[],\\"expr\\":{\\"do\\":[true,false,\\"string\\",null,123,null]}}",
+  },
+}
+`;
