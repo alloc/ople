@@ -1,4 +1,5 @@
 import {
+  BinaryExpression,
   BooleanLiteral,
   Expression,
   FunctionDeclaration,
@@ -7,6 +8,8 @@ import {
   SourceFile,
   Statement,
   StringLiteral,
+  SyntaxKind,
+  ts,
 } from 'ts-morph'
 import { query as q, FaunaJSON, Expr, ExprVal } from 'faunadb'
 import path from 'path'
@@ -36,7 +39,7 @@ export function compileQueries(file: SourceFile) {
       if (!name) continue
       const query = {
         name,
-        query: FaunaJSON.stringify(compileLambda(stmt)),
+        query: Expr.toString(compileLambda(stmt), { compact: true }),
       }
       if (stmt.getExportKeyword()) {
         exports[name] = query
@@ -50,12 +53,31 @@ export function compileQueries(file: SourceFile) {
   return exports
 }
 
+/** Local variable names */
+let locals: string[] = []
+/** Stack of local scopes */
+let scopes: string[][] = []
+
+function pushLocals(names: string[]) {
+  scopes.push(locals)
+  locals = locals.concat(names)
+}
+
+function popLocals() {
+  locals = scopes.pop() || []
+}
+
 function compileLambda(fun: FunctionDeclaration) {
   // TODO: throw if param type is not json-compatible
-  return q.Lambda(
-    fun.getParameters().map(p => p.getName()),
-    compileBlock(fun.getStatements())
-  )
+  const params = fun.getParameters().map(p => p.getName())
+  return q.Lambda(params, compileScopedBlock(fun.getStatements(), params))
+}
+
+function compileScopedBlock(stmts: Statement[], scope: string[]) {
+  pushLocals(scope)
+  const block = compileBlock(stmts)
+  popLocals()
+  return block
 }
 
 function compileLambdaWithBlock(stmts: Statement[]) {
@@ -83,6 +105,10 @@ function compileBlock(stmts: Statement[], needsReturn = true): ExprVal | null {
           }
           const name = decl.getName()
           vars[name] = compileExpression(init)
+
+          // Push to the current scope, so later variables can refer
+          // to this variable in their initializer.
+          locals.push(name)
         }
         stmt = stmts[i + 1]
         if (Node.isVariableStatement(stmt)) i++
@@ -98,28 +124,33 @@ function compileBlock(stmts: Statement[], needsReturn = true): ExprVal | null {
     // if..else
     else if (Node.isIfStatement(stmt)) {
       const thenStmt = stmt.getThenStatement()
-      const thenBlock = Node.isStatementedNode(thenStmt)
+      const elseStmt = stmt.getElseStatement()
+
+      let thenBlock = Node.isStatementedNode(thenStmt)
         ? thenStmt.getStatements()
         : null
 
-      const elseStmt = stmt.getElseStatement()
       let elseBlock = Node.isStatementedNode(elseStmt)
         ? elseStmt.getStatements()
         : null
 
-      const shouldAbsorb =
-        thenBlock?.find(Node.isReturnStatement) ||
-        elseBlock?.find(Node.isReturnStatement)
+      const thenReturns = !!thenBlock?.find(Node.isReturnStatement)
+      const elseReturns = !!elseBlock?.find(Node.isReturnStatement)
 
+      const shouldAbsorb = thenReturns || elseReturns
       if (shouldAbsorb) {
         const absorbed = stmts.slice(i + 1)
-        elseBlock = elseBlock ? elseBlock.concat(absorbed) : absorbed
+        if (!elseReturns) {
+          elseBlock = elseBlock ? elseBlock.concat(absorbed) : absorbed
+        } else if (!thenReturns) {
+          thenBlock = thenBlock ? thenBlock.concat(absorbed) : absorbed
+        }
       }
       block.push(
         q.If(
-          compileExpression(stmt.getExpression()) as Expr<boolean>,
-          thenBlock && compileBlock(thenBlock),
-          elseBlock && compileBlock(elseBlock)
+          compileCondition(stmt.getExpression()),
+          thenBlock && compileScopedBlock(thenBlock, []),
+          elseBlock && compileScopedBlock(elseBlock, [])
         )
       )
       if (shouldAbsorb) {
@@ -135,8 +166,55 @@ function compileBlock(stmts: Statement[], needsReturn = true): ExprVal | null {
   return block.length > 1 ? q.Do(...block) : block[0] || null
 }
 
-function compileExpression(expr: Expression) {
+function compileCondition(expr: Expression): ExprVal<boolean> {
+  const type = checkType(expr)
+  const query = compileExpression(expr)
+  // TODO: implement CastToBool function
+  return type.isBoolean() ? query : q.Call('CastToBool', query)
+}
+
+function compileExpression(expr: Expression): any {
   // console.log(expr.constructor.name)
+  if (Node.isIdentifier(expr)) {
+    const name = expr.getText()
+    if (!locals.includes(name)) {
+      throw Error('Unknown identifier: ' + JSON.stringify(name))
+    }
+    return q.Var(name)
+  }
+  if (Node.isPrefixUnaryExpression(expr)) {
+    // TODO: convert !! to CastToBool call
+    const op = getOperatorFromToken(expr.getOperatorToken())
+    const opFn = op && getOperatorFn(op)
+    if (!opFn) {
+      expr.getSourceFile()
+      throw Error(
+        'Unsupported operator: ' +
+          expr
+            .getText()
+            .slice(0, expr.getOperand().getStart() - expr.getStart())
+      )
+    }
+    const compileOperand = opFn == q.Not ? compileCondition : compileExpression
+    return opFn(compileOperand(expr.getOperand()))
+  }
+  if (Node.isPostfixUnaryExpression(expr)) {
+    throw Error(
+      'Unsupported operator: ' +
+        expr.getText().slice(expr.getOperand().getEnd())
+    )
+  }
+  if (Node.isBinaryExpression(expr)) {
+    const op = expr.getOperatorToken().getText()
+    const opFn = getOperatorFn(op)
+    if (!opFn) {
+      throw Error('Unsupported operator: ' + op)
+    }
+    return opFn(
+      compileExpression(expr.getLeft()),
+      compileExpression(expr.getRight())
+    )
+  }
   if (Node.isRegularExpressionLiteral(expr)) {
     return expr.getLiteralText()
   }
@@ -146,6 +224,52 @@ function compileExpression(expr: Expression) {
   return null
 }
 
+function getOperatorFn(op: string) {
+  return op == '>'
+    ? q.GT
+    : op == '<'
+    ? q.LT
+    : op == '>='
+    ? q.GTE
+    : op == '<='
+    ? q.LTE
+    : op == '=='
+    ? q.Equals
+    : op == '!'
+    ? q.Not
+    : op == '+'
+    ? q.Add
+    : op == '-'
+    ? q.Subtract
+    : op == '*'
+    ? q.Multiply
+    : op == '/'
+    ? q.Divide
+    : op == '%'
+    ? q.Modulo
+    : op == '&'
+    ? q.BitAnd
+    : op == '|'
+    ? q.BitOr
+    : op == '^'
+    ? q.BitXor
+    : op == '~'
+    ? q.BitNot
+    : null
+}
+
+function checkType(node: Node) {
+  return node.getProject().getTypeChecker().getTypeAtLocation(node)
+}
+
 function isLiteralNode(node: Node): node is BooleanLiteral | StringLiteral {
   return 'getLiteralValue' in node
+}
+
+function getOperatorFromToken(op: number) {
+  return op == SyntaxKind.ExclamationToken
+    ? '!'
+    : op == SyntaxKind.TildeToken
+    ? '~'
+    : null
 }

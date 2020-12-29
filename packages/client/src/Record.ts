@@ -69,8 +69,14 @@ export class Record extends Ople {
       throw Error('New records must be saved with a client')
     }
     if (!ref || this.isModified) {
-      // TODO: wait for pending save
-      const saving = saveRecord(this, client as PrivateClient)
+      // Bail out if already saving.
+      let saving = pendingSaves.get(this)
+      if (saving) {
+        // TODO: mark save as wanted
+        return saving
+      }
+      saving = saveRecord(this, client as PrivateClient)
+      pendingSaves.set(this, saving)
       emit(this.onSave, saving)
       await saving
     }
@@ -100,8 +106,6 @@ export class Record extends Ople {
     return null as any
   }
 
-  private _batch!: Batch
-
   protected _applyPatch(patch: any) {
     isPatching = true
     Object.assign(this, patch)
@@ -109,6 +113,7 @@ export class Record extends Ople {
   }
 }
 
+const pendingSaves = new WeakMap<Record, Promise<void>>()
 const modifiedRE = /^(add|replace|remove)$/
 let isPatching = false
 

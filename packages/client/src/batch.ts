@@ -1,5 +1,6 @@
 import queueMicrotask from '@alloc/queue-microtask'
 import { Agent } from '@ople/agent'
+import { Deferred } from 'ts-deferred'
 import type { Record } from './Record'
 import { RecordCache } from './types'
 import { getRefs } from './Ref'
@@ -20,6 +21,9 @@ export const makeBatch = (agent: Agent, cache: RecordCache) => {
   const unwatched = new Set<Record>()
   const pushed = new Set<Record>()
   const pulled = new Set<Record>()
+
+  let nextPush = new Deferred<void>()
+  let nextPull = new Deferred<void>()
 
   function updateCache(updates: { [ref: string]: any }) {
     for (const ref in updates) {
@@ -45,7 +49,7 @@ export const makeBatch = (agent: Agent, cache: RecordCache) => {
         }
         if (pushed.size) {
           // TODO: space out huge batches
-          push({})
+          flushPushed({})
         }
         if (calls.length) {
           calls.forEach(flushCall)
@@ -66,7 +70,7 @@ export const makeBatch = (agent: Agent, cache: RecordCache) => {
   }
 
   /** Push a payload after merging pending changes */
-  function push(payload: any) {
+  function flushPushed(payload: any) {
     flushSet(pushed).reduce(getPushArgs, payload)
     agent.invoke('ople.push', [payload]).then(updateCache, () => {
       for (const ref in payload) {
@@ -76,7 +80,7 @@ export const makeBatch = (agent: Agent, cache: RecordCache) => {
           payload[ref] = undefined
         }
       }
-      push(payload)
+      flushPushed(payload)
     })
   }
 

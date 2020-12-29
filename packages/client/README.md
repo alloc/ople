@@ -199,6 +199,20 @@ todos.canDelete((todo: object, user: Ref) => true)
 
 ### Queries
 
+Database queries are defined in `src/queries` by default.
+
+Example:
+
+```ts
+function add1(a: number) {
+  return a + 1
+}
+
+export { add1 }
+```
+
+#### Client queries
+
 ```ts
 // "todos" is a local collection of Todo records
 import { todos } from 'todos'

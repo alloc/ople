@@ -3,6 +3,7 @@ dependencies:
   '@alloc/types': 1.3.0
   '@ople/agent': 'link:../agent'
   fauna-lite: 0.1.1
+  ts-deferred: 1.0.4
   wana: 0.13.8
 lockfileVersion: 5.1
 packages:
@@ -44,6 +45,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-a54FxoJDIr27pgf7IgeQGxmqUNYrcV338lf/6gH456HZ/PhX+5BcwHXG9ajESmwe6WRO0tAzRUrRmNONWgkrew==
+  /ts-deferred/1.0.4:
+    dev: false
+    resolution:
+      integrity: sha1-WBReuu71uPKikLjOw9Bgg5+Uicc=
   /use-memo-one/1.1.1:
     dev: false
     peerDependencies:
@@ -68,4 +73,5 @@ specifiers:
   '@alloc/types': ^1.2.6
   '@ople/agent': 'link:../agent'
   fauna-lite: ^0.1.1
+  ts-deferred: ^1.0.4
   wana: ^0.13.1

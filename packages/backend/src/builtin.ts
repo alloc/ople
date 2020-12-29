@@ -3,11 +3,8 @@ import { db } from './fauna'
 import { api } from './api'
 import { log } from './log'
 
-interface Patch {
-  /** The affected document */
-  ref: Ref
-  /** The changes made by this patch */
-  changes: object[]
+interface PatchMap {
+  [ref: string]: { [key: string]: any }
 }
 
 // TODO: rate limiting
@@ -34,8 +31,8 @@ api.extend({
   /**
    * Publish a set of patches to a set of documents.
    */
-  async 'ople.push'(patches: Patch[]) {
-    const rejected: Patch[] = []
+  async 'ople.push'(payload: PatchMap) {
+    const rejected: PatchMap = {}
     // TODO: split patches into two groups (valid and invalid)
     // TODO: notify relevant channels
     return rejected
