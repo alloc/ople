@@ -186,12 +186,32 @@ describe('queries', () => {
           return arg.length
         }
       `)
-      // TODO: use q.Length
-      expect(result).toMatchInlineSnapshot(`null`)
+
+      expect(result).toMatchSnapshot()
     })
   })
 
-  describe('objects', () => {})
+  describe('objects', () => {
+    test('single property', () => {
+      const result = compileFile(`
+        export function foo(obj: {a: any}) {
+          return obj.a
+        }
+      `)
+
+      expect(result).toMatchSnapshot()
+    })
+
+    test('nested property', () => {
+      const result = compileFile(`
+        export function foo(obj: {a: {b:any}}) {
+          return obj.a.b
+        }
+      `)
+
+      expect(result).toMatchSnapshot()
+    })
+  })
 
   describe('arrays', () => {
     test('length', () => {
@@ -200,8 +220,8 @@ describe('queries', () => {
           return arg.length
         }
       `)
-      // TODO: use q.Count
-      expect(result).toMatchInlineSnapshot(`null`)
+
+      expect(result).toMatchSnapshot()
     })
   })
 

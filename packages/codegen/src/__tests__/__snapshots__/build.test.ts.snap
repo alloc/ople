@@ -1,5 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`queries arrays length 1`] = `
+Object {
+  "foo": Object {
+    "name": "foo",
+    "query": "Lambda([\\"arg\\"],Count(Var(\\"arg\\")))",
+  },
+}
+`;
+
 exports[`queries declare variable 1`] = `
 Object {
   "foo": Object {
@@ -68,6 +77,24 @@ Object {
   "foo": Object {
     "name": "foo",
     "query": "{\\"lambda\\":[],\\"expr\\":{\\"do\\":[true,false,\\"string\\",null,123,null]}}",
+  },
+}
+`;
+
+exports[`queries objects nested property 1`] = `
+Object {
+  "foo": Object {
+    "name": "foo",
+    "query": "Lambda([\\"obj\\"],Select([\\"a\\",\\"b\\"],Var(\\"obj\\")))",
+  },
+}
+`;
+
+exports[`queries objects single property 1`] = `
+Object {
+  "foo": Object {
+    "name": "foo",
+    "query": "Lambda([\\"obj\\"],Select(\\"a\\",Var(\\"obj\\")))",
   },
 }
 `;
@@ -172,5 +199,14 @@ Array [
 `;
 
 exports[`queries operators strict equals 1`] = `"Unsupported operator: ==="`;
+
+exports[`queries strings length 1`] = `
+Object {
+  "foo": Object {
+    "name": "foo",
+    "query": "Lambda([\\"arg\\"],Length(Var(\\"arg\\")))",
+  },
+}
+`;
 
 exports[`queries unknown identifier 1`] = `"Unknown identifier: \\"lol\\""`;

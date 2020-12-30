@@ -3,6 +3,7 @@ import {
   BooleanLiteral,
   Expression,
   FunctionDeclaration,
+  Identifier,
   Node,
   Project,
   SourceFile,
@@ -37,9 +38,14 @@ export function compileQueries(file: SourceFile) {
     if (Node.isFunctionDeclaration(stmt)) {
       const name = stmt.getName()
       if (!name) continue
+      try {
+        var lambda = compileLambda(stmt)
+      } finally {
+        resetContext()
+      }
       const query = {
         name,
-        query: Expr.toString(compileLambda(stmt), { compact: true }),
+        query: Expr.toString(lambda, { compact: true }),
       }
       if (stmt.getExportKeyword()) {
         exports[name] = query
@@ -51,20 +57,6 @@ export function compileQueries(file: SourceFile) {
     }
   }
   return exports
-}
-
-/** Local variable names */
-let locals: string[] = []
-/** Stack of local scopes */
-let scopes: string[][] = []
-
-function pushLocals(names: string[]) {
-  scopes.push(locals)
-  locals = locals.concat(names)
-}
-
-function popLocals() {
-  locals = scopes.pop() || []
 }
 
 function compileLambda(fun: FunctionDeclaration) {
@@ -173,14 +165,46 @@ function compileCondition(expr: Expression): ExprVal<boolean> {
   return type.isBoolean() ? query : q.Call('CastToBool', query)
 }
 
+function compileIdentifier(node: Identifier) {
+  const name = node.getText()
+  if (!locals.includes(name)) {
+    throw Error('Unknown identifier: ' + JSON.stringify(name))
+  }
+  return q.Var(name)
+}
+
 function compileExpression(expr: Expression): any {
   // console.log(expr.constructor.name)
   if (Node.isIdentifier(expr)) {
-    const name = expr.getText()
-    if (!locals.includes(name)) {
-      throw Error('Unknown identifier: ' + JSON.stringify(name))
+    return compileIdentifier(expr)
+  }
+  if (Node.isPropertyAccessExpression(expr)) {
+    if (expr.getQuestionDotTokenNode()) {
+      throw SyntaxError('Optional chaining is forbidden')
     }
-    return q.Var(name)
+    const key = expr.getName()
+    const left = expr.getExpression()
+    const leftType = checkType(left)
+    propertyChain.push(key)
+    const leftExpr = compileExpression(left)
+    propertyChain.pop()
+    // console.log(key, leftType.getText())
+    if (leftType.isArray()) {
+      if (key == 'length') {
+        return q.Count(leftExpr)
+      }
+    } else if (leftType.isString()) {
+      if (key == 'length') {
+        return q.Length(leftExpr)
+      }
+    }
+    if (Node.isPropertyAccessExpression(left)) {
+      return leftExpr
+    }
+    return q.Select(
+      propertyChain.length ? propertyChain.concat(key).reverse() : key,
+      leftExpr
+    )
   }
   if (Node.isPrefixUnaryExpression(expr)) {
     // TODO: convert !! to CastToBool call
@@ -224,6 +248,26 @@ function compileExpression(expr: Expression): any {
   return null
 }
 
+//
+// Utility
+//
+
+function checkType(node: Node) {
+  return node.getProject().getTypeChecker().getTypeAtLocation(node)
+}
+
+function isLiteralNode(node: Node): node is BooleanLiteral | StringLiteral {
+  return 'getLiteralValue' in node
+}
+
+function getOperatorFromToken(op: number) {
+  return op == SyntaxKind.ExclamationToken
+    ? '!'
+    : op == SyntaxKind.TildeToken
+    ? '~'
+    : null
+}
+
 function getOperatorFn(op: string) {
   return op == '>'
     ? q.GT
@@ -258,18 +302,28 @@ function getOperatorFn(op: string) {
     : null
 }
 
-function checkType(node: Node) {
-  return node.getProject().getTypeChecker().getTypeAtLocation(node)
+//
+// Global context
+//
+
+/** Local variable names */
+let locals: string[] = []
+/** Stack of local scopes */
+let scopes: string[][] = []
+/** Property access chain */
+let propertyChain: string[] = []
+
+function resetContext() {
+  locals = []
+  scopes = []
+  propertyChain = []
 }
 
-function isLiteralNode(node: Node): node is BooleanLiteral | StringLiteral {
-  return 'getLiteralValue' in node
+function pushLocals(names: string[]) {
+  scopes.push(locals)
+  locals = locals.concat(names)
 }
 
-function getOperatorFromToken(op: number) {
-  return op == SyntaxKind.ExclamationToken
-    ? '!'
-    : op == SyntaxKind.TildeToken
-    ? '~'
-    : null
+function popLocals() {
+  locals = scopes.pop() || []
 }
