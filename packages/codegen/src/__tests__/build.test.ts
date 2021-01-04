@@ -170,8 +170,10 @@ describe('queries', () => {
     test('not operator', () => {
       expect([
         compileExpression('!a'),
+        compileExpression('!(a > 0)'),
+        compileExpression('!(a + b)'),
         compileExpression('!!a'),
-      ]).toMatchInlineSnapshot(`null`)
+      ]).toMatchSnapshot()
     })
 
     test('strict equals', () => {
@@ -229,8 +231,15 @@ describe('queries', () => {
 
   describe('collections', () => {})
 
-  describe('stdlib', () => {
-    test('toArray', () => {})
-    test('isArray', () => {})
+  fdescribe('stdlib', () => {
+    test('toArray', () => {
+      const queries = compileFile(`
+        import {toArray} from '@ople/fql'
+        export function foo(arg: any) {
+          return toArray(arg)
+        }
+      `)
+      expect(queries).toMatchInlineSnapshot(`null`)
+    })
   })
 })

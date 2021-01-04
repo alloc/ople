@@ -4,6 +4,7 @@ import {
   Expression,
   FunctionDeclaration,
   Identifier,
+  ImportDeclaration,
   Node,
   Project,
   SourceFile,
@@ -12,7 +13,7 @@ import {
   SyntaxKind,
   ts,
 } from 'ts-morph'
-import { query as q, FaunaJSON, Expr, ExprVal } from 'faunadb'
+import { query as q, FaunaJSON, Expr, ExprVal, FunctionRef } from 'faunadb'
 import path from 'path'
 
 export function build() {
@@ -35,7 +36,9 @@ export function compileQueries(file: SourceFile) {
   const locals: { [name: string]: QueryDescriptor } = {}
   const exports: { [name: string]: QueryDescriptor } = {}
   for (const stmt of file.getStatements()) {
-    if (Node.isFunctionDeclaration(stmt)) {
+    if (Node.isImportDeclaration(stmt)) {
+      // TODO: track imported functions
+    } else if (Node.isFunctionDeclaration(stmt)) {
       const name = stmt.getName()
       if (!name) continue
       try {
@@ -162,7 +165,9 @@ function compileCondition(expr: Expression): ExprVal<boolean> {
   const type = checkType(expr)
   const query = compileExpression(expr)
   // TODO: implement CastToBool function
-  return type.isBoolean() ? query : q.Call('CastToBool', query)
+  return type.isBoolean() || type.isBooleanLiteral()
+    ? query
+    : q.Call('CastToBool', query)
 }
 
 function compileIdentifier(node: Identifier) {
@@ -177,6 +182,39 @@ function compileExpression(expr: Expression): any {
   // console.log(expr.constructor.name)
   if (Node.isIdentifier(expr)) {
     return compileIdentifier(expr)
+  }
+  if (Node.isParenthesizedExpression(expr)) {
+    return compileExpression(expr.getExpression())
+  }
+  if (Node.isCallExpression(expr)) {
+    const callee = expr.getExpression()
+    const args = expr.getArguments().map(node => {
+      return compileExpression(node as any)
+    })
+
+    let func: string | Expr<FunctionRef>
+    if (Node.isIdentifier(callee)) {
+      func = callee.getText()
+
+      const importDecl = findImportForIdentifier(callee)
+      const source = importDecl && importDecl.getModuleSpecifierValue()
+      if (source == '@ople/fql') {
+        // TODO: map some names to their FQL counterpart
+        let name = func[0].toUpperCase() + func.slice(1)
+        if (name in q) {
+          return (q as any)[name](...args)
+        }
+      }
+    } else {
+      const calleeType = checkType(callee)
+      if (calleeType.isString()) {
+        func = q.Function(compileExpression(callee))
+      } else {
+        throw Error('Unsupported callee')
+      }
+    }
+
+    return q.Call(func, ...args)
   }
   if (Node.isPropertyAccessExpression(expr)) {
     if (expr.getQuestionDotTokenNode()) {
@@ -207,25 +245,29 @@ function compileExpression(expr: Expression): any {
     )
   }
   if (Node.isPrefixUnaryExpression(expr)) {
-    // TODO: convert !! to CastToBool call
     const op = getOperatorFromToken(expr.getOperatorToken())
+    const operand = expr.getOperand()
+
     const opFn = op && getOperatorFn(op)
-    if (!opFn) {
-      expr.getSourceFile()
+    if (!opFn)
       throw Error(
         'Unsupported operator: ' +
-          expr
-            .getText()
-            .slice(0, expr.getOperand().getStart() - expr.getStart())
+          sliceFile(expr.getSourceFile(), expr.getStart(), operand.getStart())
       )
+
+    // Coerce !! to CastToBool call.
+    if (op == '!' && startsWith(operand, '!')) {
+      return compileCondition(operand.getLastChildOrThrow(Node.isExpression))
     }
-    const compileOperand = opFn == q.Not ? compileCondition : compileExpression
-    return opFn(compileOperand(expr.getOperand()))
+
+    const compileOperand = op == '!' ? compileCondition : compileExpression
+    return opFn(compileOperand(operand))
   }
   if (Node.isPostfixUnaryExpression(expr)) {
+    const operand = expr.getOperand()
     throw Error(
       'Unsupported operator: ' +
-        expr.getText().slice(expr.getOperand().getEnd())
+        sliceFile(expr.getSourceFile(), operand.getEnd(), expr.getEnd())
     )
   }
   if (Node.isBinaryExpression(expr)) {
@@ -234,6 +276,7 @@ function compileExpression(expr: Expression): any {
     if (!opFn) {
       throw Error('Unsupported operator: ' + op)
     }
+    // TODO: merge subsequent q.Add ops and similar
     return opFn(
       compileExpression(expr.getLeft()),
       compileExpression(expr.getRight())
@@ -258,6 +301,15 @@ function checkType(node: Node) {
 
 function isLiteralNode(node: Node): node is BooleanLiteral | StringLiteral {
   return 'getLiteralValue' in node
+}
+
+function findImportForIdentifier(node: Identifier) {
+  const [def] = node.getDefinitions()
+  return def
+    .getNode()
+    .getParentWhile(
+      (_, child) => !Node.isImportDeclaration(child)
+    ) as ImportDeclaration
 }
 
 function getOperatorFromToken(op: number) {
@@ -300,6 +352,20 @@ function getOperatorFn(op: string) {
     : op == '~'
     ? q.BitNot
     : null
+}
+
+function sliceFile(file: SourceFile, start: number, end?: number) {
+  return file.getText().slice(start, end)
+}
+
+function startsWith(node: Node, prefix: string) {
+  return (
+    sliceFile(
+      node.getSourceFile(),
+      node.getStart(),
+      node.getStart() + prefix.length
+    ) == prefix
+  )
 }
 
 //

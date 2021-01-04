@@ -72,12 +72,12 @@ export class Record extends Ople {
       // Bail out if already saving.
       let saving = pendingSaves.get(this)
       if (saving) {
-        // TODO: mark save as wanted
-        return saving
+        saving = saving.then(() => )
+      } else {
+        saving = saveRecord(this, client as PrivateClient)
+        emit(this.onSave, saving)
       }
-      saving = saveRecord(this, client as PrivateClient)
       pendingSaves.set(this, saving)
-      emit(this.onSave, saving)
       await saving
     }
   }
@@ -114,6 +114,7 @@ export class Record extends Ople {
 }
 
 const pendingSaves = new WeakMap<Record, Promise<void>>()
+
 const modifiedRE = /^(add|replace|remove)$/
 let isPatching = false
 

@@ -13,7 +13,7 @@ exports[`queries declare variable 1`] = `
 Object {
   "foo": Object {
     "name": "foo",
-    "query": "{\\"lambda\\":[],\\"expr\\":{\\"let\\":[{\\"a\\":1}],\\"in\\":null}}",
+    "query": "Lambda([],Let([{a:1}],null))",
   },
 }
 `;
@@ -22,7 +22,7 @@ exports[`queries early return 1`] = `
 Object {
   "foo": Object {
     "name": "foo",
-    "query": "{\\"lambda\\":[],\\"expr\\":1}",
+    "query": "Lambda([],1)",
   },
 }
 `;
@@ -31,7 +31,7 @@ exports[`queries export function 1`] = `
 Object {
   "foo": Object {
     "name": "foo",
-    "query": "{\\"lambda\\":[],\\"expr\\":null}",
+    "query": "Lambda([],null)",
   },
 }
 `;
@@ -40,7 +40,7 @@ exports[`queries if blocks else return 1`] = `
 Object {
   "foo": Object {
     "name": "foo",
-    "query": "{\\"lambda\\":[],\\"expr\\":{\\"if\\":true,\\"then\\":2,\\"else\\":1}}",
+    "query": "Lambda([],If(true,2,1))",
   },
 }
 `;
@@ -49,7 +49,7 @@ exports[`queries if blocks empty then 1`] = `
 Object {
   "foo": Object {
     "name": "foo",
-    "query": "{\\"lambda\\":[],\\"expr\\":{\\"do\\":[{\\"if\\":true,\\"then\\":null,\\"else\\":null},null]}}",
+    "query": "Lambda([],Do(If(true,null,null),null))",
   },
 }
 `;
@@ -58,7 +58,7 @@ exports[`queries if blocks non-boolean condition 1`] = `
 Object {
   "foo": Object {
     "name": "foo",
-    "query": "{\\"lambda\\":[\\"arg\\"],\\"expr\\":{\\"do\\":[{\\"if\\":{\\"call\\":\\"CastToBool\\",\\"arguments\\":{\\"var\\":\\"arg\\"}},\\"then\\":null,\\"else\\":null},null]}}",
+    "query": "Lambda([\\"arg\\"],Do(If(Call(\\"CastToBool\\",Var(\\"arg\\")),null,null),null))",
   },
 }
 `;
@@ -67,7 +67,7 @@ exports[`queries if blocks then return 1`] = `
 Object {
   "foo": Object {
     "name": "foo",
-    "query": "{\\"lambda\\":[],\\"expr\\":{\\"if\\":true,\\"then\\":1,\\"else\\":2}}",
+    "query": "Lambda([],If(true,1,2))",
   },
 }
 `;
@@ -76,7 +76,7 @@ exports[`queries literal values 1`] = `
 Object {
   "foo": Object {
     "name": "foo",
-    "query": "{\\"lambda\\":[],\\"expr\\":{\\"do\\":[true,false,\\"string\\",null,123,null]}}",
+    "query": "Lambda([],Do(true,false,\\"string\\",null,123,null))",
   },
 }
 `;
@@ -104,31 +104,31 @@ Array [
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"add\\":[{\\"var\\":\\"a\\"},{\\"var\\":\\"b\\"}]}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],Add(Var(\\"a\\"),Var(\\"b\\")))",
     },
   },
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"subtract\\":[{\\"var\\":\\"a\\"},{\\"var\\":\\"b\\"}]}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],Subtract(Var(\\"a\\"),Var(\\"b\\")))",
     },
   },
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"multiply\\":[{\\"var\\":\\"a\\"},{\\"var\\":\\"b\\"}]}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],Multiply(Var(\\"a\\"),Var(\\"b\\")))",
     },
   },
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"divide\\":[{\\"var\\":\\"a\\"},{\\"var\\":\\"b\\"}]}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],Divide(Var(\\"a\\"),Var(\\"b\\")))",
     },
   },
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"modulo\\":[{\\"var\\":\\"a\\"},{\\"var\\":\\"b\\"}]}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],Modulo(Var(\\"a\\"),Var(\\"b\\")))",
     },
   },
 ]
@@ -139,25 +139,25 @@ Array [
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"bitand\\":[{\\"var\\":\\"a\\"},{\\"var\\":\\"b\\"}]}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],Bitand([Var(\\"a\\"),Var(\\"b\\")]))",
     },
   },
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"bitor\\":[{\\"var\\":\\"a\\"},{\\"var\\":\\"b\\"}]}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],Bitor([Var(\\"a\\"),Var(\\"b\\")]))",
     },
   },
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"bitxor\\":[{\\"var\\":\\"a\\"},{\\"var\\":\\"b\\"}]}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],Bitxor([Var(\\"a\\"),Var(\\"b\\")]))",
     },
   },
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"bitnot\\":{\\"var\\":\\"a\\"}}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],Bitnot(Var(\\"a\\")))",
     },
   },
 ]
@@ -168,31 +168,60 @@ Array [
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"gt\\":[{\\"var\\":\\"a\\"},{\\"var\\":\\"b\\"}]}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],GT(Var(\\"a\\"),Var(\\"b\\")))",
     },
   },
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"gte\\":[{\\"var\\":\\"a\\"},{\\"var\\":\\"b\\"}]}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],GTE(Var(\\"a\\"),Var(\\"b\\")))",
     },
   },
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"lt\\":[{\\"var\\":\\"a\\"},{\\"var\\":\\"b\\"}]}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],LT(Var(\\"a\\"),Var(\\"b\\")))",
     },
   },
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"lte\\":[{\\"var\\":\\"a\\"},{\\"var\\":\\"b\\"}]}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],LTE(Var(\\"a\\"),Var(\\"b\\")))",
     },
   },
   Object {
     "foo": Object {
       "name": "foo",
-      "query": "{\\"lambda\\":[\\"a\\",\\"b\\"],\\"expr\\":{\\"equals\\":[{\\"var\\":\\"a\\"},{\\"var\\":\\"b\\"}]}}",
+      "query": "Lambda([\\"a\\",\\"b\\"],Equals(Var(\\"a\\"),Var(\\"b\\")))",
+    },
+  },
+]
+`;
+
+exports[`queries operators not operator 1`] = `
+Array [
+  Object {
+    "foo": Object {
+      "name": "foo",
+      "query": "Lambda([\\"a\\",\\"b\\"],Not(Call(\\"CastToBool\\",Var(\\"a\\"))))",
+    },
+  },
+  Object {
+    "foo": Object {
+      "name": "foo",
+      "query": "Lambda([\\"a\\",\\"b\\"],Not(GT(Var(\\"a\\"),0)))",
+    },
+  },
+  Object {
+    "foo": Object {
+      "name": "foo",
+      "query": "Lambda([\\"a\\",\\"b\\"],Not(Call(\\"CastToBool\\",Add(Var(\\"a\\"),Var(\\"b\\")))))",
+    },
+  },
+  Object {
+    "foo": Object {
+      "name": "foo",
+      "query": "Lambda([\\"a\\",\\"b\\"],Call(\\"CastToBool\\",Var(\\"a\\")))",
     },
   },
 ]

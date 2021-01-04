@@ -22,6 +22,7 @@ export const makeBatch = (agent: Agent, cache: RecordCache) => {
   const pushed = new Set<Record>()
   const pulled = new Set<Record>()
 
+  // TODO: use these
   let nextPush = new Deferred<void>()
   let nextPull = new Deferred<void>()
 
