@@ -1,13 +1,8 @@
 dependencies:
-  '@alloc/is': 2.1.2
-  '@alloc/queue-microtask': 1.1.4
+  queue-microtask: /@alloc/queue-microtask/1.1.4
   uid: 2.0.0
 lockfileVersion: 5.1
 packages:
-  /@alloc/is/2.1.2:
-    dev: false
-    resolution:
-      integrity: sha512-/qJui7XCIMEDOzpMPZUXYTy4hHdBKsx6sQnSDIOw8cFW/BL4AqZSt0B/DkB+eW9PDa0zD27zp7jyziQfeaYycQ==
   /@alloc/queue-microtask/1.1.4:
     dev: false
     resolution:
@@ -27,6 +22,5 @@ packages:
     resolution:
       integrity: sha512-hFw+zKBA1szYdbZWj6FjTxZzJnKNf+wTDcsxlJaXS64MCy9LQEmJUVieGYHCKek/WRyFIcs0cEXtGIQmfvHe2A==
 specifiers:
-  '@alloc/is': ^2.1.2
-  '@alloc/queue-microtask': ^1.1.4
+  queue-microtask: 'npm:@alloc/queue-microtask@^1.1.4'
   uid: ^2.0.0

@@ -1,22 +1,22 @@
 import { is } from '@alloc/is'
 import { makeAgent, UserConfig as AgentConfig } from '@ople/agent'
 import { FaunaTime, Ref } from 'fauna-lite'
+import { uid as makeId } from 'uid'
 import { Batch, makeBatch } from './batch'
 import { Record } from './Record'
-import { $R } from './symbols'
 import { o } from 'wana'
 import { reviveOple } from './Ople'
 import { prepare } from './prepare'
 
 export interface Client extends InstanceType<ReturnType<typeof makeClient>> {}
 
-export function makeClient(config: { types: TypeConfig[] }) {
+export function makeClient<
+  Collections extends { [name: string]: typeof Record },
+  Methods extends { [name: string]: (...args: any[]) => any }
+>(config: { types: TypeConfig[] }) {
   const types: { [collection: string]: any } = {}
 
-  config.types.forEach(([constructor, collection]) => {
-    constructor[$R] = collection[$R]
-    types[collection[$R]] = constructor
-  })
+  return
 
   class Client {
     protected _cache: RecordCache = {}
@@ -54,38 +54,21 @@ export function makeClient(config: { types: TypeConfig[] }) {
       // TODO
     }
 
-    protected invoke!: Batch['invoke']
-
-    protected _parseRecord({
-      ref,
-      data,
-      ts,
-    }: {
-      ref: Ref
-      data: any
-      ts: FaunaTime
-    }) {
-      let self = this._cache[ref as any]
-      // Avoid overwriting a cached record.
-      if (!self) {
-        const type = types[ref.collection as any]
-        this._cache[ref as any] = self = o({
-          ...data,
-          [$R]: ref,
-          lastSyncTime: ts,
-          __proto__: type.prototype,
+    protected _invoke(name: keyof Methods, args: any[]) {
+      const trace = Error()
+      const replyId = makeId()
+      return new Promise((resolve, reject) => {
+        replyQueue.set(replyId, (error, result) => {
+          replyQueue.delete(replyId)
+          if (error) {
+            trace.message = error
+            reject(trace)
+          } else {
+            resolve(result)
+          }
         })
-        reviveOple(self)
-        for (const ctr of getTypeChain(type)) {
-          prepare(self, ctr)
-        }
-      }
-      // Merge the data if the timestamp is newer.
-      else if (!self.lastSyncTime || ts.isoTime > self.lastSyncTime.isoTime) {
-        self.lastSyncTime = ts
-        Object.assign(self, data)
-      }
-      return self
+        this.send(actionId, args, replyId)
+      })
     }
   }
 
@@ -108,7 +91,7 @@ function getTypeChain(type: any) {
   return typeChain
 }
 
-type TypeConfig = [constructor: any, collection: any]
+type TypeConfig = [constructor: typeof Record, collection: string]
 
 interface ClientConfig extends AgentConfig {}
 

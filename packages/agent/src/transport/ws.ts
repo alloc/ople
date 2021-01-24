@@ -5,27 +5,20 @@ declare const console: any
 export const ws: Protocol = ({
   host,
   port,
-  sendQueue,
-  replyQueue,
   onReply,
+  onConnect,
+  onDisconnect,
 }) => {
   const isLocal = host == 'localhost'
   const socket = new WebSocket(
     `ws${isLocal ? '' : 's'}://${host}${isLocal ? ':' + port : ''}`
   )
-  socket.onopen = () => {
-    console.log('[ople] connected')
-    // TODO: resubscribe to all watched documents
-    // TODO: batch these messages into one send?
-    sendQueue.forEach(msg => socket.send(msg))
-    sendQueue.length = 0
-  }
-  socket.onmessage = event => onReply(event.data)
+  socket.binaryType = 'arraybuffer'
+  socket.onopen = onConnect
+  socket.onmessage = event => onReply(new Uint8Array(event.data))
   socket.onclose = () => {
+    onDisconnect()
     // TODO: reconnect
-    replyQueue.forEach(resolve => {
-      resolve('Lost connection')
-    })
   }
   socket.onerror = event => {
     // TODO: proper handling
@@ -39,7 +32,7 @@ export const ws: Protocol = ({
       if (socket.readyState == socket.OPEN) {
         socket.send(action)
       } else {
-        sendQueue.push(action)
+        throw Error('Not connected')
       }
     },
   }
@@ -49,10 +42,11 @@ declare class WebSocket {
   constructor(baseURL: string)
   OPEN: number
   CLOSED: number
+  binaryType: string
   readyState: number
-  send(data: string): void
+  send(data: ArrayBufferLike): void
   onopen: () => void
-  onmessage: (event: { data: string }) => void
+  onmessage: (event: { data: ArrayBufferLike }) => void
   onclose: () => void
   onerror: (event: any) => void
 }

@@ -1,19 +1,10 @@
-export interface UserConfig {
+export interface AgentConfig {
   /** The transport strategy. Pass the `ws` or `http` export, or provide your own. */
   protocol: Protocol
   /** Defaults to `"localhost"` */
   host?: string
   /** Defaults to `7999` */
   port?: number
-}
-
-export interface AgentConfig extends UserConfig {
-  /** Encoding logic for JSON values. */
-  encode: (this: any, key: string, val: any) => any
-  /** Decoding logic for JSON values. */
-  decode: (this: any, key: string, val: any) => any
-  /** Receive signals from the backend. */
-  onSignal: (name: string, args: any[]) => void
 }
 
 /** A transport strategy used by `@ople/agent` */
@@ -25,30 +16,39 @@ export interface Protocol {
 export type TransportConfig = {
   readonly host: string
   readonly port: number
-  /** Pending messages to the backend */
-  readonly sendQueue: string[]
-  /** Pending reply handlers */
-  readonly replyQueue: ReplyQueue
-  /** Process a message from the backend. */
-  readonly onReply: (data: string) => void
-  /** Send a transport-specific signal to the client. */
-  readonly onSignal: (name: string, args: any[]) => void
+  readonly onReply: (data: Uint8Array) => void
+  readonly onConnect: () => void
+  readonly onDisconnect: () => void
 }
 
 /** @internal */
 export interface Transport {
-  send(action: string): void
+  send(data: Uint8Array): void
 }
 
-/** @internal */
-export type Reply = [
-  replyId: string | 0,
-  result: any,
-  error: string | undefined
-]
-
-/** @internal */
 export type ReplyHandler = (error: string | null, result?: any) => void
-
-/** @internal */
 export type ReplyQueue = Map<string, ReplyHandler>
+
+export type PackedCall = [method: string, args: any[] | null, replyId: string]
+
+export type OpleMethod =
+  | '@push'
+  | '@pull'
+  | '@watch'
+  | '@unwatch'
+  | '@create'
+  | '@delete'
+
+export type RefMap<T> = { [ref: string]: T }
+
+export type Patch = { [key: string]: any }
+
+export type Batch<Record> = {
+  [method: string]: Set<Record>
+} & {
+  id: string
+  calls: PackedCall[]
+  patches: RefMap<Patch> | null
+  promise: Promise<void>
+  resolve: (value?: PromiseLike<void>) => void
+}

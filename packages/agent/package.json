@@ -5,7 +5,7 @@
   "module": "dist/agent.mjs",
   "typings": "dist/agent.d.ts",
   "dependencies": {
-    "@alloc/is": "^2.1.2",
+    "queue-microtask": "npm:@alloc/queue-microtask@^1.1.4",
     "uid": "^2.0.0"
   }
 }

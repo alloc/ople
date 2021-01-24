@@ -1,6 +1,5 @@
 import queueMicrotask from '@alloc/queue-microtask'
 import { Agent } from '@ople/agent'
-import { Deferred } from 'ts-deferred'
 import type { Record } from './Record'
 import { RecordCache } from './types'
 import { getRefs } from './Ref'
@@ -21,10 +20,8 @@ export const makeBatch = (agent: Agent, cache: RecordCache) => {
   const unwatched = new Set<Record>()
   const pushed = new Set<Record>()
   const pulled = new Set<Record>()
-
-  // TODO: use these
-  let nextPush = new Deferred<void>()
-  let nextPull = new Deferred<void>()
+  const saved = new Set<Record>()
+  const deleted = new Set<Record>()
 
   function updateCache(updates: { [ref: string]: any }) {
     for (const ref in updates) {
@@ -86,6 +83,8 @@ export const makeBatch = (agent: Agent, cache: RecordCache) => {
   }
 
   return {
+    calls,
+
     invoke(actionId: string, args: any[]) {
       queueFlush()
       return new Promise<T>(resolve => {
@@ -123,18 +122,4 @@ function flushSet<T>(set: Set<T>) {
   const values = Array.from(set)
   set.clear()
   return values
-}
-
-function getPushArgs(payload: any, record: Record & { [key: string]: any }) {
-  const changes: any =
-    payload[record[$R] as any] || (payload[record[$R] as any] = {})
-
-  for (const key in record[$M]) {
-    changes[key] = record[key]
-  }
-}
-
-function getPullArgs(payload: any, record: Record) {
-  payload[record[$R] as any] = record.lastSyncTime
-  return payload
 }

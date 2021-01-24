@@ -1,12 +1,11 @@
 import { o, $O, Change } from 'wana'
 import { FaunaTime, Ref } from 'fauna-lite'
 import { $R, $M } from './symbols'
-import { Batch } from './batch'
 import { Ople } from './Ople'
 import { emit, Signal } from './Signal'
-import { isEmptyObject } from './common'
-import { clientByRef, PrivateClient } from './Ref'
-import { Client } from './client'
+import { isEmptyObject, setHidden } from './common'
+import { collectionByRef, PrivateClient } from './Ref'
+import { Collection } from './Collection'
 
 export type RecordEvents = {
   /** This record was changed. */
@@ -27,29 +26,37 @@ export interface Record {
   onDelete: Signal<[deleting: Promise<void>]>
 }
 
+/** @internal */
+export function getModified(record: Record): Map<string, unknown>{
+  return (record as any).__modified
+}
+
+/** @internal */
+export function getLastModified(record: Record): number {
+  return (record as any).__lastModified
+}
+
 /**
  * An observable copy of a server-managed JSON document with server-sent events.
  */
 export class Record extends Ople {
-  protected [$R]: Ref | null = null
-  protected [$M]: (Object & { [key: string]: unknown }) | null = null
-
   /**
-   * When `true`, there are unsaved changes to this record.
+   * Records created by the current user have no ref until they
+   * are saved for the first time.
    */
-  get isModified() {
-    return !!this[$M]
+  readonly ref: Ref | null = null
+
+  constructor(lastModified?: FaunaTime) {
+    super()
+    setHidden(this, '__modified', o(new Map()))
+    setHidden(this, '__lastModified', lastModified)
   }
 
   /**
-   * The nanosecond-precision timestamp of the last patch received
-   * from the server.
+   * When true, this record has unsaved changes.
    */
-  lastSyncTime: FaunaTime | null
-
-  constructor(ts?: FaunaTime) {
-    super()
-    this.lastSyncTime = ts || null
+  get isModified() {
+    return getModified(this).size > 0
   }
 
   /**
@@ -57,12 +64,12 @@ export class Record extends Ople {
    *
    * By using the `autoSave` mixin, you can avoid calling this.
    */
-  async save(client?: Client) {
-    const ref = this[$R]
+  async save(collection?: Collection<this>) {
+    const ref = this.ref
     if (ref) {
-      if (!client) {
-        client = clientByRef.get(ref)
-      } else if (clientByRef.get(ref) !== client) {
+      if (!collection) {
+        collection = collectionByRef.get(ref)
+      } else if (collectionByRef.get(ref) !== collection) {
         throw Error('Records can only be saved to one client')
       }
     } else if (!client) {
@@ -141,12 +148,12 @@ function setModified(change: Change) {
 }
 
 async function saveRecord(self: Record, client: PrivateClient) {
-  const ref = self[$R]
+  const ref = self.ref
   if (ref) {
     client.push(self)
   } else {
     // TODO: omit getters
-    self[$R] = await this._batch.invoke('ople.create', [
+    ;(self as any).ref = await this._batch.invoke('ople.create', [
       this.constructor[$R],
       // Ensure client-only properties are omitted.
       { ...this, lastSyncTime: void 0 },

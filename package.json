@@ -11,6 +11,7 @@
   "author": "Alec Larson",
   "devDependencies": {
     "@alloc/prettier-config": "^1.0.0",
+    "@rollup/plugin-node-resolve": "^11.1.0",
     "@sucrase/jest-plugin": "^2.0.0",
     "@types/jest": "^25.2.3",
     "codecov": "^3.7.0",
