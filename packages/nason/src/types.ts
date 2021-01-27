@@ -1,4 +1,4 @@
-import { Ref } from 'fauna-lite'
+import { FaunaTime, Ref } from 'fauna-lite'
 
 type Class<T = unknown> = new (...args: any[]) => T
 
@@ -26,7 +26,7 @@ namespace Server {
   }
 }
 
-export type PackedRecord = [ref: Ref, ts: number, data: any]
+export type PackedRecord = [ref: Ref, ts: FaunaTime, data: any]
 
 export type PackedCall = [method: string, args: any[] | null, replyId: string]
 

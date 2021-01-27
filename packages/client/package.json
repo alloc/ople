@@ -14,6 +14,7 @@
     "@alloc/is": "^2.1.1",
     "@alloc/types": "^1.2.6",
     "@ople/agent": "link:../agent",
+    "@ople/nason": "link:../nason",
     "fauna-lite": "^0.1.1",
     "ts-deferred": "^1.0.4",
     "wana": "^0.13.1"

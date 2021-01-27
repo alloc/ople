@@ -1,6 +1,6 @@
-import { $O, expectOple, ChangeObserver, setEffect, OpleEffect } from 'ople'
-import { Record } from '../data/Record'
-import { $R } from '../symbols'
+import { expectOple } from '../context'
+import { Record } from '../Record'
+import { OpleEffect } from '../types'
 
 const autoSyncs = new WeakMap<Record, OpleEffect>()
 
@@ -11,7 +11,7 @@ export function autoSync(enabled = true) {
     throw TypeError('The "autoSync" mixin expects a Record type')
   }
 
-  const ref = self[$R]
+  const ref = self.ref
   // TODO: if no ref exists, wait until saved
 
   // setEffect(ref, active => {

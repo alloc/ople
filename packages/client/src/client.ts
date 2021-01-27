@@ -1,85 +1,88 @@
-import { is } from '@alloc/is'
-import { makeAgent, UserConfig as AgentConfig } from '@ople/agent'
+import { makeAgent, AgentConfig } from '@ople/agent'
+import {
+  makeBatchEncoder,
+  makeReplyDecoder,
+  Config as Coding,
+  PackedRecord,
+} from '@ople/nason'
 import { FaunaTime, Ref } from 'fauna-lite'
-import { uid as makeId } from 'uid'
-import { Batch, makeBatch } from './batch'
-import { Record } from './Record'
-import { o } from 'wana'
-import { reviveOple } from './Ople'
-import { prepare } from './prepare'
+import { Record, getModified, getLastModified } from './Record'
+import { Collection } from './Collection'
+import { collectionByRef } from './Ref'
 
-export interface Client extends InstanceType<ReturnType<typeof makeClient>> {}
-
-export function makeClient<
-  Collections extends { [name: string]: typeof Record },
-  Methods extends { [name: string]: (...args: any[]) => any }
->(config: { types: TypeConfig[] }) {
-  const types: { [collection: string]: any } = {}
-
-  return
-
-  class Client {
-    protected _cache: RecordCache = {}
-
-    constructor(config: ClientConfig) {
-      const agent = makeAgent({
-        ...config,
-        encode(key, val) {
-          // TODO
-        },
-        decode(key, val) {
-          // TODO
-        },
-        onSignal(name, args) {
-          // TODO
-        },
-      })
-      Object.assign(this, makeBatch(agent, this._cache))
-    }
-
-    readonly cache = {
-      get: (ref: Ref) => this._cache[ref as any] || null,
-    } as const
-
-    async get(ref: Ref): Promise<any>
-    async get(refs: Ref[]): Promise<any[]>
-    async get(refs: Ref | Ref[]) {
-      const results: any[] = await this.invoke('ople.get', [
-        is.array(refs) ? refs : [refs],
-      ])
-      return is.array(refs) ? results : results[0]
-    }
-
-    parse(payload: string) {
-      // TODO
-    }
-
-    protected _invoke(name: keyof Methods, args: any[]) {
-      const trace = Error()
-      const replyId = makeId()
-      return new Promise((resolve, reject) => {
-        replyQueue.set(replyId, (error, result) => {
-          replyQueue.delete(replyId)
-          if (error) {
-            trace.message = error
-            reject(trace)
-          } else {
-            resolve(result)
-          }
-        })
-        this.send(actionId, args, replyId)
-      })
-    }
+export interface Client {
+  readonly cache: {
+    get<T extends Record>(ref: Ref<T>): T | null
   }
+  get<T extends Record>(ref: Ref<T>): Promise<T>
+}
 
-  Object.setPrototypeOf(
-    Client.prototype,
-    new Proxy(Object.prototype, {
-      // TODO: assume RPC call
+export function makeClientFactory<
+  Collections extends { [name: string]: typeof Record },
+  Methods extends { [method: string]: (...args: any[]) => any }
+>(collectionTypes: Collections) {
+  return function makeClient(config: ClientConfig): Client {
+    const collections: { [name: string]: Collection } = {}
+    const cache: RecordCache = {}
+
+    function getCollection(ref: Ref) {
+      return (
+        collections[ref.id] ||
+        (collections[ref.id] = new Collection(ref, client))
+      )
+    }
+
+    function updateRecord(ref: Ref, ts: FaunaTime, data: any) {
+      const record = cache[ref as any]
+      if (record) {
+        data.__lastModified = ts
+        return Object.assign(record, data) as Record
+      }
+    }
+
+    const coding: Coding<Record> = {
+      Record,
+      packRecord: record => record.ref!,
+      unpackRecord([ref, ts, data]: PackedRecord) {
+        let record = updateRecord(ref, ts, data)
+        if (!record) {
+          cache[ref as any] = record = new Record(ts)
+          collectionByRef.set(ref, getCollection(ref.collection!))
+          Object.setPrototypeOf(record, collectionTypes[ref.collection!.id])
+          Object.assign(record, data)
+        }
+        return record
+      },
+    }
+
+    const agent = makeAgent<Record>({
+      ...config,
+      encodeBatch: makeBatchEncoder(coding),
+      decodeReply: makeReplyDecoder(coding),
+      updateRecord,
+      getModified,
+      getLastModified,
+      onSignal() {
+        // TODO
+      },
     })
-  )
 
-  return Client
+    const methods = new Proxy(Object.prototype, {
+      get(),
+    })
+
+    const client = {
+      __proto__: methods,
+      cache: {
+        get: (ref: any): any => cache[ref] || null,
+      },
+      async get(ref: Ref): Promise<any> {
+        const
+      },
+    }
+
+    return client as Client
+  }
 }
 
 function getTypeChain(type: any) {
@@ -90,8 +93,6 @@ function getTypeChain(type: any) {
   }
   return typeChain
 }
-
-type TypeConfig = [constructor: typeof Record, collection: string]
 
 interface ClientConfig extends AgentConfig {}
 

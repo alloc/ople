@@ -1,5 +1,7 @@
 import queueMicrotask from 'queue-microtask'
 import { uid as makeId } from 'uid'
+import { Deferred } from 'ts-deferred'
+import { errors } from './errors'
 import {
   AgentConfig,
   Batch,
@@ -8,43 +10,56 @@ import {
   Patch,
   RefMap,
   ReplyQueue,
+  Ref,
+  FetchQueue,
 } from './types'
 
 export { AgentConfig }
 
-export interface Agent<Record> {
+export interface Agent {
   readonly host: string
   readonly port: number
-  call(method: OpleMethod, args: [Record]): Promise<void>
+  call(method: OpleMethod, args: [any]): Promise<void>
   call(method: string, args?: any[]): Promise<any>
 }
 
 export type AgentFactory = typeof makeAgent
 
-export function makeAgent<Record extends { ref: any }>({
+export function makeAgent<Record extends { ref: Ref }>({
   protocol: makeTransport,
   host = 'localhost',
   port = 7999,
   encodeBatch,
   decodeReply,
+  updateRecord,
   getModified,
   getLastModified,
   onSignal,
-}: PrivateConfig<Record>): Agent<Record> {
-  let callQueue: PackedCall[] = []
+}: PrivateConfig<Record>): Agent {
+  let watched = new Set<Record>()
   let replyQueue: ReplyQueue = new Map()
+  let fetchQueue: FetchQueue<Record> = {}
 
   const transport = makeTransport({
     host,
     port,
     onConnect() {
-      // TODO: resubscribe to all watched documents
+      onSignal('@connect')
+
+      // Resubscribe to all watched records.
+      nextBatch['@watch'] = new Set(watched)
+
+      // Flush the batch if necessary.
+      if (watched.size || status == PENDING) {
+        flush()
+      }
     },
     onDisconnect() {
-      // TODO: repeat pulls (by merging them into next batch)
-      callQueue = []
-      replyQueue.forEach(onReply => onReply('Lost connection'))
+      // TODO: check if server received batch at all
+      replyQueue.forEach(onReply => onReply(errors.disconnect))
       replyQueue.clear()
+
+      onSignal('@disconnect')
     },
     onReply(data) {
       const [replyId, result, error] = decodeReply(data)
@@ -66,8 +81,16 @@ export function makeAgent<Record extends { ref: any }>({
   /** The batches awaiting a response */
   let batches: { [batchId: string]: Batch<Record> } = {}
 
-  let flushing = false
+  const IDLE = 0
+  const FLUSHING = 1
+  const PENDING = 2
+
+  let status = IDLE
   function flush() {
+    if (!transport.canSend()) {
+      status = PENDING
+      return
+    }
     const batch = (batches[nextBatch.id] = nextBatch)
     const calls: PackedCall[] = []
     for (const method in batch) {
@@ -81,9 +104,48 @@ export function makeAgent<Record extends { ref: any }>({
 
       calls.push([method, [payload], ''])
     }
-    transport.send(encodeBatch(batch.id, calls))
+    interface BatchResponse {
+      created?: Ref[]
+      fetched?: Record[]
+      pulled?: [Ref, any, any][]
+    }
+    replyQueue.set(batch.id, (error, response: BatchResponse) => {
+      if (error) {
+        if (error == errors.disconnect) {
+          mergeSets(nextBatch, batch, '@get')
+          mergeSets(nextBatch, batch, '@pull')
+          // TODO: check whether the server received the batch at all
+          // TODO: have another promise for push/create/delete?
+          return batch.resolve(nextBatch.promise)
+        }
+        return console.error(error)
+      }
+
+      const { created, fetched, pulled } = response
+
+      if (created) {
+        let i = 0
+        batch['@create'].forEach(record => {
+          record.ref = created[i++]
+        })
+      }
+
+      if (fetched)
+        for (const record of fetched) {
+          fetchQueue[record.ref as any].resolve(record)
+          delete fetchQueue[record.ref as any]
+        }
+
+      if (pulled)
+        for (const [ref, ts, data] of pulled) {
+          updateRecord(ref, ts, data)
+        }
+
+      batch.resolve()
+    })
+    transport.send(encodeBatch(batch.id, calls.concat(batch.calls)))
     nextBatch = makeBatch()
-    flushing = false
+    status = IDLE
   }
 
   function getPatches(records: Set<Record>) {
@@ -118,28 +180,48 @@ export function makeAgent<Record extends { ref: any }>({
     host,
     port,
     call(method: string, args?: any[]) {
-      if (method[0] === '@') {
-        nextBatch[method].add(args![0])
-        return nextBatch.promise
-      }
-      const trace = Error()
-      const replyId = makeId()
-      return new Promise<any>((resolve, reject) => {
-        replyQueue.set(replyId, (error, result) => {
-          replyQueue.delete(replyId)
-          if (error) {
-            trace.message = error
-            reject(trace)
-          } else {
-            resolve(result)
+      let promise: Promise<any>
+      if (method[0] == '@') {
+        if (method == '@get') {
+          const [ref] = args!
+          if (!fetchQueue[ref]) {
+            fetchQueue[ref] = new Deferred()
+            nextBatch[method].add(ref)
           }
-        })
-        callQueue.push([method, args || null, replyId])
-        if (!flushing) {
-          flushing = true
-          queueMicrotask(flush)
+          promise = fetchQueue[ref].promise
+        } else {
+          const [record] = args as [Record]
+          if (method == '@watch') {
+            nextBatch['@unwatch'].delete(record)
+            watched.add(record)
+          } else if (method == '@unwatch' || method == '@delete') {
+            nextBatch['@watch'].delete(record)
+            watched.delete(record)
+          }
+          nextBatch[method].add(record)
+          promise = nextBatch.promise
         }
-      })
+      } else {
+        const trace = Error()
+        const replyId = makeId()
+        nextBatch.calls.push([method, args || null, replyId])
+        promise = new Promise<any>((resolve, reject) => {
+          replyQueue.set(replyId, (error, result) => {
+            replyQueue.delete(replyId)
+            if (error) {
+              trace.message = error
+              reject(trace)
+            } else {
+              resolve(result)
+            }
+          })
+        })
+      }
+      if (status < FLUSHING) {
+        status = FLUSHING
+        queueMicrotask(flush)
+      }
+      return promise
     },
   }
 }
@@ -149,6 +231,8 @@ interface PrivateConfig<Record> extends AgentConfig {
   encodeBatch: (batchId: string, calls: PackedCall[]) => Uint8Array
   /** Decode a reply. */
   decodeReply: (bytes: Uint8Array) => [string, any, string?]
+  /** Update the local version of a `Record` object. */
+  updateRecord: (ref: Ref, ts: any, data: any) => void
   /** Get unsaved changes to a `Record` object. */
   getModified: (record: Record) => Map<string, unknown>
   /** Get timestamp of the last saved change. */
@@ -166,6 +250,7 @@ const makeBatch = <Record>(): Batch<Record> => {
     '@pull': new Set<Record>(),
     '@create': new Set<Record>(),
     '@delete': new Set<Record>(),
+    '@get': new Set<Ref>(),
   }
   let resolve!: Function
   return setHidden(batch, {
@@ -181,4 +266,8 @@ function setHidden(obj: any, values: { [key: string]: any }) {
   for (const key in values)
     Object.defineProperty(obj, key, { value: values[key] })
   return obj
+}
+
+function mergeSets(dest: any, src: any, key: string) {
+  dest[key] = new Set([...dest[key], ...src[key]])
 }

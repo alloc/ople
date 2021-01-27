@@ -9,9 +9,9 @@ export default configs
 
 const dtsPlugin = dts()
 const esPlugin = esbuild()
-
-const exts = { dts: 'd.ts', cjs: 'js', es: 'mjs' }
-const entry = { dts: 'typings', cjs: 'main', es: 'module' }
+const resolvePlugin = nodeResolve({
+  extensions: ['.ts', '.js'],
+})
 
 crawl('.', {
   only: ['packages/*/package.json'],
@@ -29,19 +29,36 @@ crawl('.', {
 
   const pkg = require('./' + pkgPath)
   const pkgRoot = dirname(pkgPath)
-  const bundle = format =>
+  const input = `${pkgRoot}/src/index.ts`
+
+  configs
+    .push
+    // {
+    //   input,
+    //   output: [
+    //     {
+    //       file: `${pkgRoot}/${pkg.main}`,
+    //       format: 'cjs',
+    //       sourcemap: true,
+    //     },
+    //     {
+    //       file: `${pkgRoot}/${pkg.module}`,
+    //       format: 'es',
+    //       sourcemap: true,
+    //     },
+    //   ],
+    //   plugins: [esPlugin, resolvePlugin],
+    //   external,
+    // },
+    ()
+  if (pkg.typings)
     configs.push({
-      input: `${pkgRoot}/src/index.ts`,
+      input,
       output: {
-        file: `${pkgRoot}/${pkg[entry[format]]}`,
-        format: format == 'cjs' ? 'cjs' : 'es',
-        sourcemap: format != 'dts',
+        file: `${pkgRoot}/${pkg.typings}`,
+        format: 'es',
       },
-      plugins: format == 'dts' ? [dtsPlugin] : [esPlugin, nodeResolve({ extensions: ['.ts', '.js'] })],
+      plugins: [dtsPlugin],
       external,
     })
-
-  if (pkg.module) bundle('es')
-  if (pkg.main) bundle('cjs')
-  if (pkg.typings) bundle('dts')
 })

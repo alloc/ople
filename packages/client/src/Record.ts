@@ -108,6 +108,14 @@ export class Record extends Ople {
     return null as any
   }
 
+  /**
+   * Remove this record from the local cache, and disable its
+   * side effects.
+   */
+  dispose() {
+    // TODO
+  }
+
   toJSON(): object {
     // TODO
     return null as any

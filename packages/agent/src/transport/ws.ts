@@ -14,12 +14,7 @@ export const ws: Protocol = ({
     `ws${isLocal ? '' : 's'}://${host}${isLocal ? ':' + port : ''}`
   )
   socket.binaryType = 'arraybuffer'
-  socket.onopen = onConnect
   socket.onmessage = event => onReply(new Uint8Array(event.data))
-  socket.onclose = () => {
-    onDisconnect()
-    // TODO: reconnect
-  }
   socket.onerror = event => {
     // TODO: proper handling
     console.error(event)
@@ -27,7 +22,20 @@ export const ws: Protocol = ({
       // TODO: exponential retry if network down
     }
   }
+
+  let isConnected = false
+  socket.onopen = () => {
+    isConnected = true
+    onConnect()
+  }
+  socket.onclose = () => {
+    isConnected = false
+    onDisconnect()
+    // TODO: reconnect
+  }
+
   return {
+    canSend: () => isConnected,
     send(action) {
       if (socket.readyState == socket.OPEN) {
         socket.send(action)
