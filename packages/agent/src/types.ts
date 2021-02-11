@@ -1,4 +1,7 @@
-import { Deferred } from 'ts-deferred'
+import type { Deferred } from 'ts-deferred'
+import type { Ref } from 'fauna-lite'
+
+export type { Ref }
 
 export interface AgentConfig {
   /** The transport strategy. Pass the `ws` or `http` export, or provide your own. */
@@ -45,7 +48,6 @@ export type OpleMethod =
   | '@delete'
   | '@get'
 
-export type Ref = { id: string }
 export type RefMap<T> = { [ref: string]: T }
 
 export type Patch = { [key: string]: any }

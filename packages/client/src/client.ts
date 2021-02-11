@@ -10,11 +10,13 @@ import { Record, getModified, getLastModified } from './Record'
 import { Collection } from './Collection'
 import { collectionByRef } from './Ref'
 
+export { ws, http } from '@ople/agent'
+
 export interface Client {
   readonly cache: {
     get<T extends Record>(ref: Ref<T>): T | null
   }
-  get<T extends Record>(ref: Ref<T>): Promise<T>
+  get<T extends Record>(ref: Ref<T>, force?: boolean): Promise<T>
 }
 
 export function makeClientFactory<
@@ -68,31 +70,35 @@ export function makeClientFactory<
     })
 
     const methods = new Proxy(Object.prototype, {
-      get(),
+      get(_, method: string) {
+        return (...args: any[]) => agent.call(method, args)
+      },
     })
 
-    const client = {
+    const client: Client & { __proto__: any } = {
       __proto__: methods,
       cache: {
-        get: (ref: any): any => cache[ref] || null,
+        get: (ref): any => cache[ref as any] || null,
       },
-      async get(ref: Ref): Promise<any> {
-        const
+      async get(ref, force): Promise<any> {
+        const record = cache[ref as any]
+        const getting = (force || !record) && agent.call('@get', [ref])
+        return record || getting
       },
     }
 
-    return client as Client
+    return client
   }
 }
 
-function getTypeChain(type: any) {
-  const typeChain: any[] = []
-  while (type !== Record) {
-    typeChain.unshift(type)
-    type = Object.getPrototypeOf(type.prototype).constructor
-  }
-  return typeChain
-}
+// function getTypeChain(type: any) {
+//   const typeChain: any[] = []
+//   while (type !== Record) {
+//     typeChain.unshift(type)
+//     type = Object.getPrototypeOf(type.prototype).constructor
+//   }
+//   return typeChain
+// }
 
 interface ClientConfig extends AgentConfig {}
 

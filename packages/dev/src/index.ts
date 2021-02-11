@@ -1,9 +1,5 @@
-#!/usr/bin/env node
-import 'source-map-support/register'
-
-import { app } from './core'
-
-import './commands/start'
-import './commands/build'
-
-app.parse()
+export * from './events'
+export * from './pushpin/start'
+export * from './pushpin/stop'
+export * from './fauna/start'
+export * from './fauna/stop'

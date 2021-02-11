@@ -1,10 +1,9 @@
 import { o, $O, Change } from 'wana'
 import { FaunaTime, Ref } from 'fauna-lite'
-import { $R, $M } from './symbols'
 import { Ople } from './Ople'
 import { emit, Signal } from './Signal'
 import { isEmptyObject, setHidden } from './common'
-import { collectionByRef, PrivateClient } from './Ref'
+import { collectionByRef } from './Ref'
 import { Collection } from './Collection'
 
 export type RecordEvents = {
@@ -27,7 +26,7 @@ export interface Record {
 }
 
 /** @internal */
-export function getModified(record: Record): Map<string, unknown>{
+export function getModified(record: Record): Map<string, unknown> {
   return (record as any).__modified
 }
 
@@ -79,7 +78,7 @@ export class Record extends Ople {
       // Bail out if already saving.
       let saving = pendingSaves.get(this)
       if (saving) {
-        saving = saving.then(() => )
+        // TODO: saving = saving.then(() => )
       } else {
         saving = saveRecord(this, client as PrivateClient)
         emit(this.onSave, saving)
@@ -104,6 +103,7 @@ export class Record extends Ople {
    * from the local cache.
    */
   delete(): Promise<void> {
+    this.dispose()
     // TODO
     return null as any
   }

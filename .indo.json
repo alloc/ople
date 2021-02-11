@@ -1,4 +1,7 @@
 {
+  "alias": {
+    "faunadb": "@aleclarson/faunadb"
+  },
   "repos": {
     "vendor/faunadb": {
       "url": "https://github.com/aleclarson/faunadb-js",

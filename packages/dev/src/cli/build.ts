@@ -1,4 +1,4 @@
-import { app } from '../core'
+import { app } from './app'
 
 app.command('build', 'Build the production server').action(() => {
   // TODO

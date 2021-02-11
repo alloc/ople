@@ -14,18 +14,20 @@ import {
   FetchQueue,
 } from './types'
 
-export { AgentConfig }
+declare const console: { error: Function }
+
+export type { AgentConfig }
 
 export interface Agent {
   readonly host: string
   readonly port: number
-  call(method: OpleMethod, args: [any]): Promise<void>
+  call(method: OpleMethod, args: [any]): Promise<any>
   call(method: string, args?: any[]): Promise<any>
 }
 
 export type AgentFactory = typeof makeAgent
 
-export function makeAgent<Record extends { ref: Ref }>({
+export function makeAgent<Record extends { ref: Ref | null }>({
   protocol: makeTransport,
   host = 'localhost',
   port = 7999,
@@ -154,9 +156,9 @@ export function makeAgent<Record extends { ref: Ref }>({
       const patch: Patch = {}
       const modified = getModified(record)
       if (modified.size) {
-        patches[record.ref] = patch
+        patches[record.ref as any] = patch
         modified.forEach((_, key) => {
-          patch[key] = Reflect.get(record, key)
+          patch[key] = record[key as keyof Record]
         })
         modified.clear()
       }
@@ -171,7 +173,7 @@ export function makeAgent<Record extends { ref: Ref }>({
   function getPullMap(records: Set<Record>) {
     const pulls: RefMap<number> = {}
     records.forEach(record => {
-      pulls[record.ref] = getLastModified(record)
+      pulls[record.ref as any] = getLastModified(record)
     })
     return pulls
   }

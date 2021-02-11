@@ -3,18 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
   "bin": {
-    "ople": "dist/index.js"
+    "ople": "bin/ople"
   },
   "dependencies": {
-    "@cush/exec": "^1.6.2",
+    "@cush/exec": "^1.6.4",
+    "@ople/config": "link:../config",
     "ansi-italic": "^0.1.1",
-    "cac": "^6.5.10",
+    "cac": "^6.0.0",
     "chokidar": "^3.4.1",
     "debounce": "^1.2.0",
     "dedent": "^0.7.0",
     "enquirer": "^2.3.6",
     "is": "npm:@alloc/is@^2.1.1",
+    "lodge": "^0.1.7",
+    "saxon": "^0.2.10",
     "smart-restart": "^2.4.0",
     "source-map-support": "^0.5.19",
     "sucrase": "^3.15.0",
@@ -24,6 +28,7 @@
   "devDependencies": {
     "@types/debounce": "^1.2.0",
     "@types/dedent": "^0.7.0",
+    "@types/node": "^14.14.25",
     "@types/prettier": "^2.0.2",
     "@types/source-map-support": "^0.5.2",
     "typescript": "link:../../node_modules/typescript"
