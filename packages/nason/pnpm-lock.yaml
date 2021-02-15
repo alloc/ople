@@ -1,24 +1,12 @@
 dependencies:
-  fauna-lite: 0.1.1
-  is: /@alloc/is/2.1.2
+  fauna-lite: link:../../vendor/fauna-lite
   nason: 1.2.0
-lockfileVersion: 5.1
+lockfileVersion: 5.2
 packages:
-  /@alloc/is/2.1.2:
-    dev: false
-    resolution:
-      integrity: sha512-/qJui7XCIMEDOzpMPZUXYTy4hHdBKsx6sQnSDIOw8cFW/BL4AqZSt0B/DkB+eW9PDa0zD27zp7jyziQfeaYycQ==
-  /fauna-lite/0.1.1:
-    dependencies:
-      '@alloc/is': 2.1.2
-    dev: false
-    resolution:
-      integrity: sha512-j7wFWu1c3qsWcpbcng+Qb3stMaK6j3PiT1PKg7X4mM9kPl0Go16wAdEcYcNNY679VaVRgsg+SuacNVL/DJYEyg==
   /nason/1.2.0:
     dev: false
     resolution:
       integrity: sha512-DxpgnY1XAwYRxuQshluHajyy+rql1pikWeRvVFezXYqswLVEwrZiqhq931LChf+UEOThA7WL+yw/PDHicKgIpQ==
 specifiers:
   fauna-lite: ^0.1.1
-  is: 'npm:@alloc/is@^2.1.2'
   nason: ^1.2.0

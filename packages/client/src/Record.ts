@@ -1,10 +1,12 @@
-import { o, $O, Change } from 'wana'
+import { o, Change } from 'wana'
 import { FaunaTime, Ref } from 'fauna-lite'
-import { Ople } from './Ople'
-import { emit, Signal } from './Signal'
+import { makeDisposableMap } from './utils/DisposableMap'
+import { observe } from './utils/observe'
 import { isEmptyObject, setHidden } from './common'
-import { collectionByRef } from './Ref'
 import { Collection } from './Collection'
+import { Ople } from './Ople'
+import { collectionByRef } from './Ref'
+import { emit, Signal } from './Signal'
 
 export type RecordEvents = {
   /** This record was changed. */
@@ -25,15 +27,10 @@ export interface Record {
   onDelete: Signal<[deleting: Promise<void>]>
 }
 
-/** @internal */
-export function getModified(record: Record): Map<string, unknown> {
-  return (record as any).__modified
-}
-
-/** @internal */
-export function getLastModified(record: Record): number {
-  return (record as any).__lastModified
-}
+let isUpdating = false
+const modifiedMap = makeDisposableMap()
+const pendingSaves = new WeakMap<Record, Promise<void>>()
+const queuedSaves = new Set<Record>() // TODO
 
 /**
  * An observable copy of a server-managed JSON document with server-sent events.
@@ -47,8 +44,18 @@ export class Record extends Ople {
 
   constructor(lastModified?: FaunaTime) {
     super()
-    setHidden(this, '__modified', o(new Map()))
+
+    const modified = o(new Set())
+    setHidden(this, '__modified', modified)
     setHidden(this, '__lastModified', lastModified)
+
+    // Track which properties have been modified since
+    // the most recent `save` command.
+    modifiedMap.set(this, () =>
+      observe(this as any, change => {
+        isUpdating || modified.add(change.key)
+      })
+    )
   }
 
   /**
@@ -63,29 +70,30 @@ export class Record extends Ople {
    *
    * By using the `autoSave` mixin, you can avoid calling this.
    */
-  async save(collection?: Collection<this>) {
+  save(collection?: Collection<this>) {
     const ref = this.ref
     if (ref) {
       if (!collection) {
-        collection = collectionByRef.get(ref)
+        collection = collectionByRef.get(ref)!
       } else if (collectionByRef.get(ref) !== collection) {
-        throw Error('Records can only be saved to one client')
+        throw Error('Records can only be saved to one collection')
       }
-    } else if (!client) {
-      throw Error('New records must be saved with a client')
+    } else if (!collection) {
+      throw Error('New records must be saved with a collection')
     }
     if (!ref || this.isModified) {
-      // Bail out if already saving.
       let saving = pendingSaves.get(this)
-      if (saving) {
-        // TODO: saving = saving.then(() => )
-      } else {
-        saving = saveRecord(this, client as PrivateClient)
+      // TODO: if saving already, make sure the batch is not flushed. otherwise, we need to save again.
+      if (!saving) {
+        const { client } = collection
+        // TODO: what if deleted before finished saving?
+        saving = client.call(ref ? '@push' : '@create', [this])
         emit(this.onSave, saving)
       }
       pendingSaves.set(this, saving)
-      await saving
+      return saving
     }
+    return Promise.resolve()
   }
 
   /**
@@ -120,54 +128,21 @@ export class Record extends Ople {
     // TODO
     return null as any
   }
-
-  protected _applyPatch(patch: any) {
-    isPatching = true
-    Object.assign(this, patch)
-    isPatching = false
-  }
 }
 
-const pendingSaves = new WeakMap<Record, Promise<void>>()
-
-const modifiedRE = /^(add|replace|remove)$/
-let isPatching = false
-
-function setModified(change: Change) {
-  if (modifiedRE.test(change.op)) {
-    const { target, key } = change as { target: Record; key: string }
-
-    let modified = target[$M]
-    if (modified && modified.hasOwnProperty(key)) {
-      // The modified key may equal its last synced value.
-      if (isPatching || change.value === modified[key]) {
-        delete modified[key]
-        if (isEmptyObject(modified)) {
-          target[$M] = null
-        }
-      }
-    } else if (!isPatching) {
-      if (!modified) {
-        modified = target[$M] = {}
-      }
-      modified[key] = change.oldValue
-    }
-  }
+/** Apply changes while leaving `isModified` intact */
+export function updateRecord(record: Record, patch: object) {
+  isUpdating = true
+  Object.assign(record, patch)
+  isUpdating = false
 }
 
-async function saveRecord(self: Record, client: PrivateClient) {
-  const ref = self.ref
-  if (ref) {
-    client.push(self)
-  } else {
-    // TODO: omit getters
-    ;(self as any).ref = await this._batch.invoke('ople.create', [
-      this.constructor[$R],
-      // Ensure client-only properties are omitted.
-      { ...this, lastSyncTime: void 0 },
-    ])
-    this[$M] = o(new Map())
-    this[$O].observe($O, setModified)
-    // TODO: call `autoSave(false)` if not auto-saved
-  }
+/** @internal */
+export function getModified(record: Record): Set<string> {
+  return (record as any).__modified
+}
+
+/** @internal */
+export function getLastModified(record: Record): number {
+  return (record as any).__lastModified
 }

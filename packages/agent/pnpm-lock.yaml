@@ -1,7 +1,9 @@
 dependencies:
+  fauna-lite: link:../../vendor/fauna-lite
   queue-microtask: /@alloc/queue-microtask/1.1.4
+  ts-deferred: 1.0.4
   uid: 2.0.0
-lockfileVersion: 5.1
+lockfileVersion: 5.2
 packages:
   /@alloc/queue-microtask/1.1.4:
     dev: false
@@ -13,6 +15,10 @@ packages:
       node: '>=8'
     resolution:
       integrity: sha512-ruuGHsnabmObBdeMg3vKdGRmh06Oog3eFpf/Tk6X0kDSJDpJTDCj2dqdp1+0VjzIUgHlFF9GBm7uFqfYhhdX9g==
+  /ts-deferred/1.0.4:
+    dev: false
+    resolution:
+      integrity: sha1-WBReuu71uPKikLjOw9Bgg5+Uicc=
   /uid/2.0.0:
     dependencies:
       '@lukeed/csprng': 1.0.0
@@ -22,5 +28,7 @@ packages:
     resolution:
       integrity: sha512-hFw+zKBA1szYdbZWj6FjTxZzJnKNf+wTDcsxlJaXS64MCy9LQEmJUVieGYHCKek/WRyFIcs0cEXtGIQmfvHe2A==
 specifiers:
-  queue-microtask: 'npm:@alloc/queue-microtask@^1.1.4'
+  fauna-lite: '*'
+  queue-microtask: npm:@alloc/queue-microtask@^1.1.4
+  ts-deferred: ^1.0.4
   uid: ^2.0.0

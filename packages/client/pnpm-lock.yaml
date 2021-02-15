@@ -1,12 +1,12 @@
 dependencies:
   '@alloc/is': 2.1.2
   '@alloc/types': 1.3.0
-  '@ople/agent': 'link:../agent'
-  '@ople/nason': 'link:../nason'
-  fauna-lite: 0.1.1
+  '@ople/agent': link:../agent
+  '@ople/nason': link:../nason
+  fauna-lite: link:../../vendor/fauna-lite
   ts-deferred: 1.0.4
   wana: 0.13.8
-lockfileVersion: 5.1
+lockfileVersion: 5.2
 packages:
   /@alloc/is-dev/1.2.2:
     dev: false
@@ -26,12 +26,6 @@ packages:
     dev: false
     resolution:
       integrity: sha512-plcc+hbExy3McchJCEQG3knOsuh3HH+Prx1P6cLIkET/0dLuQDEnrT+s27Axgc9bqfsmNUNHfscgMUdBpC9xfg==
-  /fauna-lite/0.1.1:
-    dependencies:
-      '@alloc/is': 2.1.2
-    dev: false
-    resolution:
-      integrity: sha512-j7wFWu1c3qsWcpbcng+Qb3stMaK6j3PiT1PKg7X4mM9kPl0Go16wAdEcYcNNY679VaVRgsg+SuacNVL/DJYEyg==
   /queue-microtask/1.2.2:
     dev: false
     resolution:
@@ -72,8 +66,8 @@ packages:
 specifiers:
   '@alloc/is': ^2.1.1
   '@alloc/types': ^1.2.6
-  '@ople/agent': 'link:../agent'
-  '@ople/nason': 'link:../nason'
+  '@ople/agent': link:../agent
+  '@ople/nason': link:../nason
   fauna-lite: ^0.1.1
   ts-deferred: ^1.0.4
   wana: ^0.13.1

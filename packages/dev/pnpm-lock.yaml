@@ -1,6 +1,6 @@
 dependencies:
   '@cush/exec': 1.6.4
-  '@ople/config': 'link:../config'
+  '@ople/config': link:../config
   ansi-italic: 0.1.1
   cac: 6.7.1
   chokidar: 3.5.1
@@ -18,11 +18,10 @@ dependencies:
 devDependencies:
   '@types/debounce': 1.2.0
   '@types/dedent': 0.7.0
-  '@types/node': 14.14.25
+  '@types/node': 14.14.27
   '@types/prettier': 2.2.0
   '@types/source-map-support': 0.5.3
-  typescript: 'link:../../node_modules/typescript'
-lockfileVersion: 5.1
+lockfileVersion: 5.2
 packages:
   /@alloc/is/2.1.2:
     dev: false
@@ -91,10 +90,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-tHq6qdbT9U1IRSGf14CL0pUlULksvY9OZ+5eEgl1N7t+OA3tGvNpxJCzuKQlsNgCVwbAs670L1vcVQi8j9HjnA==
-  /@types/node/14.14.25:
+  /@types/node/14.14.27:
     dev: true
     resolution:
-      integrity: sha512-EPpXLOVqDvisVxtlbvzfyqSsFeQxltFbluZNRndIb8tr9KiBnYNLzrc1N3pyKUCww2RNrfHDViqDWWE1LCJQtQ==
+      integrity: sha512-Ecfmo4YDQPwuqTCl1yBxLV5ihKfRlkBmzUEDcfIRvDxOTGQEeikr317Ln7Gcv0tjA8dVgKI3rniqW2G1OyKDng==
   /@types/prettier/2.2.0:
     dev: true
     resolution:
@@ -432,6 +431,8 @@ packages:
     dev: false
     engines:
       node: '>=6.0'
+    peerDependencies:
+      supports-color: '*'
     peerDependenciesMeta:
       supports-color:
         optional: true
@@ -1223,7 +1224,7 @@ packages:
     resolution:
       integrity: sha1-jcrkcOHIirwtYA//Sndihtp15jc=
   /resolve-url/0.2.1:
-    deprecated: 'https://github.com/lydell/resolve-url#deprecated'
+    deprecated: https://github.com/lydell/resolve-url#deprecated
     dev: false
     resolution:
       integrity: sha1-LGN/53yJOv0qZj/iGqkIAGjiBSo=
@@ -1516,7 +1517,7 @@ packages:
     resolution:
       integrity: sha512-aZwGpamFO61g3OlfT7OQCHqhGnW43ieH9WZeP7QxN/G/jS4jfqUkZxoryvJgVPEcrl5NL/ggHsSmLMHuH64Lhg==
   /urix/0.1.0:
-    deprecated: 'Please see https://github.com/lydell/urix#deprecated'
+    deprecated: Please see https://github.com/lydell/urix#deprecated
     dev: false
     resolution:
       integrity: sha1-2pN/emLiH+wf0Y1Js1wpNQZ6bHI=
@@ -1536,7 +1537,7 @@ packages:
       integrity: sha1-tSQ9jz7BqjXxNkYFvA0QNuMKtp8=
 specifiers:
   '@cush/exec': ^1.6.4
-  '@ople/config': 'link:../config'
+  '@ople/config': link:../config
   '@types/debounce': ^1.2.0
   '@types/dedent': ^0.7.0
   '@types/node': ^14.14.25
@@ -1548,12 +1549,11 @@ specifiers:
   debounce: ^1.2.0
   dedent: ^0.7.0
   enquirer: ^2.3.6
-  is: 'npm:@alloc/is@^2.1.1'
+  is: npm:@alloc/is@^2.1.1
   lodge: ^0.1.7
   saxon: ^0.2.10
   smart-restart: ^2.4.0
   source-map-support: ^0.5.19
   sucrase: ^3.15.0
   ts-morph: ^7.1.2
-  typescript: 'link:../../node_modules/typescript'
   uid: ^1.0.0

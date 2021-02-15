@@ -1,87 +1,59 @@
-import { $O, ChangeObserver } from 'wana'
-import { Record } from '../Record'
-import { $R, $U } from '../symbols'
+import { ChangeObserver } from 'wana'
+import { getModified, Record } from '../Record'
 import { expectRecord } from '../context'
 import { OpleEffect } from '../types'
 import { setEffect } from '../Ople'
+import { Listener } from '../Signal'
+import { observe } from '../utils/observe'
 
-// Effects for automatic patch queueing.
-const autoQueues = new WeakMap<Record, OpleEffect>()
 // Effects for automatic saving.
 const autoSaves = new WeakMap<Record, OpleEffect>()
 
 export const isAutoSaved = (record: any) => autoSaves.has(record)
 
-/** Push local changes, and pull remote changes */
+/**
+ * Call the `save` method of the current `Record` context every time
+ * a new property is modified, but only after its `ref` prop exists.
+ * Auto-saving can be disabled by passing `false`.
+ */
 export function autoSave(enabled = true) {
   const self = expectRecord()
 
-  let queueEffect = autoQueues.get(self)
   let saveEffect = autoSaves.get(self)
 
   if (enabled) {
     if (saveEffect) return
-    const batch = self['_batch']
-
-    let saving = self[$R]
-      ? null
-      : self.save().then(
-          () => {
-            // TODO: bail if `autoSave(false)` was called
-            self[$U]!.forEach(batch.push)
-            self[$U] = saving = null
-          },
-          err => {
-            // TODO: handle failed save
-            console.error(err)
-          }
-        )
-
-    if (!saving) {
-      self[$U]!.forEach(batch.push)
-      self[$U] = null
+    if (self.ref) {
+      autoSaves.set(self, saveOnChange(self))
+    } else {
+      self.onSave(saving => {
+        saving.then(() => autoSaves.set(self, saveOnChange(self)))
+      })
     }
-
-    let observer: ChangeObserver
-    autoSaves.set(
-      self,
-      (saveEffect = active => {
-        if (active) {
-          observer = self[$O].observe($O, change => {
-            if (saving) {
-              self[$U]!.push(change)
-            } else {
-              batch.push(change)
-            }
-          })
-        } else {
-          observer.dispose()
-        }
-      })
-    )
-  } else {
-    if (queueEffect) return
-    self[$U] = []
-
-    let observer: ChangeObserver
-    autoQueues.set(
-      self,
-      (queueEffect = active => {
-        if (active) {
-          observer = self[$O].observe($O, change => {
-            self[$U]!.push(change)
-          })
-        } else {
-          observer.dispose()
-        }
-      })
-    )
   }
 
-  if (queueEffect) {
-    setEffect(queueEffect, enabled ? null : queueEffect)
-  }
   if (saveEffect) {
     setEffect(saveEffect, enabled ? saveEffect : null)
+  }
+}
+
+function saveOnChange(self: Record) {
+  let saveListener: Listener | undefined
+  let observer: ChangeObserver
+  return (active: boolean) => {
+    if (active) {
+      saveListener = self.onSave(savePromise => {
+        savePromise.then(() => {
+          saveListener && self.isModified && self.save()
+        })
+      })
+      observer = observe(getModified(self), () => {
+        self.ref && self.save()
+      })
+    } else {
+      observer.dispose()
+      saveListener!.dispose()
+      saveListener = void 0
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { makeAgent, AgentConfig } from '@ople/agent'
+import { makeAgent, Agent, AgentConfig } from '@ople/agent'
 import {
   makeBatchEncoder,
   makeReplyDecoder,
@@ -17,6 +17,7 @@ export interface Client {
     get<T extends Record>(ref: Ref<T>): T | null
   }
   get<T extends Record>(ref: Ref<T>, force?: boolean): Promise<T>
+  call: Agent['call']
 }
 
 export function makeClientFactory<
@@ -44,7 +45,7 @@ export function makeClientFactory<
 
     const coding: Coding<Record> = {
       Record,
-      packRecord: record => record.ref!,
+      packRecord: (record: Record) => record.ref,
       unpackRecord([ref, ts, data]: PackedRecord) {
         let record = updateRecord(ref, ts, data)
         if (!record) {
@@ -85,6 +86,7 @@ export function makeClientFactory<
         const getting = (force || !record) && agent.call('@get', [ref])
         return record || getting
       },
+      call: agent.call,
     }
 
     return client

@@ -36,6 +36,7 @@ export function createHandler(methods: Methods) {
       }
       if (input) {
         const events = grip.decodeWebSocketEvents(input)
+        console.log(events)
         if (events.length) {
           let ctx: MethodContext | undefined
           let opened = false
