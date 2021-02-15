@@ -27,7 +27,7 @@ export interface Record {
   onDelete: Signal<[deleting: Promise<void>]>
 }
 
-let isUpdating = false
+let isPatching = false
 const modifiedMap = makeDisposableMap()
 const pendingSaves = new WeakMap<Record, Promise<void>>()
 const queuedSaves = new Set<Record>() // TODO
@@ -40,10 +40,11 @@ export class Record extends Ople {
    * Records created by the current user have no ref until they
    * are saved for the first time.
    */
-  readonly ref: Ref | null = null
+  readonly ref: Ref | null
 
-  constructor(lastModified?: FaunaTime) {
+  constructor(ref?: Ref, lastModified?: FaunaTime) {
     super()
+    this.ref = ref || null
 
     const modified = o(new Set())
     setHidden(this, '__modified', modified)
@@ -53,7 +54,7 @@ export class Record extends Ople {
     // the most recent `save` command.
     modifiedMap.set(this, () =>
       observe(this as any, change => {
-        isUpdating || modified.add(change.key)
+        isPatching || modified.add(change.key)
       })
     )
   }
@@ -131,10 +132,11 @@ export class Record extends Ople {
 }
 
 /** Apply changes while leaving `isModified` intact */
-export function updateRecord(record: Record, patch: object) {
-  isUpdating = true
+export function applyPatch(record: Record, patch: object) {
+  isPatching = true
   Object.assign(record, patch)
-  isUpdating = false
+  isPatching = false
+  return record
 }
 
 /** @internal */

@@ -6,9 +6,10 @@ import {
   PackedRecord,
 } from '@ople/nason'
 import { FaunaTime, Ref } from 'fauna-lite'
-import { Record, getModified, getLastModified } from './Record'
+import { Record, getModified, getLastModified, applyPatch } from './Record'
 import { Collection } from './Collection'
 import { collectionByRef } from './Ref'
+import { prepare } from './prepare'
 
 export { ws, http } from '@ople/agent'
 
@@ -18,46 +19,52 @@ export interface Client {
   }
   get<T extends Record>(ref: Ref<T>, force?: boolean): Promise<T>
   call: Agent['call']
+  collection(name: string): Collection
 }
 
-export function makeClientFactory<
-  Collections extends { [name: string]: typeof Record },
-  Methods extends { [method: string]: (...args: any[]) => any }
->(collectionTypes: Collections) {
-  return function makeClient(config: ClientConfig): Client {
+export function makeClientFactory<T extends Client>(collectionTypes: {
+  [name: string]: typeof Record
+}) {
+  return function makeClient(config: ClientConfig): T {
+    const records: RecordCache = {}
     const collections: { [name: string]: Collection } = {}
-    const cache: RecordCache = {}
-
-    function getCollection(ref: Ref) {
-      return (
-        collections[ref.id] ||
-        (collections[ref.id] = new Collection(ref, client))
-      )
-    }
+    const getCollection = (name: string) =>
+      collections[name] ||
+      (collections[name] = new Collection(
+        new Ref(name, Ref.Native.collections),
+        client
+      ))
 
     function updateRecord(ref: Ref, ts: FaunaTime, data: any) {
-      const record = cache[ref as any]
+      const record = records[ref as any]
       if (record) {
         data.__lastModified = ts
-        return Object.assign(record, data) as Record
+        return applyPatch(record, data)
       }
     }
 
     const coding: Coding<Record> = {
       Record,
-      packRecord: (record: Record) => record.ref,
+      packRecord: (record: Record) => record.ref!,
       unpackRecord([ref, ts, data]: PackedRecord) {
         let record = updateRecord(ref, ts, data)
         if (!record) {
-          cache[ref as any] = record = new Record(ts)
-          collectionByRef.set(ref, getCollection(ref.collection!))
-          Object.setPrototypeOf(record, collectionTypes[ref.collection!.id])
+          const collection = ref.collection!.id
+          const recordType = collectionTypes[collection]
+          collectionByRef.set(ref, getCollection(collection))
+
+          records[ref as any] = record = new Record(ref, ts)
+          Object.setPrototypeOf(record, recordType)
           Object.assign(record, data)
+
+          // TODO: call `prepare` for each superclass
+          prepare(record, recordType)
         }
         return record
       },
     }
 
+    // The agent handles remote communication.
     const agent = makeAgent<Record>({
       ...config,
       encodeBatch: makeBatchEncoder(coding),
@@ -70,26 +77,27 @@ export function makeClientFactory<
       },
     })
 
+    // Syntax sugar for backend calls.
     const methods = new Proxy(Object.prototype, {
       get(_, method: string) {
         return (...args: any[]) => agent.call(method, args)
       },
     })
 
-    const client: Client & { __proto__: any } = {
-      __proto__: methods,
+    const client: Client = {
       cache: {
-        get: (ref): any => cache[ref as any] || null,
+        get: (ref): any => records[ref as any] || null,
       },
       async get(ref, force): Promise<any> {
-        const record = cache[ref as any]
+        const record = records[ref as any]
         const getting = (force || !record) && agent.call('@get', [ref])
         return record || getting
       },
       call: agent.call,
+      collection: getCollection,
     }
 
-    return client
+    return Object.setPrototypeOf(client, methods)
   }
 }
 

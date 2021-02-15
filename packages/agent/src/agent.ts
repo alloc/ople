@@ -157,7 +157,7 @@ export function makeAgent<Record extends { ref: Ref | null }>({
       const modified = getModified(record)
       if (modified.size) {
         patches[record.ref as any] = patch
-        modified.forEach((_, key) => {
+        modified.forEach(key => {
           patch[key] = record[key as keyof Record]
         })
         modified.clear()
@@ -236,7 +236,7 @@ interface PrivateConfig<Record> extends AgentConfig {
   /** Update the local version of a `Record` object. */
   updateRecord: (ref: Ref, ts: any, data: any) => void
   /** Get unsaved changes to a `Record` object. */
-  getModified: (record: Record) => Map<string, unknown>
+  getModified: (record: Record) => Set<string>
   /** Get timestamp of the last saved change. */
   getLastModified: (record: Record) => number
   /** Receive signals from the backend. */
