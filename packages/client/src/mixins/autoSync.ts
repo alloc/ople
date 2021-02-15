@@ -6,13 +6,15 @@ import { makeDisposableMap } from '../utils/DisposableMap'
 const autoSyncs = makeDisposableMap()
 
 /** Pull remote changes when they occur. Local changes are ignored. */
-export function autoSync(enabled = true) {
+export function autoSync(enabled = true, syncInterval = -1) {
   const self = expectRecord()
 
   if (enabled) {
+    // TODO: use syncInterval
+    if (autoSyncs.has(self)) return
     autoSyncs.set(self, () => {
-      let disposed = false
-      let saveListener: Listener
+      let active = true
+      let saveListener: Listener | undefined
       let { ref } = self
 
       if (ref) {
@@ -22,23 +24,22 @@ export function autoSync(enabled = true) {
         saveListener = self.onSave(savePromise => {
           savePromise.then(() => {
             ref = self.ref!
-            if (saveListener) {
+            if (active) {
               const { client } = collectionByRef.get(ref)!
               client.call('@watch', [self])
             }
           })
-          return true
+          return false
         })
       }
 
       return () => {
-        disposed = true
+        active = false
+        saveListener?.dispose()
         if (ref) {
           const { client } = collectionByRef.get(ref)!
           client.call('@unwatch', [self])
         }
-        saveListener?.dispose()
-        saveListener = void 0
       }
     })
   } else {

@@ -10,8 +10,8 @@ import { startPolling, endPolling } from 'ople'
 // Check the record every 30 seconds.
 startPolling(record, 30)
 
-// Manual pulls reset the polling timer.
-record.pull()
+// Manual sync resets the polling timer.
+record.sync()
 
 // Stop polling for changes to this record.
 endPolling(record)
