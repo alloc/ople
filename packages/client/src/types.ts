@@ -1,5 +1,5 @@
 import { Pick, UnknownProps } from '@alloc/types'
-import { Ople } from './Ople'
+import { Ople, ReadonlyOple } from './Ople'
 import { Record } from './Record'
 import { Signal } from './Signal'
 
@@ -13,9 +13,6 @@ export type OpleEffect = (active: boolean) => void
 /** An `Ople` object with added state. */
 export type OpleObject<State extends object = UnknownProps> = ReadonlyOple &
   State & { set: OpleSetFn<State> }
-
-/** An `Ople` object without its `set` method. */
-export interface ReadonlyOple extends Omit<Ople, 'set'> {}
 
 /** An `Ople` object with immutable state. */
 export type ReadonlyOpleObject<

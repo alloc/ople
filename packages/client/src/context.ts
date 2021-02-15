@@ -8,7 +8,7 @@ let current: any = null
 
 /** Use `state` as the Ople context until `effect` returns */
 export function withOple<In extends any[], Out>(
-  state: Ople,
+  state: Ople | null,
   effect: (...args: In) => Out,
   args?: In
 ): Out {
@@ -24,9 +24,11 @@ export function withOple<In extends any[], Out>(
 export const getOple = <State extends object = UnknownProps>() =>
   current as OpleObject<State> | null
 
-export function expectOple<State extends object = UnknownProps>() {
+export function expectOple(): OpleObject
+export function expectOple<State extends object>(): OpleObject<State>
+export function expectOple() {
   if (current) {
-    return current as OpleObject<State>
+    return current
   }
   throw Error('Expected an Ople context')
 }

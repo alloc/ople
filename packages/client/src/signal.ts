@@ -13,12 +13,12 @@ export function emit<T>(signal: Signal<T>, ...args: SignalArgs<T>) {
   const cacheKey = makeCacheKey(signal)
   const cache: Set<Listener> = signal.target[cacheKey]
   if (cache && cache.size) {
-    for (const listener of cache) {
-      if (listener.ople) {
-        withOple(listener.ople, listener, args)
-      } else {
-        listener(...args)
-      }
+    let listener: Listener
+    function recv() {
+      listener(...args) !== false || listener.dispose()
+    }
+    for (listener of Array.from(cache)) {
+      withOple(listener.ople || null, recv)
     }
   }
 }
@@ -104,7 +104,7 @@ interface Handler<T = any> {
 
 function disposeListener(this: Listener) {
   if (this.ople) {
-    withOple(this.ople, setEffect, [this, null])
+    setEffect(this, null, this.ople)
   } else {
     const cacheKey = makeCacheKey(this.signal)
     this.signal.target[cacheKey].delete(this)

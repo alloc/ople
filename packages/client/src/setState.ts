@@ -9,12 +9,10 @@ const { defineProperty } = Object
 
 const getKeyRE = /^get[A-Z]/
 
-export function setState(state: object) {
-  const parent = expectOple()
-
+export function setState(state: object, context = expectOple()) {
   const descs = Object.getOwnPropertyDescriptors(state)
   for (const key in descs) {
-    const prevDesc = Object.getOwnPropertyDescriptor(parent, key)
+    const prevDesc = Object.getOwnPropertyDescriptor(context, key)
     const prevGet = prevDesc && prevDesc.get
     if (isDerived(prevGet)) {
       prevGet.dispose()
@@ -23,18 +21,18 @@ export function setState(state: object) {
     if (is.string(key) && !getKeyRE.test(key)) {
       const { value, get, set } = desc
       if (set) {
-        desc.set = bindAction(parent, set)
+        desc.set = bindAction(context, set)
       } else if (get) {
-        const memo = (desc.get = o(get.bind(parent)))
+        const memo = (desc.get = o(get.bind(context)))
         attachAuto(memo.auto)
       } else if (is.function(value) && !is.asyncFunction(value)) {
-        desc.value = bindAction(parent, value)
+        desc.value = bindAction(context, value)
       }
     }
-    defineProperty(parent, key, desc)
+    defineProperty(context, key, desc)
   }
 }
 
 /** Disable implicit observation and set the `Ople` context. */
-const bindAction = (parent: OpleObject, fn: AnyFn): AnyFn =>
-  no((...args) => withOple(parent, fn, args))
+const bindAction = (context: OpleObject, fn: AnyFn): AnyFn =>
+  no((...args) => withOple(context, fn, args))

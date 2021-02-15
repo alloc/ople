@@ -1,5 +1,6 @@
-import { OpleEffect } from '../types'
+import { is } from '@alloc/is'
 import { Ople, setEffect } from '../Ople'
+import { OpleEffect } from '../types'
 import { withOple } from '../context'
 
 interface Disposable {
@@ -21,11 +22,15 @@ interface Disposable {
 export function makeDisposableMap() {
   const effects = new WeakMap<Ople, OpleEffect>()
   return {
-    set(owner: Ople, init: () => Disposable) {
-      let instance: Disposable
+    set(owner: Ople, init: () => Disposable | (() => void)) {
+      let instance: Disposable | (() => void)
 
       const effect: OpleEffect = active =>
-        active ? (instance = init()) : instance.dispose()
+        active
+          ? (instance = init())
+          : is.function(instance)
+          ? instance()
+          : instance.dispose()
 
       effects.set(owner, effect)
       withOple(owner, () => setEffect(effect, effect))

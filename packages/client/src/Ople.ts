@@ -1,28 +1,33 @@
-import { $O, no, o, Observable } from 'wana'
-import { withOple, expectOple } from './context'
-import { OpleEffect, OpleObject } from './types'
+import { $O, o, Observable } from 'wana'
+import { expectOple } from './context'
+import { OpleEffect } from './types'
 import { setHidden } from './common'
 import { setState } from './setState'
 import { $effects, $disposed } from './symbols'
 import { signalTraps } from './Signal'
 
-/** The base class of objects created by `createOple` */
-export class Ople {
+export abstract class ReadonlyOple {
   protected [$O]: Observable
   protected [$effects]: Map<object, OpleEffect>
   protected [$disposed]: boolean
 
   constructor() {
-    return reviveOple(this)
+    setHidden(this, $effects, new Map())
+    setHidden(this, $disposed, false)
+    return o(this)
   }
 
+  abstract dispose(): void
+}
+
+export class Ople extends ReadonlyOple {
   /**
    * Use the properties defined in the given `state` object to update
    * this object's values. Like `Object.assign` but with support for
    * memoized getters (via `get` syntax).
    */
   set(state: object) {
-    withOple(this, setState, [state])
+    setState(state, this)
   }
 
   /** Disable all effects managed by this object. */
@@ -37,21 +42,18 @@ export class Ople {
 // Bind signals to Ople instances on-demand.
 Object.setPrototypeOf(Ople.prototype, new Proxy({}, signalTraps))
 
-export function reviveOple(self: Ople) {
-  setHidden(self, $effects, new Map())
-  setHidden(self, $disposed, false)
-  return o(self)
-}
-
 /**
  * Tell the active `Ople` context to update the `effect` associated
  * with the given `owner` object. The `owner` is retained until its
  * `effect` is set to null. The `effect` will be called immediately
  * if the `Ople` context is not disposed.
  */
-export function setEffect(owner: object, effect: OpleEffect | null) {
-  const ople = no<OpleObject>(expectOple())
-  const effects = ople[$effects]
+export function setEffect(
+  owner: object,
+  effect: OpleEffect | null,
+  context: Ople = expectOple()
+) {
+  const effects = context[$effects]
   const prevEffect = effects.get(owner)
   if (prevEffect && effect) {
     throw Error('Cannot overwrite an existing effect')
@@ -63,7 +65,7 @@ export function setEffect(owner: object, effect: OpleEffect | null) {
     effects.delete(owner)
     effect = prevEffect
   }
-  if (!ople[$disposed] && effect) {
+  if (!context[$disposed] && effect) {
     effect(active)
   }
 }

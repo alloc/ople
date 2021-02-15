@@ -22,7 +22,7 @@ export interface Client {
   collection(name: string): Collection
 }
 
-export function makeClientFactory<T extends Client>(collectionTypes: {
+export function defineClient<T extends Client>(collectionTypes: {
   [name: string]: typeof Record
 }) {
   return function makeClient(config: ClientConfig): T {
