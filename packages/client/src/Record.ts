@@ -2,10 +2,9 @@ import { o, Change } from 'wana'
 import { FaunaTime, Ref } from 'fauna-lite'
 import { makeDisposableMap } from './utils/DisposableMap'
 import { observe } from './utils/observe'
-import { isEmptyObject, setHidden } from './common'
+import { setHidden } from './common'
 import { Collection } from './Collection'
 import { Ople } from './Ople'
-import { collectionByRef } from './Ref'
 import { emit, Signal } from './Signal'
 
 export type RecordEvents = {
@@ -75,8 +74,8 @@ export class Record extends Ople {
     const ref = this.ref
     if (ref) {
       if (!collection) {
-        collection = collectionByRef.get(ref)!
-      } else if (collectionByRef.get(ref) !== collection) {
+        collection = getCollection(this)
+      } else if (collection != getCollection(this)) {
         throw Error('Records can only be saved to one collection')
       }
     } else if (!collection) {
@@ -87,6 +86,8 @@ export class Record extends Ople {
       // TODO: if saving already, make sure the batch is not flushed. otherwise, we need to save again.
       if (!saving) {
         const { client } = collection
+        setHidden(this, '__collection', collection)
+
         // TODO: what if deleted before finished saving?
         saving = client.call(ref ? '@push' : '@create', [this])
         emit(this.onSave, saving)
@@ -103,8 +104,11 @@ export class Record extends Ople {
    * By using the `autoSync` mixin, you can avoid calling this.
    */
   sync(): Promise<void> {
-    // TODO
-    return null as any
+    const { ref } = this
+    if (!ref) {
+      throw Error('Record must be saved first')
+    }
+    const { client } = collectionByRef.get(ref)!
   }
 
   /**
@@ -137,6 +141,11 @@ export function applyPatch(record: Record, patch: object) {
   Object.assign(record, patch)
   isPatching = false
   return record
+}
+
+/** @internal */
+export function getCollection(record: Record): Collection {
+  return (record as any).__collection
 }
 
 /** @internal */

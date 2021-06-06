@@ -10,10 +10,11 @@ import { Record, getModified, getLastModified, applyPatch } from './Record'
 import { Collection } from './Collection'
 import { collectionByRef } from './Ref'
 import { prepare } from './prepare'
+import { setHidden } from './common'
 
 export { ws, http } from '@ople/agent'
 
-export interface Client {
+export interface OpleClient {
   readonly cache: {
     get<T extends Record>(ref: Ref<T>): T | null
   }
@@ -22,7 +23,7 @@ export interface Client {
   collection(name: string): Collection
 }
 
-export function defineClient<T extends Client>(collectionTypes: {
+export function defineClient<T extends OpleClient>(collectionTypes: {
   [name: string]: typeof Record
 }) {
   return function makeClient(config: ClientConfig): T {
@@ -51,11 +52,11 @@ export function defineClient<T extends Client>(collectionTypes: {
         if (!record) {
           const collection = ref.collection!.id
           const recordType = collectionTypes[collection]
-          collectionByRef.set(ref, getCollection(collection))
 
           records[ref as any] = record = new Record(ref, ts)
           Object.setPrototypeOf(record, recordType)
           Object.assign(record, data)
+          setHidden(record, '__collection', collection)
 
           // TODO: call `prepare` for each superclass
           prepare(record, recordType)
@@ -84,7 +85,7 @@ export function defineClient<T extends Client>(collectionTypes: {
       },
     })
 
-    const client: Client = {
+    const client: OpleClient = {
       cache: {
         get: (ref): any => records[ref as any] || null,
       },

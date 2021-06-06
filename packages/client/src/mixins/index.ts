@@ -1,2 +1,2 @@
-export * from './autoSave'
-export * from './autoSync'
+export { autoSave } from './autoSave'
+export { autoSync } from './autoSync'

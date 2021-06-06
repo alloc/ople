@@ -34,6 +34,7 @@ export function makeAgent<Record extends { ref: Ref | null }>({
   encodeBatch,
   decodeReply,
   updateRecord,
+  getCollection,
   getModified,
   getLastModified,
   onSignal,
@@ -102,7 +103,12 @@ export function makeAgent<Record extends { ref: Ref | null }>({
           ? (batch.patches = getPatches(records))
           : method == '@pull'
           ? getPullMap(records)
-          : Array.from(records, record => record.ref)
+          : Array.from(
+              records,
+              method == '@create'
+                ? record => [record.ref, getCollection(record)]
+                : record => record.ref
+            )
 
       calls.push([method, [payload], ''])
     }
@@ -235,6 +241,8 @@ interface PrivateConfig<Record> extends AgentConfig {
   decodeReply: (bytes: Uint8Array) => [string, any, string?]
   /** Update the local version of a `Record` object. */
   updateRecord: (ref: Ref, ts: any, data: any) => void
+  /** Get the collection of a `Record` object. */
+  getCollection: (record: Record) => Ref
   /** Get unsaved changes to a `Record` object. */
   getModified: (record: Record) => Set<string>
   /** Get timestamp of the last saved change. */
