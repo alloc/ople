@@ -1,68 +1,5 @@
-dependencies:
-  '@alloc/is': 2.1.2
-  '@alloc/types': 1.3.0
-  '@ople/agent': link:../agent
-  '@ople/nason': link:../nason
-  fauna-lite: link:../../vendor/fauna-lite
-  ts-deferred: 1.0.4
-  wana: 0.13.8
-lockfileVersion: 5.2
-packages:
-  /@alloc/is-dev/1.2.2:
-    dev: false
-    resolution:
-      integrity: sha512-EkpBVIODXFYUWxou3xJmRD+bmwYTOYMShG0tswjZ6uv0k7INOzXzp/uyjOdSZ4K9ygp8mNCLOxjCkiRfd7TDYA==
-  /@alloc/is/2.1.2:
-    dev: false
-    resolution:
-      integrity: sha512-/qJui7XCIMEDOzpMPZUXYTy4hHdBKsx6sQnSDIOw8cFW/BL4AqZSt0B/DkB+eW9PDa0zD27zp7jyziQfeaYycQ==
-  /@alloc/types/1.3.0:
-    dev: false
-    resolution:
-      integrity: sha512-mH7LiFiq9g6rX2tvt1LtwsclfG5hnsmtIfkZiauAGrm1AwXhoRS0sF2WrN9JGN7eV5vFXqNaB0eXZ3IvMsVi9g==
-  /@babel/runtime/7.12.5:
-    dependencies:
-      regenerator-runtime: 0.13.7
-    dev: false
-    resolution:
-      integrity: sha512-plcc+hbExy3McchJCEQG3knOsuh3HH+Prx1P6cLIkET/0dLuQDEnrT+s27Axgc9bqfsmNUNHfscgMUdBpC9xfg==
-  /queue-microtask/1.2.2:
-    dev: false
-    resolution:
-      integrity: sha512-dB15eXv3p2jDlbOiNLyMabYg1/sXvppd8DP2J3EOCQ0AkuSXCW2tP7mnVouVLJKgUMY6yP0kcQDVpLCN13h4Xg==
-  /react-layout-effect/1.0.5:
-    dev: false
-    peerDependencies:
-      react: '>=16.8'
-    resolution:
-      integrity: sha512-zdRXHuch+OBHU6bvjTelOGUCM+UDr/iCY+c0wXLEAc+G4/FlcJruD/hUOzlKH5XgO90Y/BUJPNhI/g9kl+VAsA==
-  /regenerator-runtime/0.13.7:
-    dev: false
-    resolution:
-      integrity: sha512-a54FxoJDIr27pgf7IgeQGxmqUNYrcV338lf/6gH456HZ/PhX+5BcwHXG9ajESmwe6WRO0tAzRUrRmNONWgkrew==
-  /ts-deferred/1.0.4:
-    dev: false
-    resolution:
-      integrity: sha1-WBReuu71uPKikLjOw9Bgg5+Uicc=
-  /use-memo-one/1.1.2:
-    dev: false
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0
-    resolution:
-      integrity: sha512-u2qFKtxLsia/r8qG0ZKkbytbztzRb317XCkT7yP8wxL0tZ/CzK2G+WWie5vWvpyeP7+YoPIwbJoIHJ4Ba4k0oQ==
-  /wana/0.13.8:
-    dependencies:
-      '@alloc/is': 2.1.2
-      '@alloc/is-dev': 1.2.2
-      '@babel/runtime': 7.12.5
-      queue-microtask: 1.2.2
-      react-layout-effect: 1.0.5
-      use-memo-one: 1.1.2
-    dev: false
-    peerDependencies:
-      react: '>=16.9'
-    resolution:
-      integrity: sha512-MpkMaguxM+sKRiEapk+05U+hfIyIVYTiuC9ty7afEjKTozH958G7h86PX7niD9ysO2pzLOF+07fd5PKBmkx3Lw==
+lockfileVersion: 5.3
+
 specifiers:
   '@alloc/is': ^2.1.1
   '@alloc/types': ^1.2.6
@@ -71,3 +8,75 @@ specifiers:
   fauna-lite: ^0.1.1
   ts-deferred: ^1.0.4
   wana: ^0.13.1
+
+dependencies:
+  '@alloc/is': 2.1.2
+  '@alloc/types': 1.3.0
+  '@ople/agent': link:../agent
+  '@ople/nason': link:../nason
+  fauna-lite: 0.1.1
+  ts-deferred: 1.0.4
+  wana: 0.13.8
+
+packages:
+
+  /@alloc/is-dev/1.2.2:
+    resolution: {integrity: sha512-EkpBVIODXFYUWxou3xJmRD+bmwYTOYMShG0tswjZ6uv0k7INOzXzp/uyjOdSZ4K9ygp8mNCLOxjCkiRfd7TDYA==}
+    dev: false
+
+  /@alloc/is/2.1.2:
+    resolution: {integrity: sha512-/qJui7XCIMEDOzpMPZUXYTy4hHdBKsx6sQnSDIOw8cFW/BL4AqZSt0B/DkB+eW9PDa0zD27zp7jyziQfeaYycQ==}
+    dev: false
+
+  /@alloc/types/1.3.0:
+    resolution: {integrity: sha512-mH7LiFiq9g6rX2tvt1LtwsclfG5hnsmtIfkZiauAGrm1AwXhoRS0sF2WrN9JGN7eV5vFXqNaB0eXZ3IvMsVi9g==}
+    dev: false
+
+  /@babel/runtime/7.12.5:
+    resolution: {integrity: sha512-plcc+hbExy3McchJCEQG3knOsuh3HH+Prx1P6cLIkET/0dLuQDEnrT+s27Axgc9bqfsmNUNHfscgMUdBpC9xfg==}
+    dependencies:
+      regenerator-runtime: 0.13.7
+    dev: false
+
+  /fauna-lite/0.1.1:
+    resolution: {integrity: sha512-j7wFWu1c3qsWcpbcng+Qb3stMaK6j3PiT1PKg7X4mM9kPl0Go16wAdEcYcNNY679VaVRgsg+SuacNVL/DJYEyg==}
+    dependencies:
+      '@alloc/is': 2.1.2
+    dev: false
+
+  /queue-microtask/1.2.2:
+    resolution: {integrity: sha512-dB15eXv3p2jDlbOiNLyMabYg1/sXvppd8DP2J3EOCQ0AkuSXCW2tP7mnVouVLJKgUMY6yP0kcQDVpLCN13h4Xg==}
+    dev: false
+
+  /react-layout-effect/1.0.5:
+    resolution: {integrity: sha512-zdRXHuch+OBHU6bvjTelOGUCM+UDr/iCY+c0wXLEAc+G4/FlcJruD/hUOzlKH5XgO90Y/BUJPNhI/g9kl+VAsA==}
+    peerDependencies:
+      react: '>=16.8'
+    dev: false
+
+  /regenerator-runtime/0.13.7:
+    resolution: {integrity: sha512-a54FxoJDIr27pgf7IgeQGxmqUNYrcV338lf/6gH456HZ/PhX+5BcwHXG9ajESmwe6WRO0tAzRUrRmNONWgkrew==}
+    dev: false
+
+  /ts-deferred/1.0.4:
+    resolution: {integrity: sha1-WBReuu71uPKikLjOw9Bgg5+Uicc=}
+    dev: false
+
+  /use-memo-one/1.1.2:
+    resolution: {integrity: sha512-u2qFKtxLsia/r8qG0ZKkbytbztzRb317XCkT7yP8wxL0tZ/CzK2G+WWie5vWvpyeP7+YoPIwbJoIHJ4Ba4k0oQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0
+    dev: false
+
+  /wana/0.13.8:
+    resolution: {integrity: sha512-MpkMaguxM+sKRiEapk+05U+hfIyIVYTiuC9ty7afEjKTozH958G7h86PX7niD9ysO2pzLOF+07fd5PKBmkx3Lw==}
+    peerDependencies:
+      react: '>=16.9'
+    dependencies:
+      '@alloc/is': 2.1.2
+      '@alloc/is-dev': 1.2.2
+      '@babel/runtime': 7.12.5
+      queue-microtask: 1.2.2
+      react-layout-effect: 1.0.5
+      use-memo-one: 1.1.2
+    dev: false

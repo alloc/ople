@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
-  "typings": "dist/index.d.ts",
+  "typings": "src/v2/types.ts",
   "prettier": "@alloc/prettier-config",
   "dependencies": {
     "@alloc/is": "^2.1.1",

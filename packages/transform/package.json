@@ -1,0 +1,7 @@
+{
+  "name": "@ople/transform",
+  "version": "0.0.0",
+  "dependencies": {
+    "@ople/backend": "*"
+  }
+}

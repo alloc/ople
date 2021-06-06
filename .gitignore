@@ -1,4 +1,6 @@
 dist/
 vendor/
 node_modules/
+packages/fauna-lite
+packages/faunadb
 sandbox/
