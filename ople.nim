@@ -8,13 +8,13 @@ var db {.noinit.}: Database
 
 init proc(exports: Module) =
 
-  var collections: Table[string, Collection]
-  var snapshots: Table[pointer, Snapshot]
-  var transactions: Table[pointer, Transaction]
-
   exports.registerFn(1, "open"):
     db = openDatabase("ople_data")
     return undefined()
+
+  var collections: Table[string, Collection]
+  var snapshots = initTable[pointer, Snapshot]()
+  var transactions = initTable[pointer, Transaction]()
 
   proc toCollection(this: napi_value): Collection =
     let self = this["_collection"]
@@ -45,15 +45,15 @@ init proc(exports: Module) =
     handle["__proto__"] = SnapshotMethods
     return handle
 
-  fn(0, beginTransaction):
-    let t = this.toCollection.beginTransaction()
-    let handle = exports.create { "_transaction": createExternal(addr t) }
-    handle["__proto__"] = TransactionMethods
-    return handle
+  # fn(0, beginTransaction):
+  #   let t = this.toCollection.beginTransaction()
+  #   let handle = exports.create { "_transaction": createExternal(addr t) }
+  #   handle["__proto__"] = TransactionMethods
+  #   return handle
 
   let CollectionMethods = exports.create {
     "beginSnapshot": beginSnapshot,
-    "beginTransaction": beginTransaction,
+    # "beginTransaction": beginTransaction,
   }
 
   proc toJS(node: CborNode): napi_value =
@@ -167,8 +167,15 @@ init proc(exports: Module) =
 
   exports.registerFn(1, "createCollection"):
     let name = args[0].getStr
-    let coll = db.createCollection(name)
-    let handle = exports.create { "_collection": createExternal(addr coll) }
+    let collection = db.createCollection(name)
+    collections[name] = collection
+
+    let collectionRef = createExternal(
+      addr collection,
+      proc () = collections.del(name)
+    )
+
+    let handle = exports.create { "_collection": collectionRef }
     handle["__proto__"] = CollectionMethods
     return handle
 
