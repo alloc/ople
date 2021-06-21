@@ -1,4 +1,7 @@
 dist
+build
+binding.gyp
+nimcache
 nimbledeps
 node_modules
 ople_data
