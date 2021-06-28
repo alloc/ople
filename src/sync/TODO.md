@@ -1,0 +1,12 @@
+- Unsupported queries:
+  - Events
+  - Singleton
+- Unsupported types:
+  - Bytes
+  - Credentials
+  - Database
+  - Function
+  - Index
+  - Key
+  - Role
+  - Token
