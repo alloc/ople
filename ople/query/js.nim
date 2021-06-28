@@ -1,5 +1,5 @@
 import napibindings
-import ../query
+import ./types
 
 proc toJS*(query: OpleCall, `env$`: napi_env): any =
   query.callee
