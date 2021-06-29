@@ -1,6 +1,5 @@
 dist
-build
-binding.gyp
+src/queryMap.ts
 nimcache
 nimbledeps
 node_modules

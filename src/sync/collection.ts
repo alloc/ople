@@ -9,7 +9,7 @@ import {
   kTransaction,
   snapshots,
   transactions,
-} from '../query'
+} from '../transaction'
 import { now } from '../time'
 import { OpleDocument, OpleDocumentOptions } from './document'
 import { OpleRef, OpleTime } from './values'

@@ -1,11 +1,13 @@
-import { OpleArray, OpleArrayLike, OpleIterable } from './array'
+import { OpleArray } from './array'
+import { OpleRef } from './values'
 
-export interface OplePage<T> extends OpleArrayLike<T>, OpleIterable<T> {
+export interface OplePage<T> {
   readonly data: OpleArray<T>
   readonly after?: OpleCursor
   readonly before?: OpleCursor
-  drop(count: number): this
-  take(count: number): this
+  drop(count: number): OplePage<T>
+  take(count: number): OplePage<T>
 }
 
-export interface OpleCursor {}
+// TODO: support other cursor types
+export type OpleCursor = OpleRef

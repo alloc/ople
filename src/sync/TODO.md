@@ -1,6 +1,7 @@
 - Unsupported queries:
   - Events
   - Singleton
+  - Casefold
 - Unsupported types:
   - Bytes
   - Credentials
