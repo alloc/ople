@@ -9,13 +9,14 @@ export function withSnapshot(query: OpleQuery) {
   if (!reader) {
     throw Error('Must be within `read` callback')
   }
-  return reader.execSync(JSON.stringify(query))
+  const result = reader.execSync(JSON.stringify(query))
 }
 
 export function withTransaction(query: OpleQuery) {
   if (!transaction) {
     throw Error('Must be within `write` callback')
   }
+  const result = transaction.execSync(JSON.stringify(query))
 }
 
 /**

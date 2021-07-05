@@ -1,26 +1,26 @@
 import tables
-import ./data
+import ./query
 import ./error
 
-type OpleFunction* = proc (
-  arguments: seq[OpleData]
-): OpleData
+type
+  OpleFunction* = proc (
+    query: OpleQuery,
+    arguments: seq[OpleData]
+  ): OpleData
 
+# Hard-coded functions
 var functions: Table[string, OpleFunction]
 
-proc callFunction*(callee: string, arguments: seq[OpleData]): OpleData =
-  let f = functions[callee]
-  if f == nil: raiseOpleError "Undefined function '" & callee & "'"
-  f(arguments)
-
-proc addFunction(name: string, f: proc (arguments: seq[OpleQuery]): OpleData) =
+proc addFunction*(name: string, f: OpleFunction) =
   if functions.hasKey(name):
-    raise newException(Defect, "Function already exists: " & name)
+    raise newException(Defect, "function already exists: " & name)
   functions[name] = f
 
-template addFunction*(name: string, impl: untyped) =
-  addFunction(
-    name,
-    proc (arguments {.inject.}: seq[OpleQuery]): OpleData =
-      impl
-  )
+proc callFunction*(query: OpleQuery, callee: string, args: OpleArray): OpleData =
+  let fn = functions[callee]
+  if fn == nil:
+    query.fail "invalid ref", badFunctionRef callee
+  return fn(query, args)
+
+addFunction "Call", proc (callee: string, args: OpleArray) {.query.} =
+  callFunction(query, callee, args)
