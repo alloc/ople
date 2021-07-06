@@ -1,16 +1,19 @@
 import cbor
-import ./data/from-cbor
-import ./query
+import ../collection
+import ../data/from_cbor
+import ../query
 
-proc getDocument*(query: OpleQuery, docRef: OpleRef): OpleData =
-  let col = query.database.openCollectionOrNil docRef.collection
-  if col == nil:
-    query.fail "invalid ref", badCollectionRef(docRef.collection)
+proc getDocument*(r: OpleRef) {.query.} =
+  let col = toCollection(r)
+  let doc = col.with(query.snapshot).get r.id
+  if doc.exists: newOpleObject parseCbor(doc)
   else:
-    let doc = col.with(query.snapshot).get docRef.id
-    if doc.exists: newOpleObject(parseCbor(doc))
-    else:
-      query.fail "instance not found", "Document not found."
+    query.fail "instance not found", "Document not found."
+
+
+proc hasDocument*() {.query.} = discard
+
+proc putDocument*() {.query.} = discard
 
 fn(1, hasDocument):
   let id = args[0].getStr

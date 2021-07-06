@@ -13,13 +13,18 @@ type
     error*: OpleError
     database*: Database
     snapshot*: Snapshot
-    transaction*: Transaction
+    transaction: Transaction
     expression*: OpleData
     debugPath*: seq[string]
 
 proc fail*(query: OpleQuery, code: string, description: string) {.raises OpleFailure.} =
   query.error = OpleError(code: code, description: description)
   raise newException(OpleFailure, "query failed")
+
+proc transaction*(query: OpleQuery): Transaction =
+  result = query.transaction
+  if result == nil:
+    query.fail "read only", "cannot write in a readonly query"
 
 proc expectArgument*(query: OpleQuery, arguments: seq[OpleData], index: int): OpleData =
   if index < arguments.len:
