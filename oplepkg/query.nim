@@ -1,5 +1,6 @@
 import macros
 import nimdbx
+import times
 import ./data
 import ./error
 
@@ -17,7 +18,12 @@ type
     expression*: OpleData
     debugPath*: seq[string]
 
-proc fail*(query: OpleQuery, code: string, description: string) {.raises OpleFailure.} =
+proc newQuery*(expression: OpleData, database: Database): OpleQuery =
+  result.expression = expression
+  result.database = database
+  result.now = getTime().utc
+
+proc fail*(query: OpleQuery, code: string, description: string) {.raises: [OpleFailure].} =
   query.error = OpleError(code: code, description: description)
   raise newException(OpleFailure, "query failed")
 
@@ -56,15 +62,15 @@ proc dataKey(kind: OpleDataKind): string =
 macro query*(fn: untyped): untyped =
   let prevParams = fn.params
 
-  fn.params = newNimNode(nnkFormalParams).add(
-    prevParams[0],
+  fn.params = nnkFormalParams.newTree(
+    newIdentNode("OpleData"),
     newIdentDefs(
       newIdentNode("query"),
       newIdentNode("OpleQuery")
     ),
     newIdentDefs(
       newIdentNode("arguments"),
-      newNimNode(nnkBracketExpr).add(
+      nnkBracketExpr.newTree(
         newIdentNode("seq"),
         newIdentNode("OpleData")
       )
@@ -75,22 +81,18 @@ macro query*(fn: untyped): untyped =
     if i == 0: continue
     var init = newCall(
       newIdentNode("expectArgument"),
+      newIdentNode("query"),
+      newIdentNode("arguments"),
       newIntLitNode(i - 1)
     )
 
     let paramType = param[1].strVal
     let paramKind = parseOpleDataKind paramType
 
-    if paramType == "OpleData":
+    if paramType != "OpleData":
       init.add newIdentNode($paramKind)
 
     init = newDotExpr(init, newIdentNode(paramKind.dataKey))
     fn.body.insert i - 1, newLetStmt(param[0], init)
 
-  echo fn.treeRepr
   return fn
-
-proc newQuery*(expression: OpleData, database: Database): OpleQuery =
-  result.expression = expression
-  result.database = database
-  # TODO: result.now =

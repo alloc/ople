@@ -1,4 +1,5 @@
 import tables
+import times
 
 type
   OpleDataKind* = enum
@@ -52,19 +53,13 @@ type
     of ople_set:
       query*: OpleCall
 
+  OpleDate* = DateTime
+  OpleTime* = DateTime
+
   OpleDocument* = ref object of RootObj
     `ref`*: OpleRef
     data*: Table[string, OpleData]
-    ts*: OpleData
-
-  OpleDate* = ref object of RootObj
-    year*: int16
-    month*: int8
-    day*: int8
-
-  OpleTime* = ref object of OpleDate
-    secs*: int64
-    nano*: int64
+    ts*: int64 # µsecs since unix epoch
 
   OplePage* = ref object of RootObj
     data*: OpleData
@@ -107,10 +102,16 @@ proc newOpleString*(data: string): auto =
   OpleData(kind: ople_string, `string`: data)
 
 proc newOpleDate*(data: string): auto =
-  OpleData(kind: ople_date, date: data)
+  OpleData(kind: ople_date, date: parse(data, "yyyy-MM-dd"))
+
+proc newOpleDate*(date: DateTime): auto =
+  OpleData(kind: ople_date, date: date)
 
 proc newOpleTime*(data: string): auto =
-  OpleData(kind: ople_time, time: data)
+  OpleData(kind: ople_time, time: parse(data, "yyyy-MM-dd'T'HH:mm:ss'.'fffffffff'Z'"))
+
+proc newOpleTime*(time: DateTime): auto =
+  OpleData(kind: ople_time, time: time)
 
 proc newOpleCall*(callee: string, arguments: seq[OpleData]): auto =
   OpleData(
@@ -124,13 +125,13 @@ proc newOpleCall*(callee: string, arguments: seq[OpleData]): auto =
 proc newOpleRef*(id: string, collection: string): auto =
   OpleData(kind: ople_ref, `ref`: OpleRef(id: id, collection: collection))
 
-proc newOpleDocument*(`ref`: OpleRef, data: Table[string, OpleData], ts: string): auto =
+proc newOpleDocument*(`ref`: OpleRef, data: Table[string, OpleData], ts: int64): auto =
   OpleData(
     kind: ople_document,
     document: OpleDocument(
       `ref`: `ref`,
       data: data,
-      ts: newOpleTime(ts)
+      ts: ts
     )
   )
 
@@ -193,3 +194,28 @@ proc parseOpleDataKind*(t: string): OpleDataKind =
     of "OpleSet": ople_set
     else:
       raise newException(Defect, "cannot convert to OpleDataKind")
+
+template `\`*(arg: pointer): OpleData =
+  assert(arg.isNil)
+  OpleData(kind: ople_null)
+
+template `\`*(arg: bool): OpleData =
+  newOpleBool arg
+
+template `\`*(arg: int64): OpleData =
+  newOpleInt arg
+
+template `\`*(arg: float64): OpleData =
+  newOpleFloat arg
+
+template `\`*(arg: string): OpleData =
+  newOpleString arg
+
+template `\`*(arg: bool): OpleData =
+  newOpleBool arg
+
+template `\`*(arg: OpleObject): OpleData =
+  newOpleObject arg
+
+template `\`*(arg: OpleArray): OpleData =
+  newOpleArray arg

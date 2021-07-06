@@ -1,6 +1,7 @@
 import tables
-import ./query
 import ./error
+import ./query
+import ./query/document
 
 type
   OpleFunction* = proc (
@@ -22,5 +23,11 @@ proc callFunction*(query: OpleQuery, callee: string, args: OpleArray): OpleData 
     query.fail "invalid ref", badFunctionRef callee
   return fn(query, args)
 
-addFunction "Call", proc (callee: string, args: OpleArray) {.query.} =
+# TODO: retrieve callee from "functions" collection
+addFunction "call", proc (callee: string, args: OpleArray) {.query.} =
   callFunction(query, callee, args)
+
+addFunction "get", getDocument
+addFunction "exists", hasDocument
+addFunction "create", newDocument
+addFunction "replace", setDocumentData

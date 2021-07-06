@@ -2,10 +2,8 @@
 import napibindings
 import nimdbx
 import streams
-import ./ople/data/from_json
-import ./ople/data/to_napi
-import ./ople/eval
-import ./ople/query
+import ./oplepkg/data/[from_json,to_napi]
+import ./oplepkg/[eval,query]
 
 var db {.noinit.}: Database
 
@@ -22,8 +20,8 @@ init proc(exports: Module) =
 
   fn(1, execSync):
     let queryStr = args[0].getStr
-    let queryExpr = parseOpleData newStringStream(queryStr)
-    var query = newQuery(queryExpr, db)
+    let queryExpr: OpleData = parseOpleData newStringStream(queryStr)
+    var query = newQuery queryExpr, db
     let snapshot = this.toSnapshot
     query.snapshot = snapshot
     if snapshot of Transaction:

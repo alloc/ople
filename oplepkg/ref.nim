@@ -47,7 +47,7 @@ proc newSnowflakeId*(time: Time): SnowflakeId =
 
 proc `$`*(snowflake: SnowflakeId): string =
   let id: int64 = snowflake.ts shl ts_offset +
-                  cast[int64](snowflake.region_id) shl region_offset +
-                  cast[int64](snowflake.shard_id) shl shard_offset +
-                  cast[int64](snowflake.seq_id)
+                  int64(snowflake.region_id) shl region_offset +
+                  int64(snowflake.shard_id) shl shard_offset +
+                  int64(snowflake.seq_id)
   return $id
