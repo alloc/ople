@@ -211,9 +211,6 @@ template `\`*(arg: float64): OpleData =
 template `\`*(arg: string): OpleData =
   newOpleString arg
 
-template `\`*(arg: bool): OpleData =
-  newOpleBool arg
-
 template `\`*(arg: OpleObject): OpleData =
   newOpleObject arg
 

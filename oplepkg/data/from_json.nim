@@ -5,15 +5,25 @@ import streams
 import tables
 import ../data
 
-proc parseOpleData*(p: var JsonParser): OpleData
+proc parseOpleData(p: var JsonParser): OpleData
 
-proc parseStringLit*(p: var JsonParser): string =
+proc parseOpleData*(s: Stream): OpleData =
+  var p: JsonParser
+  p.open(s, "")
+  try:
+    discard getTok(p) # read first token
+    result = parseOpleData(p)
+    eat(p, tkEof) # check if there is no extra data
+  finally:
+    p.close()
+
+proc parseStringLit(p: var JsonParser): string =
   if p.tok != tkString:
     raiseParseErr(p, "expected string literal")
   result = p.a
   discard getTok(p)
 
-proc parseTable*(p: var JsonParser): Table[string, string] =
+proc parseTable(p: var JsonParser): Table[string, string] =
   if p.tok != tkCurlyLe:
     raiseParseErr(p, "expected an object")
   discard getTok(p)
@@ -26,20 +36,17 @@ proc parseTable*(p: var JsonParser): Table[string, string] =
     discard getTok(p)
   eat(p, tkCurlyRi)
 
-proc parseOpleRef*(p: var JsonParser): OpleData =
+proc parseOpleRef(p: var JsonParser): OpleData =
   let props = parseTable(p)
-  if props.hasKey "collection":
-    newOpleRef(props["id"], props["collection"])
-  else:
-    newOpleCollectionRef(props["id"])
+  newOpleRef props["id"], props["collection"]
 
-proc parseOpleTime*(p: var JsonParser): OpleData =
-  newOpleTime(parseStringLit(p))
+proc parseOpleTime(p: var JsonParser): OpleData =
+  newOpleTime parseStringLit(p)
 
-proc parseOpleDate*(p: var JsonParser): OpleData =
-  newOpleDate(parseStringLit(p))
+proc parseOpleDate(p: var JsonParser): OpleData =
+  newOpleDate parseStringLit(p)
 
-proc parseOpleObject*(p: var JsonParser): OpleData =
+proc parseOpleObject(p: var JsonParser): OpleData =
   if p.tok != tkCurlyLe:
     raiseParseErr(p, "expected object")
   discard getTok(p)
@@ -47,25 +54,30 @@ proc parseOpleObject*(p: var JsonParser): OpleData =
   while p.tok != tkCurlyRi:
     let key = parseStringLit(p)
     eat(p, tkColon)
-    obj[key] = parseOpleData(p)
+    var value = parseOpleData(p)
+    value.debugId = key
+    obj[key] = value
     if p.tok != tkComma: break
     discard getTok(p)
   eat(p, tkCurlyRi)
   newOpleObject(obj)
 
-proc parseOpleCall*(p: var JsonParser): OpleData =
+proc parseOpleCall(p: var JsonParser): OpleData =
   let callee = parseStringLit(p)
   eat(p, tkColon)
+  var debugId = callee
   var arguments: seq[OpleData]
   while p.tok != tkCurlyRi:
-    arguments.add(parseOpleData(p))
+    var argument = parseOpleData(p)
+    argument.debugId = debugId
+    arguments.add argument
     if p.tok != tkComma: break
     discard getTok(p)
-    eat(p, tkString)
+    debugId = parseStringLit(p)
     eat(p, tkColon)
   newOpleCall(callee, arguments)
 
-proc parseOpleData*(p: var JsonParser): OpleData =
+proc parseOpleData(p: var JsonParser): OpleData =
   case p.tok
 
   of tkString:
@@ -76,11 +88,11 @@ proc parseOpleData*(p: var JsonParser): OpleData =
     discard getTok(p)
 
   of tkInt:
-    result = newOpleInt(parseBiggestInt(p.a))
+    result = newOpleInt parseBiggestInt(p.a)
     discard getTok(p)
 
   of tkFloat:
-    result = newOpleFloat(parseFloat(p.a))
+    result = newOpleFloat parseFloat(p.a)
     discard getTok(p)
 
   of tkTrue:
@@ -123,24 +135,18 @@ proc parseOpleData*(p: var JsonParser): OpleData =
     eat(p, tkCurlyRi)
 
   of tkBracketLe:
+    var index = 0
     var elements: seq[OpleData]
     discard getTok(p)
     while p.tok != tkBracketRi:
-      elements.add(parseOpleData(p))
+      var element = parseOpleData(p)
+      element.debugId = $index
+      elements.add element
       if p.tok != tkComma: break
       discard getTok(p)
+      inc index
     eat(p, tkBracketRi)
     result = newOpleArray(elements)
 
   of tkError, tkCurlyRi, tkBracketRi, tkColon, tkComma, tkEof:
     raiseParseErr(p, "{")
-
-proc parseOpleData*(s: Stream): OpleData =
-  var p: JsonParser
-  p.open(s, "")
-  try:
-    discard getTok(p) # read first token
-    result = parseOpleData(p)
-    eat(p, tkEof) # check if there is no extra data
-  finally:
-    p.close()

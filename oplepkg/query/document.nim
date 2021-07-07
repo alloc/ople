@@ -5,7 +5,6 @@ import tables
 import times
 import ../data/from_cbor
 import ../data/to_cbor
-import ../collection
 import ../query
 import ../ref
 
@@ -21,7 +20,7 @@ template getCollection*(query: OpleQuery, name: string): Collection =
 
 template getDocument*(query: OpleQuery, col: Collection, id: string): OpleObject =
   let doc = col.with(query.snapshot).get id
-  if not doc.exists: 
+  if not doc.exists:
     query.fail "instance not found", "Document not found."
   return newOpleObject parseCbor $doc
 

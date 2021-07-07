@@ -32,16 +32,26 @@ proc transaction*(query: OpleQuery): Transaction =
   if result == nil:
     query.fail "read only", "cannot write in a readonly query"
 
+proc setSnapshot*(query: OpleQuery, snapshot: Snapshot) =
+  query.snapshot = snapshot
+  if snapshot of Transaction:
+    query.transaction = cast[Transaction](snapshot)
+
+template expectArity*(query: OpleQuery, arguments: seq[OpleData], arity: int) =
+  if arity > arguments.len:
+    query.fail "invalid arity", invalidArity(arity)
+
 proc expectArgument*(query: OpleQuery, arguments: seq[OpleData], index: int): OpleData =
-  if index < arguments.len:
-    return arguments[index]
-  query.fail "invalid arity", invalidArity(index + 1)
+  query.expectArity(arguments, index + 1)
+  return arguments[index]
+
+proc expectKind*(query: OpleQuery, data: OpleData, kind: OpleDataKind) =
+  if data.kind != kind:
+    query.fail "invalid argument", invalidKind(kind, data.kind)
 
 proc expectArgument*(query: OpleQuery, arguments: seq[OpleData], index: int, kind: OpleDataKind): OpleData =
-  let argument = query.expectArgument(arguments, index)
-  if argument.kind == kind:
-    return argument
-  query.fail "invalid argument", invalidKind(kind, argument.kind)
+  result = query.expectArgument(arguments, index)
+  query.expectKind(result, kind)
 
 proc dataKey(kind: OpleDataKind): string =
   result = case kind

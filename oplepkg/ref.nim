@@ -23,7 +23,7 @@ type SnowflakeId* = object
   shard_id*: uint8
   seq_id*: uint16
 
-var last_ts: int64 = 0
+var last_ts: int64 = -1
 var seq_id: uint16 = 0
 
 proc newSnowflakeId*(time: Time): SnowflakeId =
@@ -33,7 +33,7 @@ proc newSnowflakeId*(time: Time): SnowflakeId =
   result.region_id = region_id
   result.shard_id = shard_id
 
-  if ts != last_ts:
+  if ts > last_ts:
     last_ts = ts
     seq_id = 0
   elif seq_id == seq_max:
