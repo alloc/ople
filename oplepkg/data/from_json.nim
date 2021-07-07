@@ -36,6 +36,7 @@ proc parseTable(p: var JsonParser): Table[string, string] =
     discard getTok(p)
   eat(p, tkCurlyRi)
 
+# TODO: props["collection"] is an OpleRef too
 proc parseOpleRef(p: var JsonParser): OpleData =
   let props = parseTable(p)
   newOpleRef props["id"], props["collection"]

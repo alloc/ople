@@ -1,6 +1,9 @@
 import tables
 import times
 
+const opleDateFormat* = initTimeFormat "yyyy-MM-dd"
+const opleTimeFormat* = initTimeFormat "yyyy-MM-dd'T'HH:mm:ss'.'fffffffff'Z'"
+
 type
   OpleDataKind* = enum
     ople_null
@@ -102,13 +105,13 @@ proc newOpleString*(data: string): auto =
   OpleData(kind: ople_string, `string`: data)
 
 proc newOpleDate*(data: string): auto =
-  OpleData(kind: ople_date, date: parse(data, "yyyy-MM-dd"))
+  OpleData(kind: ople_date, date: parse(data, opleDateFormat))
 
 proc newOpleDate*(date: DateTime): auto =
   OpleData(kind: ople_date, date: date)
 
 proc newOpleTime*(data: string): auto =
-  OpleData(kind: ople_time, time: parse(data, "yyyy-MM-dd'T'HH:mm:ss'.'fffffffff'Z'"))
+  OpleData(kind: ople_time, time: parse(data, opleTimeFormat))
 
 proc newOpleTime*(time: DateTime): auto =
   OpleData(kind: ople_time, time: time)

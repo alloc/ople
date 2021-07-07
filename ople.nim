@@ -24,7 +24,8 @@ init proc(exports: Module) =
     var query = newQuery(queryExpr, db)
     query.setSnapshot this.toSnapshot
     let queryResult = query.eval()
-    return \
+    let queryResultStr = queryResult.stringify()
+    return napiCreate queryResultStr
 
   fn(0, finishSnapshot):
     this.toSnapshot.finish()
