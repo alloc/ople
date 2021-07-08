@@ -12,7 +12,7 @@ import {
 } from '../transaction'
 import { now } from '../time'
 import { OpleDocument, OpleDocumentOptions } from './document'
-import { OpleRef, OpleTime } from './values'
+import { OpleRef, OpleTime } from '../values'
 
 const kHandle = Symbol('handle')
 

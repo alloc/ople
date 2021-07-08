@@ -1,5 +1,5 @@
 import { OpleArray } from './array'
-import { OpleRef } from './values'
+import { OpleRef } from '../values'
 
 export interface OplePage<T> {
   readonly data: OpleArray<T>

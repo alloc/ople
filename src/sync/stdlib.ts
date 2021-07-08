@@ -1,7 +1,7 @@
 import { OpleCollection } from './collection'
 import { OpleDocument } from './document'
 import { OpleSet } from './set'
-import { OpleDate, OpleRef, OpleTime } from './values'
+import { OpleDate, OpleRef, OpleTime } from '../values'
 
 export interface OpleFunctions {
   contains(str: string, substr: string): boolean

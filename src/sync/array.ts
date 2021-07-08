@@ -1,6 +1,5 @@
-import { dequal } from 'dequal'
-import { notImplemented } from '../errors'
-import { makeQuery } from '../query'
+import { queriesByType } from '../queryMap'
+import { execSync } from './transaction'
 
 const kData = Symbol.for('OpleIterable.data')
 
@@ -87,6 +86,13 @@ export class OpleArray<T = any> implements OpleArrayLike<T> {
   map<U>(mapper: (value: T) => U): OpleArray<U> {
     return new OpleArray(this[kData].map(mapper))
   }
+  select<U>(index: number, fallback: U): T | U
+  select(index: number): T | undefined
+  select(index: number, fallback?: any) {
+    return index >= 0 && index < this[kData].length
+      ? this[kData][index]
+      : fallback
+  }
   //
   // OpleArrayLike
   //
@@ -94,6 +100,14 @@ export class OpleArray<T = any> implements OpleArrayLike<T> {
     return this[kData].reduce(reducer, initial)
   }
 }
+
+const proto: any = OpleArray.prototype
+queriesByType.array.forEach(callee => {
+  if (proto[callee]) return
+  proto[callee] = function (this: OpleArray, ...args: any[]) {
+    return execSync(callee, this[kData], ...args)
+  }
+})
 
 export interface OpleArray<T> extends OpleArrayLike<T> {
   append<U>(value: U | U[]): OpleArray<T | U>
@@ -107,8 +121,6 @@ export interface OpleArray<T> extends OpleArrayLike<T> {
   mean(): [T] extends [number] ? number : never
   prepend<U>(value: U | U[]): OpleArray<T | U>
   reverse(): OpleArray<T>
-  select(index: number): T | undefined
-  select<U>(index: number, fallback: U): T | U
   sum(): [T] extends [number] ? number : never
   take(count: number): OpleArray<T>
   toObject(): OpleArrayToObject<T>

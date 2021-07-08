@@ -1,22 +1,22 @@
 import { db, Snapshot, Transaction } from '../db'
-import type { OpleQuery } from '../query'
+import { writeQueries } from '../queryMap'
+import { makeQuery } from '../query'
 
 let snapshot: Snapshot | null = null
 let transaction: Transaction | null = null
 
-export function withSnapshot(query: OpleQuery) {
-  const reader = snapshot || transaction
-  if (!reader) {
-    throw Error('Must be within `read` callback')
+export function execSync(callee: string, ...args: any[]) {
+  const query = makeQuery(callee, ...args)
+  if (transaction) {
+    return query.execSync(transaction)
   }
-  const result = reader.execSync(JSON.stringify(query))
-}
-
-export function withTransaction(query: OpleQuery) {
-  if (!transaction) {
+  if (writeQueries.includes(callee)) {
     throw Error('Must be within `write` callback')
   }
-  const result = transaction.execSync(JSON.stringify(query))
+  if (snapshot) {
+    return query.execSync(snapshot)
+  }
+  throw Error('Must be within `read` or `write` callback')
 }
 
 /**

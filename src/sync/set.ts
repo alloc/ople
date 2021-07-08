@@ -1,4 +1,4 @@
-import type { OpleArrayLike, OpleIterable } from './array'
+import type { OpleArrayLike,  } from './array'
 
 export function isOpleSet(value: any): value is OpleSet {
   return value?.constructor === OpleSet

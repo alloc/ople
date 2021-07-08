@@ -1,5 +1,5 @@
 import { OpleSet } from './set'
-import { OpleRef, OpleTime } from './values'
+import { OpleRef, OpleTime } from '../values'
 
 export interface OpleDocumentOptions {
   credentials?: object

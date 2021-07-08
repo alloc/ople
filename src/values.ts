@@ -1,5 +1,9 @@
 export class OpleRef {
-  constructor(readonly collection: string, readonly id: string) {}
+  constructor(readonly id: string, readonly collection?: OpleRef) {}
+
+  get isCollection(): boolean {
+    return !this.collection && this.id == 'collections'
+  }
 }
 
 export class OpleDate {
