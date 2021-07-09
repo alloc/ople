@@ -7,10 +7,10 @@ import ./error
 export data
 
 type
-  OpleFailure* = object of CatchableError
+  OpleFailure* = ref object of CatchableError
 
   OpleQuery* = ref object
-    now*: OpleTime
+    now*: Time
     error*: OpleError
     database*: Database
     snapshot*: Snapshot
@@ -21,11 +21,11 @@ type
 proc newQuery*(expression: OpleData, database: Database): OpleQuery =
   result.expression = expression
   result.database = database
-  result.now = getTime().utc
+  result.now = getTime()
 
-proc fail*(query: OpleQuery, code: string, description: string) {.raises: [OpleFailure].} =
+proc fail*(query: OpleQuery, code: string, description: string) {.noreturn.} =
   query.error = OpleError(code: code, description: description)
-  raise newException(OpleFailure, "query failed")
+  raise OpleFailure()
 
 proc transaction*(query: OpleQuery): Transaction =
   result = query.transaction
@@ -96,13 +96,18 @@ macro query*(fn: untyped): untyped =
       newIntLitNode(i - 1)
     )
 
-    let paramType = param[1].strVal
-    let paramKind = parseOpleDataKind paramType
+    let isVar = param[1].kind == nnkVarTy
+    let paramType =
+      if isVar: param[1][0].strVal
+      else: param[1].strVal
 
+    let paramKind = parseOpleDataKind paramType
     if paramType != "OpleData":
       init.add newIdentNode($paramKind)
 
     init = newDotExpr(init, newIdentNode(paramKind.dataKey))
-    fn.body.insert i - 1, newLetStmt(param[0], init)
+    fn.body.insert i - 1,
+      if isVar: newVarStmt(param[0], init)
+      else: newLetStmt(param[0], init)
 
   return fn

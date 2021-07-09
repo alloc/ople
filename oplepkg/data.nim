@@ -81,7 +81,7 @@ type
     parameters*: seq[string]
     body*: OpleCall
 
-  OpleError* = object
+  OpleError* = ref object
     code*: string
     description*: string
 
@@ -124,6 +124,9 @@ proc newOpleCall*(callee: string, arguments: seq[OpleData]): auto =
       arguments: arguments
     )
   )
+
+proc newOpleRef*(data: OpleRef): auto =
+  OpleData(kind: ople_ref, `ref`: data)
 
 proc newOpleRef*(id: string, collection: string): auto =
   OpleData(kind: ople_ref, `ref`: OpleRef(id: id, collection: collection))
@@ -217,5 +220,11 @@ template `\`*(arg: string): OpleData =
 template `\`*(arg: OpleObject): OpleData =
   newOpleObject arg
 
+template `\`*[I](arg: array[I, (string, OpleData)]): OpleData =
+  newOpleObject arg.toTable
+
 template `\`*(arg: OpleArray): OpleData =
   newOpleArray arg
+
+template `\`*(arg: OpleRef): OpleData =
+  newOpleRef arg
