@@ -18,18 +18,13 @@ proc writeCbor*(stream: Stream, arr: OpleArray) =
   for element in arr:
     stream.writeCbor element
 
-proc `$`(date: OpleDate): string =
-  $date.year & "-" &
-    (if date.month < 10: "0" else: "") & $date.month & "-" &
-    (if date.day < 10: "0" else: "") & $date.day
-
 proc writeCbor*(stream: Stream, date: OpleDate) =
   stream.writeCborTag cborOpleDate
-  stream.writeCbor $date
+  stream.writeCbor date.format opleDateFormat
 
 proc writeCbor*(stream: Stream, time: OpleTime) =
   stream.writeCborTag cborOpleTime
-  stream.writeCbor $OpleDate(time) & 
+  stream.writeCbor time.format opleTimeFormat
 
 proc writeCbor*(stream: Stream, r: OpleRef) =
   stream.writeCborTag cborOpleRef
@@ -70,6 +65,6 @@ proc writeCbor*(stream: Stream, data: OpleData, kind: OpleDataKind) =
       stream.writeCborArrayLen 2
       stream.writeCbor data.query.callee
       stream.writeCbor data.query.arguments
-      
+
 proc writeCbor*(stream: Stream, data: OpleData) =
   stream.writeCbor data, data.kind
