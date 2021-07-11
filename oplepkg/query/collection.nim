@@ -11,5 +11,5 @@ proc getCollection*(query: OpleQuery, name: string): Collection not nil =
   if col == nil: query.database.openCollection name
   else: col
 
-proc newCollection*(query: OpleQuery, name: string): Collection not nil =
-  query.database.createCollection()
+# proc newCollection*(query: OpleQuery, name: string): Collection not nil =
+#   query.database.createCollection()

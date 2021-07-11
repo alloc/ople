@@ -68,3 +68,22 @@ proc setDocumentData*(docRef: OpleRef, data: OpleObject) {.query.} =
     "data": props["data"],
     "ts": props["ts"],
   }
+
+proc updateDocument*(docRef: OpleRef, params: OpleObject) {.query.} =
+  discard
+  # const ts = now()
+  # if (data === null) {
+  #   if (!this.writer.exists(id)) {
+  #     throw Error('Document does not exist: ' + id)
+  #   }
+  #   // TODO: set data to null
+  # } else if (data) {
+  #   const oldData = this.writer.get(id)
+  #   if (!oldData) {
+  #     throw Error('Document does not exist: ' + id)
+  #   }
+  #   data = merge(oldData, data)
+  #   this.writer.update(id, { ...data, '@ts': ts })
+  #   return this.toDocument(id, data, ts)
+  # }
+  # throw Error('todo')

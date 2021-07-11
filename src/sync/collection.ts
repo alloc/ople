@@ -4,14 +4,20 @@ import { OpleDocument, OpleDocumentOptions } from './document'
 import { OpleRef } from '../values'
 import { execSync, q } from './transaction'
 
-export interface OpleCollectionOptions {
-  data?: any
-  history_days?: number
-  permissions?: any
-  ttl_days?: number
+function coerceToRef<T extends object | null = any>(
+  ref: string | OpleRef<T>,
+  collection: OpleRef,
+): OpleRef<T> {
+  if (typeof ref == 'string') {
+    return new OpleRef(ref, collection)
+  }
+  if (ref.collection?.id !== collection.id) {
+    throw Error('Document ref belongs to another collection')
+  }
+  return ref
 }
 
-export class OpleCollection<T = any> {
+export class OpleCollection<T extends object | null = any> {
   private ref: OpleRef
 
   /**
@@ -34,54 +40,40 @@ export class OpleCollection<T = any> {
   }
 
   /** Create a document in this collection */
-  create(
-    data: T,
-    // TODO: use these options
-    opts?: OpleDocumentOptions,
-  ): OpleDocument<T> {
-    return execSync('create')
+  create(data: T, options?: OpleDocumentOptions): OpleDocument<T> {
+    return q.create(this.ref, { ...options, data })
   }
 
   /** Replace a document's data */
-  replace(id: string, data: T): OpleDocument<T> {
-    if (!this.writer.exists(id)) {
-      throw Error('Document does not exist: ' + id)
-    }
-    const ts = now()
-    this.writer.put(id, { ...data, '@ts': ts })
-    return this.toDocument(id, data, ts)
+  replace(ref: string | OpleRef<T>, data: T): OpleDocument<T> {
+    return q.replace(coerceToRef(ref, this.ref), { data })
   }
 
   /** Merge new data into a document */
-  update(id: string, data?: T, opts?: OpleDocumentOptions): OpleDocument<T>
   update(
-    id: string,
-    data: null,
-    opts?: OpleDocumentOptions,
-  ): Omit<OpleDocument<T>, 'data'>
-  update(
-    id: string,
-    data?: T | null,
-    // TODO: use these options
-    opts?: OpleDocumentOptions,
-  ) {
-    const ts = now()
-    if (data === null) {
-      if (!this.writer.exists(id)) {
-        throw Error('Document does not exist: ' + id)
-      }
-      // TODO: set data to null
-    } else if (data) {
-      const oldData = this.writer.get(id)
-      if (!oldData) {
-        throw Error('Document does not exist: ' + id)
-      }
-      data = merge(oldData, data)
-      this.writer.update(id, { ...data, '@ts': ts })
-      return this.toDocument(id, data, ts)
-    }
-    throw Error('todo')
+    ref: string | OpleRef<T>,
+    options: { data?: Partial<T> } & OpleDocumentOptions,
+  ): OpleDocument<T> {
+    return q.update(coerceToRef(ref, this.ref), options)
   }
 }
 
 export interface OpleCollection<T> {}
+
+export namespace OpleCollection {
+  /** The options for `Database#createCollection` */
+  export interface Options<T extends object> {
+    data?: T
+    history_days?: number
+    permissions?: any
+    ttl_days?: number
+  }
+
+  /** The result of `Database#createCollection` */
+  export interface CreateResult<T extends object> {
+    ref: OpleRef<T>
+    name: string
+    ts: number
+    history_days: number | null
+  }
+}

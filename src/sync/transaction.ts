@@ -45,23 +45,25 @@ export function read<T>(reader: () => T): T {
 /**
  * Write to the database.
  */
-export function write(writer: (rollback: () => void) => void): void {
+export function write<T>(
+  writer: (abort: (message?: string) => void) => T,
+): T | undefined {
   if (snapshot || transaction) {
     throw Error('Nested transactions are forbidden')
   }
-  let didCommit = false
   transaction = db.beginTransaction()
   try {
-    let willCommit = true
-    writer(() => {
-      willCommit = false
+    const result = writer(() => {
+      throw transaction
     })
-    if (willCommit) {
-      transaction.commit()
-      didCommit = true
+    transaction.commit()
+    return result
+  } catch (e) {
+    transaction.finish()
+    if (e !== transaction) {
+      throw e
     }
   } finally {
-    didCommit || transaction.finish()
     transaction = null
   }
 }

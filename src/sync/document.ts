@@ -1,13 +1,12 @@
-import { OpleSet } from './set'
 import { OpleRef, OpleTime } from '../values'
 
 export interface OpleDocumentOptions {
   credentials?: object
   delegates?: object
-  ttl?: string | OpleTime
+  ttl?: OpleTime
 }
 
-export interface OpleDocument<T = any> {
+export interface OpleDocument<T extends object | null = any> {
   ref: OpleRef
   data: Readonly<T>
   ts: OpleTime

@@ -2,22 +2,34 @@ import { Snapshot } from './internal/db'
 import { jsonReplacer } from './json/replacer'
 import { jsonReviver } from './json/reviver'
 import { queryMap } from './queryMap'
-import { OpleCollection, OpleCollectionOptions } from './sync/collection'
+import { OpleCollection } from './sync/collection'
 import { OpleDocument, OpleDocumentOptions } from './sync/document'
 import { OpleFunctions } from './sync/stdlib'
-import { OpleRef } from './values'
+import { OpleRef, OpleTime } from './values'
 
 export interface OpleQueries extends OpleFunctions {
-  get(ref: OpleRef): OpleDocument
+  get<T extends object | null>(ref: OpleRef<T>): OpleDocument<T>
 
-  create<T>(
+  exists(ref: OpleRef): boolean
+
+  create<T extends object | null>(
     collection: OpleRef,
     params: { data: T } & OpleDocumentOptions,
   ): OpleDocument<T>
 
-  createCollection<T>(
-    params: { name: string } & OpleCollectionOptions,
-  ): OpleCollection<T>
+  createCollection<T extends object | null>(
+    params: { name: string } & OpleCollection.Options<T>,
+  ): OpleCollection.CreateResult<T>
+
+  replace<T extends object | null>(
+    ref: OpleRef<T>,
+    params: { data: T },
+  ): OpleDocument<T>
+
+  update<T extends object | null>(
+    ref: OpleRef<T>,
+    params: { data?: Partial<T> } & OpleDocumentOptions,
+  ): OpleDocument<T>
 }
 
 export class OpleQuery {

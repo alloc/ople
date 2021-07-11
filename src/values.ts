@@ -1,7 +1,12 @@
 import { notImplemented } from './errors'
+import { q } from './sync/transaction'
 
-export class OpleRef<T extends object = any> {
+export class OpleRef<T extends object | null = any> {
   constructor(readonly id: string, readonly collection?: OpleRef) {}
+
+  get exists(): boolean {
+    return q.exists(this)
+  }
 
   get isCollection(): boolean {
     return this.collection?.id == 'collections'
