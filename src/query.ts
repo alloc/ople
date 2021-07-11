@@ -1,18 +1,23 @@
+import { Snapshot } from './internal/db'
 import { jsonReplacer } from './json/replacer'
 import { jsonReviver } from './json/reviver'
 import { queryMap } from './queryMap'
-import { OpleCollection } from './sync/collection'
+import { OpleCollection, OpleCollectionOptions } from './sync/collection'
 import { OpleDocument, OpleDocumentOptions } from './sync/document'
 import { OpleFunctions } from './sync/stdlib'
 import { OpleRef } from './values'
 
-interface OpleQueries extends OpleFunctions {
+export interface OpleQueries extends OpleFunctions {
+  get(ref: OpleRef): OpleDocument
+
   create<T>(
     collection: OpleRef,
     params: { data: T } & OpleDocumentOptions,
   ): OpleDocument<T>
 
-  createCollection<T>(name: string): OpleCollection<T>
+  createCollection<T>(
+    params: { name: string } & OpleCollectionOptions,
+  ): OpleCollection<T>
 }
 
 export class OpleQuery {
@@ -20,8 +25,8 @@ export class OpleQuery {
   toString() {
     return JSON.stringify(this.expr, jsonReplacer)
   }
-  execSync(transaction: { execSync(query: string): string }) {
-    const result = transaction.execSync(this.toString())
+  execSync(snapshot: Snapshot) {
+    const result = snapshot.execSync(this.toString())
     return JSON.parse(result, jsonReviver)
   }
 }

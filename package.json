@@ -2,11 +2,12 @@
   "name": "ople-db",
   "main": "dist/ople.js",
   "module": "dist/ople.mjs",
-  "typings": "ople.ts",
+  "typings": "src/ople.ts",
   "scripts": {
     "build": "rollup -c",
     "build:native": "napibuild ople.nim",
-    "generate:queries": "sucrase-node scripts/generateQueryMap.ts"
+    "generate:queries": "sucrase-node scripts/generateQueryMap.ts",
+    "test": "sucrase-node test.ts"
   },
   "devDependencies": {
     "@types/bindings": "^1.5.0",

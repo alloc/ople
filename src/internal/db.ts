@@ -1,7 +1,7 @@
 import bindings from 'bindings'
 import path from 'path'
 
-export const db: Database = bindings('ople')
+export const db: DatabaseHandle = bindings('ople')
 export const dbPath =
   process.env.NODE_ENV === 'test'
     ? require('tempy').file({ name: 'ople_data' })
@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-export interface Database {
+export interface DatabaseHandle {
   open(path: string): void
   /** Start an isolated read transaction */
   beginSnapshot(): Snapshot

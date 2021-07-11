@@ -1,10 +1,17 @@
-import { db, Snapshot, Transaction } from '../db'
-import { writeQueries } from '../queryMap'
-import { makeQuery } from '../query'
+import { db, Snapshot, Transaction } from '../internal/db'
+import { makeQuery, OpleQueries } from '../query'
+import { queryMap, writeQueries } from '../queryMap'
 
 let snapshot: Snapshot | null = null
 let transaction: Transaction | null = null
 
+/** Type-safe query functions */
+export const q = new Proxy({} as OpleQueries, {
+  get: (_, callee: string) =>
+    queryMap[callee] ? execSync.bind(callee) : undefined,
+})
+
+/** Untyped query executor */
 export function execSync(callee: string, ...args: any[]) {
   const query = makeQuery(callee, ...args)
   if (transaction) {

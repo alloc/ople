@@ -1,3 +1,4 @@
+import { OpleArray } from '../sync/array'
 import { OpleDate, OpleRef, OpleTime } from '../values'
 
 type DataReviver = (data: any) => any
@@ -12,6 +13,9 @@ export function jsonReviver(_key: string, value: any) {
   if (value == null || typeof value != 'object') {
     return value
   }
+  if (Array.isArray(value)) {
+    return new OpleArray(value)
+  }
   for (const [key, revive] of dataRevivers) {
     const data = value[key]
     if (data) {
@@ -21,10 +25,6 @@ export function jsonReviver(_key: string, value: any) {
   return value
 }
 
-const nativeRefs: { [name: string]: OpleRef } = {
-  collections: new OpleRef('collections'),
-}
-
 function toRef({ id, collection }: { id: string; collection?: any }): OpleRef {
   if (collection) {
     if (collection['@ref']) {
@@ -32,7 +32,7 @@ function toRef({ id, collection }: { id: string; collection?: any }): OpleRef {
     }
     throw Error('Malformed ref')
   }
-  const ref = nativeRefs[id]
+  const ref = (OpleRef.Native as any)[id]
   if (ref) {
     return ref
   }

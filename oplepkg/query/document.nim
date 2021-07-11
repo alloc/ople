@@ -1,5 +1,4 @@
 {.experimental: "notnil".}
-import cbor
 import nimdbx
 import streams
 import tables
@@ -9,19 +8,12 @@ import ../data/to_cbor
 import ../error
 import ../query
 import ../ref
+import ./collection
 
 proc serializeDocument(props: OpleObject): string =
   let stream = newStringStream()
   stream.writeCbor props
   stream.data
-
-proc getCollection*(query: OpleQuery, name: string): Collection not nil =
-  var col = query.database.openCollectionOrNil name
-  if col == nil:
-    query.fail "invalid ref", badCollectionRef name
-  # HACK: this proves the result is non-nil
-  if col == nil: query.database.openCollection name
-  else: col
 
 proc getDocument*(query: OpleQuery, col: Collection not nil, id: string): OpleObject =
   let doc = col.with(query.snapshot).get id
@@ -68,11 +60,11 @@ proc getDocument*(docRef: OpleRef) {.query.} =
 proc setDocumentData*(docRef: OpleRef, data: OpleObject) {.query.} =
   let col = query.getCollection(docRef.collection)
   var props = query.getDocument(col, docRef.id)
-  props["data"] = data
-  props["ts"] = int64(query.now.toUnixFloat)
+  props["data"] = \data
+  props["ts"] = \int64(query.now.toUnixFloat)
   col.with(query.transaction).put docRef.id, serializeDocument(props)
   return \{
-    "ref": docRef,
+    "ref": \docRef,
     "data": props["data"],
     "ts": props["ts"],
   }

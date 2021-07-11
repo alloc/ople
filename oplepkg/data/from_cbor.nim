@@ -3,6 +3,8 @@ import strutils
 import tables
 import ../data
 
+export parseCbor
+
 const cborOpleTime* = 1001 # map { 1 => seconds, -9 => nanoseconds }
 const cborOpleDate* = 1004 # string
 const cborOpleRef* = 32768 # string

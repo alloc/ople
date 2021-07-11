@@ -1,63 +1,26 @@
-import { v4 as uuid } from '@lukeed/uuid'
-// import Timestamp from 'timestamp-nano'
-import { CollectionHandle, db, Snapshot, Transaction } from '../db'
 import { notImplemented } from '../errors'
 import { merge } from '../merge'
-import {
-  isReading,
-  isWriting,
-  kTransaction,
-  snapshots,
-  transactions,
-} from '../transaction'
-import { now } from '../time'
 import { OpleDocument, OpleDocumentOptions } from './document'
-import { OpleRef, OpleTime } from '../values'
+import { OpleRef } from '../values'
+import { execSync, q } from './transaction'
 
-const kHandle = Symbol('handle')
+export interface OpleCollectionOptions {
+  data?: any
+  history_days?: number
+  permissions?: any
+  ttl_days?: number
+}
 
 export class OpleCollection<T = any> {
-  protected [kHandle]: CollectionHandle
-  protected [kTransaction]: Snapshot | Transaction | null = null
+  private ref: OpleRef
 
+  /**
+   * Equivalent to `Collection` in FaunaDB
+   *
+   * @see https://docs.fauna.com/fauna/current/api/fql/functions/collection
+   */
   constructor(readonly name: string) {
-    this[kHandle] = db.createCollection(name)
-  }
-
-  protected get reader() {
-    if (!isReading()) {
-      throw Error('Invalid outside "read" or "write" callback')
-    }
-    if (!this[kTransaction]) {
-      snapshots.set(
-        this,
-        (this[kTransaction] = isWriting()
-          ? this[kHandle].beginTransaction()
-          : this[kHandle].beginSnapshot()),
-      )
-    }
-    return this[kTransaction] as Snapshot
-  }
-
-  protected get writer() {
-    if (!isWriting()) {
-      throw Error('Invalid outside "write" callback')
-    }
-    if (!this[kTransaction]) {
-      transactions.set(
-        this,
-        (this[kTransaction] = this[kHandle].beginTransaction()),
-      )
-    }
-    return this[kTransaction] as Transaction
-  }
-
-  protected toDocument<T>(id: string, data: T, ts: number): OpleDocument<T> {
-    return {
-      ref: new OpleRef(this.name, id),
-      data,
-      ts: new OpleTime(ts),
-    }
+    this.ref = new OpleRef(name, OpleRef.Native.collections)
   }
 
   /** Get the mutable metadata of this collection */
@@ -67,7 +30,7 @@ export class OpleCollection<T = any> {
 
   /** Read a document in this collection */
   get(id: string) {
-    return this.reader.get(id)
+    return execSync('get', new OpleRef(id, this.ref))
   }
 
   /** Create a document in this collection */
@@ -76,10 +39,7 @@ export class OpleCollection<T = any> {
     // TODO: use these options
     opts?: OpleDocumentOptions,
   ): OpleDocument<T> {
-    const ts = now()
-    const id = uuid()
-    this.writer.put(id, { ...data, '@ts': ts })
-    return this.toDocument(id, data, ts)
+    return execSync('create')
   }
 
   /** Replace a document's data */

@@ -1,9 +1,18 @@
-export class OpleRef {
+import { notImplemented } from './errors'
+
+export class OpleRef<T extends object = any> {
   constructor(readonly id: string, readonly collection?: OpleRef) {}
 
   get isCollection(): boolean {
-    return !this.collection && this.id == 'collections'
+    return this.collection?.id == 'collections'
   }
+
+  static Native = {
+    collections: new OpleRef('collections'),
+  }
+
+  /** This enforces type nominality. */
+  protected _ref!: { data: T }
 }
 
 export class OpleDate {
@@ -13,12 +22,25 @@ export class OpleDate {
    * @see https://docs.fauna.com/fauna/current/api/fql/functions/date
    */
   constructor(date: string) {}
+
+  toString() {
+    throw notImplemented
+  }
+
+  /** This enforces type nominality. */
+  protected _type!: 'OpleDate'
 }
 
 export type OpleTimeUnit = 'millisecond' | 'nanosecond'
 
 export class OpleTime {
   constructor(time: string | number, unit?: OpleTimeUnit) {}
+
+  toString() {
+    throw notImplemented
+  }
+
+  protected _type!: 'OpleTime'
 }
 
 export interface OpleDate {

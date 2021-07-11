@@ -1,3 +1,4 @@
+- Get should return the first value in a result set
 - Unsupported queries:
   - Events
   - Singleton

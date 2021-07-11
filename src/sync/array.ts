@@ -105,6 +105,7 @@ const proto: any = OpleArray.prototype
 queriesByType.array.forEach(callee => {
   if (proto[callee]) return
   proto[callee] = function (this: OpleArray, ...args: any[]) {
+    // TODO: create a native function that does this call
     return execSync(callee, this[kData], ...args)
   }
 })
