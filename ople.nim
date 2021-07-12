@@ -6,8 +6,8 @@ import ./oplepkg/eval
 
 var db {.noinit.}: Database
 
-var SnapshotMethods {.noinit.}: napi_value
-var TransactionMethods {.noinit.}: napi_value
+var SnapshotMethods {.noinit.}: napi_ref
+var TransactionMethods {.noinit.}: napi_ref
 
 proc toSnapshot(this: napi_value): auto =
   cast[Snapshot](this["handle"].getExternal)
@@ -30,10 +30,10 @@ init proc(exports: Module) =
     this.toSnapshot.finish()
     return nil
 
-  SnapshotMethods = \{
+  SnapshotMethods = \({
     "execSync": execSync,
     "finish": finishSnapshot,
-  }
+  }).toRef
 
   fn(0, commitTransaction):
     this.toTransaction.commit()
@@ -41,7 +41,7 @@ init proc(exports: Module) =
 
   TransactionMethods = objectCreate(SnapshotMethods, {
     "commit": commitTransaction,
-  })
+  }).toRef
 
   exports.register("SnapshotMethods", SnapshotMethods)
   exports.register("TransactionMethods", TransactionMethods)
