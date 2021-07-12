@@ -1,9 +1,8 @@
-{.experimental: "notnil".}
 import napibindings
 import nimdbx
 import streams
 import ./oplepkg/data/[from_json,to_json]
-import ./oplepkg/[eval,query]
+import ./oplepkg/eval
 
 var db {.noinit.}: Database
 
@@ -40,11 +39,12 @@ init proc(exports: Module) =
     this.toTransaction.commit()
     return nil
 
-  TransactionMethods = \{
+  TransactionMethods = objectCreate(SnapshotMethods, {
     "commit": commitTransaction,
-  }
+  })
 
-  TransactionMethods.setPrototype SnapshotMethods
+  exports.register("SnapshotMethods", SnapshotMethods)
+  exports.register("TransactionMethods", TransactionMethods)
 
   exports.registerFn(1, "open"):
     db = openDatabase(args[0].getStr)
@@ -53,23 +53,21 @@ init proc(exports: Module) =
   exports.registerFn(0, "beginSnapshot"):
     let snapshot = db.beginSnapshot()
     GC_ref(snapshot)
-    result = \{
+    return objectCreate(SnapshotMethods, {
       "handle": createExternal(
         cast[pointer](snapshot),
         proc (data: pointer) =
           GC_unref(snapshot)
       ),
-    }
-    result.setPrototype SnapshotMethods
+    })
 
   exports.registerFn(0, "beginTransaction"):
     let transaction = db.beginTransaction()
     GC_ref(transaction)
-    result = \{
+    return objectCreate(TransactionMethods, {
       "handle": createExternal(
         cast[pointer](transaction),
         proc (data: pointer) =
           GC_unref(transaction)
       ),
-    }
-    result.setPrototype TransactionMethods
+    })

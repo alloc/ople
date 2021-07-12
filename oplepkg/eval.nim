@@ -3,6 +3,8 @@ import tables
 import ./functions
 import ./query
 
+export newQuery, setSnapshot, OpleQuery
+
 proc eval*(query: OpleQuery, expression: OpleData): OpleData
 
 const
