@@ -42,8 +42,9 @@ init proc(exports: Module) =
 
   TransactionMethods = \{
     "commit": commitTransaction,
-    "__proto__": SnapshotMethods,
   }
+
+  TransactionMethods.setPrototype SnapshotMethods
 
   exports.registerFn(1, "open"):
     db = openDatabase(args[0].getStr)
@@ -52,23 +53,23 @@ init proc(exports: Module) =
   exports.registerFn(0, "beginSnapshot"):
     let snapshot = db.beginSnapshot()
     GC_ref(snapshot)
-    return \{
-      "__proto__": SnapshotMethods,
+    result = \{
       "handle": createExternal(
         cast[pointer](snapshot),
         proc (data: pointer) =
           GC_unref(snapshot)
       ),
     }
+    result.setPrototype SnapshotMethods
 
   exports.registerFn(0, "beginTransaction"):
     let transaction = db.beginTransaction()
     GC_ref(transaction)
-    return \{
-      "__proto__": TransactionMethods,
+    result = \{
       "handle": createExternal(
         cast[pointer](transaction),
         proc (data: pointer) =
           GC_unref(transaction)
       ),
     }
+    result.setPrototype TransactionMethods

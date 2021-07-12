@@ -3,7 +3,8 @@
     {
       "target_name": "ople",
       "cflags": [
-        "-w"
+        "-w",
+        "-Wl,-rpath,/Users/aleclarson/.nimble/pkgs/nimdbx-0.4.1/libmdbx-dist"
       ],
       "include_dirs": [
         "/Users/aleclarson/.choosenim/toolchains/nim-1.4.8/lib",
@@ -12,6 +13,15 @@
       "linkflags": [
         "-ldl"
       ],
+      "libraries": [
+        "-lmdbx"
+      ],
+      "link_settings": {
+        "libraries": [
+          "-L$$HOME/.nimble/pkgs/nimdbx-0.4.1/libmdbx-dist",
+          "-Wl,-rpath,$$HOME/.nimble/pkgs/nimdbx-0.4.1/libmdbx-dist"
+        ]
+      },
       "sources": [
         "nimcache/stdlib_assertions.nim.c",
         "nimcache/stdlib_dollars.nim.c",

@@ -1,3 +1,4 @@
+process.chdir(process.env.HOME + '/.nimble/pkgs/nimdbx-0.4.1/libmdbx-dist')
 import { db, write } from './'
 
 type User = { name: string }
