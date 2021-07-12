@@ -1,5 +1,6 @@
 import macros
 import nimdbx
+import options
 import times
 import ./data
 import ./error
@@ -14,28 +15,29 @@ type
     error*: OpleError
     database*: Database
     snapshot*: Snapshot
-    transaction: Transaction
     expression*: OpleData
     debugPath*: seq[string]
-
-proc newQuery*(expression: OpleData, database: Database): OpleQuery =
-  result.expression = expression
-  result.database = database
-  result.now = getTime()
+    t: Option[Transaction]
 
 proc fail*(query: OpleQuery, code: string, description: string) {.noreturn.} =
   query.error = OpleError(code: code, description: description)
   raise OpleFailure()
 
 proc transaction*(query: OpleQuery): Transaction =
-  result = query.transaction
-  if result == nil:
+  if query.t.isNone:
     query.fail "read only", "cannot write in a readonly query"
+  result = query.t.get()
 
-proc setSnapshot*(query: OpleQuery, snapshot: Snapshot) =
-  query.snapshot = snapshot
-  if snapshot of Transaction:
-    query.transaction = cast[Transaction](snapshot)
+proc newQuery*(expression: OpleData, database: Database, snapshot: Snapshot, now: Time): OpleQuery =
+  result = OpleQuery(
+    now: now, 
+    expression: expression, 
+    database: database, 
+    snapshot: snapshot, 
+    t: if snapshot of Transaction:
+      some(cast[Transaction](snapshot))
+    else: none(Transaction),
+  )
 
 template expectArity*(query: OpleQuery, arguments: seq[OpleData], arity: int) =
   if arity > arguments.len:

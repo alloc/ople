@@ -3,7 +3,7 @@ import tables
 import ./functions
 import ./query
 
-export newQuery, setSnapshot, OpleQuery
+export newQuery, OpleQuery
 
 proc eval*(query: OpleQuery, expression: OpleData): OpleData
 

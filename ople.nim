@@ -1,6 +1,7 @@
 import napibindings
 import nimdbx
 import streams
+import times
 import ./oplepkg/data/[from_json,to_json]
 import ./oplepkg/eval
 
@@ -9,42 +10,45 @@ var db {.noinit.}: Database
 var SnapshotMethods {.noinit.}: napi_ref
 var TransactionMethods {.noinit.}: napi_ref
 
-proc toSnapshot(this: napi_value): auto =
+proc snapshot(this: napi_value): auto =
   cast[Snapshot](this["handle"].getExternal)
 
-proc toTransaction(this: napi_value): auto =
+proc transaction(this: napi_value): auto =
   cast[Transaction](this["handle"].getExternal)
+
+proc now(this: napi_value): auto =
+  cast[ref Time](this["ts"].getExternal)[]
+
+proc now(): ref Time =
+  new(result)
+  result[] = getTime()
 
 init proc(exports: Module) =
 
   fn(1, execSync):
-    let queryStr = args[0].getStr
-    let queryExpr = parseOpleData newStringStream(queryStr)
-    var query = newQuery(queryExpr, db)
-    query.setSnapshot this.toSnapshot
+    let queryExprStr = args[0].getStr
+    let queryExpr = parseOpleData newStringStream(queryExprStr)
+    let query = newQuery(queryExpr, db, this.snapshot, this.now)
     let queryResult = query.eval()
     let queryResultStr = queryResult.stringify()
     return napiCreate queryResultStr
 
   fn(0, finishSnapshot):
-    this.toSnapshot.finish()
+    this.snapshot.finish()
     return nil
 
-  SnapshotMethods = \({
+  SnapshotMethods = toRef \{
     "execSync": execSync,
     "finish": finishSnapshot,
-  }).toRef
+  }
 
   fn(0, commitTransaction):
-    this.toTransaction.commit()
+    this.transaction.commit()
     return nil
 
-  TransactionMethods = objectCreate(SnapshotMethods, {
+  TransactionMethods = objectCreate(SnapshotMethods.fromRef, {
     "commit": commitTransaction,
   }).toRef
-
-  exports.register("SnapshotMethods", SnapshotMethods)
-  exports.register("TransactionMethods", TransactionMethods)
 
   exports.registerFn(1, "open"):
     db = openDatabase(args[0].getStr)
@@ -52,22 +56,14 @@ init proc(exports: Module) =
 
   exports.registerFn(0, "beginSnapshot"):
     let snapshot = db.beginSnapshot()
-    GC_ref(snapshot)
-    return objectCreate(SnapshotMethods, {
-      "handle": createExternal(
-        cast[pointer](snapshot),
-        proc (data: pointer) =
-          GC_unref(snapshot)
-      ),
+    return objectCreate(SnapshotMethods.fromRef, {
+      "handle": createExternalRef(snapshot),
+      "ts": createExternalRef(now()),
     })
 
   exports.registerFn(0, "beginTransaction"):
     let transaction = db.beginTransaction()
-    GC_ref(transaction)
-    return objectCreate(TransactionMethods, {
-      "handle": createExternal(
-        cast[pointer](transaction),
-        proc (data: pointer) =
-          GC_unref(transaction)
-      ),
+    return objectCreate(TransactionMethods.fromRef, {
+      "handle": createExternalRef(transaction),
+      "ts": createExternalRef(now()),
     })

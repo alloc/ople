@@ -5,7 +5,6 @@ import tables
 import times
 import ../data/from_cbor
 import ../data/to_cbor
-import ../error
 import ../query
 import ../ref
 import ./collection
@@ -87,3 +86,18 @@ proc updateDocument*(docRef: OpleRef, params: OpleObject) {.query.} =
   #   return this.toDocument(id, data, ts)
   # }
   # throw Error('todo')
+
+proc mergeProperties*(oldProps: OpleObject, newProps: OpleObject): OpleObject =
+  discard
+  # export function merge(a: any, b: any) {
+  #   if (b === undefined) {
+  #     return a
+  #   }
+  #   if (a && b && a.constructor == Object && b.constructor == Object) {
+  #     for (const key in b) {
+  #       a[key] = merge(a[key], b[key])
+  #     }
+  #     return a
+  #   }
+  #   return b
+  # }

@@ -1,5 +1,4 @@
 import { notImplemented } from '../errors'
-import { merge } from '../merge'
 import { OpleDocument, OpleDocumentOptions } from './document'
 import { OpleRef } from '../values'
 import { execSync, q } from './transaction'
@@ -62,7 +61,7 @@ export interface OpleCollection<T> {}
 
 export namespace OpleCollection {
   /** The options for `Database#createCollection` */
-  export interface Options<T extends object> {
+  export interface Options<T extends object | null> {
     data?: T
     history_days?: number
     permissions?: any
@@ -70,7 +69,7 @@ export namespace OpleCollection {
   }
 
   /** The result of `Database#createCollection` */
-  export interface CreateResult<T extends object> {
+  export interface CreateResult<T extends object | null> {
     ref: OpleRef<T>
     name: string
     ts: number

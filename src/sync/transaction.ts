@@ -8,7 +8,7 @@ let transaction: Transaction | null = null
 /** Type-safe query functions */
 export const q = new Proxy({} as OpleQueries, {
   get: (_, callee: string) =>
-    queryMap[callee] ? execSync.bind(callee) : undefined,
+    queryMap[callee] ? execSync.bind(null, callee) : undefined,
 })
 
 /** Untyped query executor */
