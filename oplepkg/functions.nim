@@ -17,11 +17,13 @@ proc addFunction*(name: string, f: OpleFunction) =
     raise newException(Defect, "function already exists: " & name)
   functions[name] = f
 
-proc callFunction*(query: OpleQuery, callee: string, args: OpleArray): OpleData =
-  let fn = functions[callee]
-  if fn == nil:
+proc assertFunction*(query: OpleQuery, callee: string) =
+  if not functions.hasKey callee:
+    query.debugPath.add callee
     query.fail "invalid ref", badFunctionRef callee
-  return fn(query, args)
+
+proc callFunction*(query: OpleQuery, callee: string, args: OpleArray): OpleData =
+  return functions[callee](query, args)
 
 # TODO: retrieve callee from "functions" collection
 addFunction "call", proc (callee: string, args: OpleArray) {.query.} =

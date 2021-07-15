@@ -2,10 +2,10 @@ import esbuild from 'rollup-plugin-esbuild'
 
 const name = require('./package.json').main.replace(/\.js$/, '')
 
-const bundle = (config) => ({
+const bundle = config => ({
   ...config,
   input: 'src/ople.ts',
-  external: (id) => !/^[./]/.test(id),
+  external: id => !/^[./]/.test(id),
 })
 
 export default bundle({
@@ -15,6 +15,7 @@ export default bundle({
       file: `${name}.js`,
       format: 'cjs',
       sourcemap: true,
+      sourcemapExcludeSources: true,
     },
     {
       file: `${name}.mjs`,

@@ -21,6 +21,7 @@ proc parseStringLit(p: var JsonParser): string =
   if p.tok != tkString:
     raiseParseErr(p, "expected string literal")
   result = p.a
+  p.a = ""
   discard getTok(p)
 
 proc parseTable(p: var JsonParser): Table[string, string] =
@@ -31,6 +32,7 @@ proc parseTable(p: var JsonParser): Table[string, string] =
     let key = parseStringLit(p)
     eat(p, tkColon)
     result[key] = p.a
+    p.a = ""
     discard getTok(p)
     if p.tok != tkComma: break
     discard getTok(p)
@@ -126,6 +128,7 @@ proc parseOpleData(p: var JsonParser): OpleData =
       else: nil
 
     if parseSpecial != nil or firstKey == "@obj":
+      p.a = ""
       discard getTok(p)
       eat(p, tkColon)
 

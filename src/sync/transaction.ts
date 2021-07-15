@@ -46,7 +46,7 @@ export function read<T>(reader: () => T): T {
  * Write to the database.
  */
 export function write<T>(
-  writer: (abort: (message?: string) => void) => T,
+  writer: (abort: (message?: string) => never) => T,
 ): T | undefined {
   if (snapshot || transaction) {
     throw Error('Nested transactions are forbidden')

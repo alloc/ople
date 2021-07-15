@@ -17,7 +17,7 @@ proc `%`(arr: OpleArray): JsonNode =
 #   %*{ "data": doc.data, "before": doc.before, "after": doc.after }
 
 proc newJObject(error: OpleError, debugPath: seq[string]): JsonNode =
-  %{ "position": %debugPath, "code": %error.code, "description": %error.description }
+  %{ "@error": %{ "position": %debugPath, "code": %error.code, "description": %error.description } }
 
 proc newJObject(call: OpleCall): JsonNode =
   var node = newJObject()

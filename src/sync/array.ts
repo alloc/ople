@@ -143,3 +143,8 @@ export interface OpleArrayLike<T = any> {
   reduce<U>(reducer: (acc: U, value: T) => U, initial: U): U
   sum(): [T] extends [number] ? number : never
 }
+
+/** @internal */
+export function unwrapOpleArray(arr: OpleArray) {
+  return arr[kData]
+}

@@ -1,5 +1,5 @@
-import { OpleArray } from '../sync/array'
-import { OpleDate, OpleRef, OpleTime } from '../values'
+import { OpleArray, unwrapOpleArray } from '../sync/array'
+import { OpleDate, OpleQueryError, OpleRef, OpleTime } from '../values'
 
 type DataReviver = (data: any) => any
 const dataRevivers: [string, DataReviver][] = [
@@ -7,6 +7,7 @@ const dataRevivers: [string, DataReviver][] = [
   ['@time', toTime],
   ['@date', toDate],
   ['@set', toSet],
+  ['@error', toError],
 ]
 
 export function jsonReviver(_key: string, value: any) {
@@ -49,4 +50,8 @@ function toDate(data: string) {
 
 function toSet(data: any) {
   throw Error('not implemented')
+}
+
+function toError({ code, description, position }: any) {
+  return new OpleQueryError(code, description, unwrapOpleArray(position))
 }

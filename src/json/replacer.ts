@@ -1,8 +1,15 @@
 import { OpleSet } from '../sync/set'
 import { OpleDate, OpleRef, OpleTime } from '../values'
 
-export function jsonReplacer(_key: string, value: any) {
-  if (value == null || typeof value != 'object') {
+export function jsonReplacer(key: string, value: any) {
+  if (
+    value == null ||
+    typeof value != 'object' ||
+    Array.isArray(value) ||
+    key == '@ref' ||
+    key == '@obj' ||
+    key == ''
+  ) {
     return value
   }
   switch (value.constructor) {
@@ -15,7 +22,7 @@ export function jsonReplacer(_key: string, value: any) {
     case OpleSet:
       return replaceSet(value)
   }
-  return value
+  return { '@obj': value }
 }
 
 function replaceRef(ref: OpleRef) {

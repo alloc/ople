@@ -5,7 +5,7 @@ import { queryMap } from './queryMap'
 import { OpleCollection } from './sync/collection'
 import { OpleDocument, OpleDocumentOptions } from './sync/document'
 import { OpleFunctions } from './sync/stdlib'
-import { OpleRef, OpleTime } from './values'
+import { OpleQueryError, OpleRef } from './values'
 
 export interface OpleQueries extends OpleFunctions {
   get<T extends object | null>(ref: OpleRef<T>): OpleDocument<T>
@@ -38,8 +38,14 @@ export class OpleQuery {
     return JSON.stringify(this.expr, jsonReplacer)
   }
   execSync(snapshot: Snapshot) {
-    const result = snapshot.execSync(this.toString())
-    return JSON.parse(result, jsonReviver)
+    const query = this.toString()
+    console.log('execSync:', query)
+    const resultStr = snapshot.execSync(query)
+    const result = JSON.parse(resultStr, jsonReviver)
+    if (result.constructor == OpleQueryError) {
+      throw result
+    }
+    return result
   }
 }
 

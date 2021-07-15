@@ -1,4 +1,5 @@
 import sequtils
+import strutils
 import tables
 import ./functions
 import ./query
@@ -37,6 +38,8 @@ proc eval*(query: OpleQuery, call: OpleCall): OpleData =
         return \false
     return \true
 
+  query.assertFunction(call.callee)
+
   # Evaluate any nested calls.
   var arguments: OpleArray
   for i, argument in call.arguments:
@@ -54,7 +57,10 @@ proc eval*(query: OpleQuery, arr: OpleArray): OpleData =
     query.eval data
 
 proc eval*(query: OpleQuery, expression: OpleData): OpleData =
-  query.debugPath.add expression.debugId
+  let hasDebugId = expression.debugId != ""
+  if hasDebugId:
+    query.debugPath.add expression.debugId
+  echo "eval: " & query.debugPath.join(".") & " [" & $expression.kind & "]"
 
   try:
     return case expression.kind
@@ -67,7 +73,8 @@ proc eval*(query: OpleQuery, expression: OpleData): OpleData =
     return newOpleError(query.error, query.debugPath)
 
   finally:
-    discard query.debugPath.pop()
+    if hasDebugId:
+      discard query.debugPath.pop()
 
-proc eval*(query: OpleQuery): OpleData =
+template eval*(query: OpleQuery): OpleData =
   query.eval(query.expression)
