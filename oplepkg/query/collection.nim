@@ -1,7 +1,14 @@
 {.experimental: "notnil".}
-import nimdbx
+import streams
+import ../data/to_cbor
+import ../database
 import ../error
 import ../query
+
+proc serializeDocument*(props: OpleObject): string =
+  let stream = newStringStream()
+  stream.writeCbor props
+  stream.data
 
 proc getCollection*(query: OpleQuery, name: string): Collection not nil =
   var col = query.database.openCollectionOrNil name
@@ -11,6 +18,16 @@ proc getCollection*(query: OpleQuery, name: string): Collection not nil =
   if col == nil: query.database.openCollection name
   else: col
 
-# TODO: create document in "ople_collections" collection
-proc newCollection*(query: OpleQuery, name: string): Collection not nil =
-  query.database.createCollection(name)
+# TODO: permissions
+proc newCollection*(query: OpleQuery, params: OpleObject) =
+  let collections = query.getWritableSchema ople_collections
+  let name = params["name"].string
+  if collections.get(name).exists:
+    query.fail "instance already exists", "Collection already exists."
+  discard query.database.createCollection(name)
+  var props: OpleObject
+  props["ts"] = \int64(query.now.toUnixFloat)
+  props["data"] = params.getOrDefault("data", \nil)
+  props["ttl_days"] = params.getOrDefault("ttl_days", \nil)
+  props["history_days"] = params.getOrDefault("history_days", \30)
+  collections.put name, serializeDocument(props)

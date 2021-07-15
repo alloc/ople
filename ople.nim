@@ -1,8 +1,8 @@
 import napibindings
-import nimdbx
 import streams
 import times
 import ./oplepkg/data/[from_json,to_json]
+import ./oplepkg/database
 import ./oplepkg/eval
 
 var db {.noinit.}: Database
@@ -51,7 +51,7 @@ init proc(exports: Module) =
   }).toRef
 
   exports.registerFn(1, "open"):
-    db = openDatabase(args[0].getStr)
+    db = initDatabase args[0].getStr
     return undefined()
 
   exports.registerFn(0, "beginSnapshot"):

@@ -42,13 +42,13 @@ proc eval*(query: OpleQuery, call: OpleCall): OpleData =
 
   # Evaluate any nested calls.
   var arguments: OpleArray
-  for i, argument in call.arguments:
-    arguments[i] = query.eval argument
+  for argument in items(call.arguments):
+    arguments.add query.eval argument
 
   query.callFunction(call.callee, arguments)
 
 proc eval*(query: OpleQuery, obj: OpleObject): OpleData =
-  result.kind = ople_object
+  result = OpleData(kind: ople_object)
   for key, data in obj:
     result.object[key] = query.eval data
 

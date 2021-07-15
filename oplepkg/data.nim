@@ -1,6 +1,9 @@
 import tables
 import times
 
+export tables
+export times
+
 const opleDateFormat* = initTimeFormat "yyyy-MM-dd"
 const opleTimeFormat* = initTimeFormat "yyyy-MM-dd'T'HH:mm:ss'.'fffffffff'Z'"
 

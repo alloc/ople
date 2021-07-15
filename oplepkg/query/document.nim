@@ -1,18 +1,11 @@
 {.experimental: "notnil".}
 import nimdbx
-import streams
 import tables
 import times
 import ../data/from_cbor
-import ../data/to_cbor
 import ../query
 import ../ref
 import ./collection
-
-proc serializeDocument(props: OpleObject): string =
-  let stream = newStringStream()
-  stream.writeCbor props
-  stream.data
 
 proc getDocument*(query: OpleQuery, col: Collection not nil, id: string): OpleObject =
   let doc = col.with(query.snapshot).get id

@@ -1,4 +1,3 @@
-import tables
 import ./error
 import ./query
 import ./query/document
@@ -41,4 +40,12 @@ addFunction "replace", setDocumentData
 #
 # Collections
 #
-addFunction "create_collection", proc (params: OpleObject) {.query.} = discard
+addFunction "create_collection", proc (params: OpleObject) {.query.} =
+  query.newCollection params
+  let name = params["name"].string
+  return \{
+    "ref": newOpleRef(name, "collections"),
+    "name": params["name"],
+    "ts": \int64(query.now.toUnixFloat),
+    "history_days": params.getOrDefault("history_days", \30),
+  }

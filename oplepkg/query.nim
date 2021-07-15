@@ -1,7 +1,6 @@
 import macros
 import nimdbx
 import options
-import times
 import ./data
 import ./error
 
@@ -30,10 +29,10 @@ proc transaction*(query: OpleQuery): Transaction =
 
 proc newQuery*(expression: OpleData, database: Database, snapshot: Snapshot, now: Time): OpleQuery =
   result = OpleQuery(
-    now: now, 
-    expression: expression, 
-    database: database, 
-    snapshot: snapshot, 
+    now: now,
+    expression: expression,
+    database: database,
+    snapshot: snapshot,
     t: if snapshot of Transaction:
       some(cast[Transaction](snapshot))
     else: none(Transaction),
@@ -82,10 +81,7 @@ macro query*(fn: untyped): untyped =
     ),
     newIdentDefs(
       newIdentNode("arguments"),
-      nnkBracketExpr.newTree(
-        newIdentNode("seq"),
-        newIdentNode("OpleData")
-      )
+      newIdentNode("OpleArray")
     )
   )
 
