@@ -2,6 +2,7 @@ import tables
 import ./error
 import ./query
 import ./query/document
+import ./query/collection
 
 type
   OpleFunction* = proc (
@@ -29,7 +30,15 @@ proc callFunction*(query: OpleQuery, callee: string, args: OpleArray): OpleData 
 addFunction "call", proc (callee: string, args: OpleArray) {.query.} =
   callFunction(query, callee, args)
 
+#
+# Documents
+#
 addFunction "get", getDocument
 addFunction "exists", hasDocument
 addFunction "create", newDocument
 addFunction "replace", setDocumentData
+
+#
+# Collections
+#
+addFunction "create_collection", proc (params: OpleObject) {.query.} = discard
