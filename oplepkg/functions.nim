@@ -49,3 +49,8 @@ addFunction "create_collection", proc (params: OpleObject) {.query.} =
     "ts": \int64(query.now.toUnixFloat),
     "history_days": params.getOrDefault("history_days", \30),
   }
+
+#
+# Sets
+#
+addFunction "paginate", paginate

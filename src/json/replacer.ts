@@ -26,11 +26,7 @@ export function jsonReplacer(key: string, value: any) {
 }
 
 function replaceRef(ref: OpleRef) {
-  const data: any = { id: ref.id }
-  if (ref.collection) {
-    data.collection = replaceRef(ref.collection)
-  }
-  return { '@ref': data }
+  return { '@ref': { id: ref.id, collection: ref.collection } }
 }
 
 function replaceTime(time: OpleTime) {
@@ -42,5 +38,5 @@ function replaceDate(date: OpleDate) {
 }
 
 function replaceSet(set: OpleSet) {
-  throw Error('not implemented')
+  return { '@set': set.expr }
 }

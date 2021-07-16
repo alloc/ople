@@ -46,13 +46,13 @@ proc expectArgument*(query: OpleQuery, arguments: seq[OpleData], index: int): Op
   query.expectArity(arguments, index + 1)
   return arguments[index]
 
-proc expectKind*(query: OpleQuery, data: OpleData, kind: OpleDataKind) =
+proc expectKind*(query: OpleQuery, data: OpleData, kind: OpleDataKind): OpleData =
   if data.kind != kind:
     query.fail "invalid argument", invalidKind(kind, data.kind)
+  return data
 
-proc expectArgument*(query: OpleQuery, arguments: seq[OpleData], index: int, kind: OpleDataKind): OpleData =
-  result = query.expectArgument(arguments, index)
-  query.expectKind(result, kind)
+template expectArgument*(query: OpleQuery, arguments: seq[OpleData], index: int, kind: OpleDataKind): OpleData =
+  query.expectKind(query.expectArgument(arguments, index), kind)
 
 proc dataKey(kind: OpleDataKind): string =
   result = case kind

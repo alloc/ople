@@ -81,13 +81,3 @@ export interface OpleTime {
   diff(finish: OpleTime, unit: OpleTimeUnit): OpleTime
   subtract(offset: number, unit: OpleTimeUnit): OpleTime
 }
-
-export class OpleQueryError extends Error {
-  constructor(
-    readonly code: string,
-    readonly description: string,
-    readonly position: string[],
-  ) {
-    super()
-  }
-}

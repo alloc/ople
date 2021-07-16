@@ -7,6 +7,9 @@ import ../data
 
 proc parseOpleData(p: var JsonParser): OpleData
 
+proc raiseCustomParseErr(p: JsonParser, msg: string) {.noReturn.} =
+  raise newException(JsonParsingError, "($1, $2) Error: $3" % [$getLine(p), $getColumn(p), msg])
+
 proc parseOpleData*(s: Stream): OpleData =
   var p: JsonParser
   p.open(s, "")
@@ -24,24 +27,30 @@ proc parseStringLit(p: var JsonParser): string =
   p.a = ""
   discard getTok(p)
 
-proc parseTable(p: var JsonParser): Table[string, string] =
-  if p.tok != tkCurlyLe:
-    raiseParseErr(p, "expected an object")
-  discard getTok(p)
-  while p.tok != tkCurlyRi:
-    let key = parseStringLit(p)
-    eat(p, tkColon)
-    result[key] = p.a
-    p.a = ""
-    discard getTok(p)
-    if p.tok != tkComma: break
-    discard getTok(p)
-  eat(p, tkCurlyRi)
-
-# TODO: props["collection"] is an OpleRef too
 proc parseOpleRef(p: var JsonParser): OpleData =
-  let props = parseTable(p)
-  newOpleRef props["id"], props["collection"]
+  eat(p, tkCurlyLe)
+  var key = parseStringLit(p)
+  if key != "id":
+    raiseCustomParseErr(p, "expected 'id' key, got '$1'" % [key])
+  eat(p, tkColon)
+  var id = parseStringLit(p)
+  var collection: string
+  if p.tok == tkComma:
+    eat(p, tkComma)
+    key = parseStringLit(p)
+    if key != "collection":
+      raiseCustomParseErr(p, "expected 'collection' key, got '$1'" % [key])
+    eat(p, tkColon)
+    let value = parseOpleData(p)
+    if value.kind != ople_ref:
+      raiseCustomParseErr(p, "expected 'collection' to be ople_ref, but got $1" % [$value.kind])
+    collection = value.ref.id
+  else:
+    id = case id
+      of "collections": "ople_collections"
+      else: raiseCustomParseErr(p, "expected native collection, got '$1'" % [id])
+  eat(p, tkCurlyRi)
+  newOpleRef id, collection
 
 proc parseOpleTime(p: var JsonParser): OpleData =
   newOpleTime parseStringLit(p)
@@ -79,6 +88,12 @@ proc parseOpleCall(p: var JsonParser): OpleData =
     debugId = parseStringLit(p)
     eat(p, tkColon)
   newOpleCall(callee, arguments)
+
+proc parseOpleSet(p: var JsonParser): OpleData =
+  eat(p, tkCurlyLe)
+  let call = parseOpleCall(p)
+  eat(p, tkCurlyRi)
+  newOpleSet call
 
 proc parseOpleData(p: var JsonParser): OpleData =
   case p.tok
@@ -125,6 +140,7 @@ proc parseOpleData(p: var JsonParser): OpleData =
       of "@ref": parseOpleRef
       of "@ts": parseOpleTime
       of "@date": parseOpleDate
+      of "@set": parseOpleSet
       else: nil
 
     if parseSpecial != nil or firstKey == "@obj":

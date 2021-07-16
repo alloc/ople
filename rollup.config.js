@@ -9,18 +9,24 @@ const bundle = config => ({
 })
 
 export default bundle({
-  plugins: [esbuild()],
+  plugins: [
+    esbuild({
+      target: 'node16',
+      sourceMap: true,
+    }),
+  ],
   output: [
     {
       file: `${name}.js`,
       format: 'cjs',
-      sourcemap: true,
+      sourcemap: 'inline',
       sourcemapExcludeSources: true,
     },
     {
       file: `${name}.mjs`,
       format: 'es',
-      sourcemap: true,
+      sourcemap: 'inline',
+      sourcemapExcludeSources: true,
     },
   ],
 })

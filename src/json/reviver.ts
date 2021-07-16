@@ -1,5 +1,7 @@
 import { OpleArray, unwrapOpleArray } from '../sync/array'
-import { OpleDate, OpleQueryError, OpleRef, OpleTime } from '../values'
+import { OpleDate, OpleRef, OpleTime } from '../values'
+import { OpleQueryError } from '../errors'
+import { OpleSet } from '../sync/set'
 
 type DataReviver = (data: any) => any
 const dataRevivers: [string, DataReviver][] = [
@@ -28,10 +30,7 @@ export function jsonReviver(_key: string, value: any) {
 
 function toRef({ id, collection }: { id: string; collection?: any }): OpleRef {
   if (collection) {
-    if (collection['@ref']) {
-      return new OpleRef(id, toRef(collection['@ref']))
-    }
-    throw Error('Malformed ref')
+    return new OpleRef(id, collection)
   }
   const ref = (OpleRef.Native as any)[id]
   if (ref) {
@@ -49,7 +48,7 @@ function toDate(data: string) {
 }
 
 function toSet(data: any) {
-  throw Error('not implemented')
+  return new OpleSet(data)
 }
 
 function toError({ code, description, position }: any) {

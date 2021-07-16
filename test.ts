@@ -1,11 +1,14 @@
 process.chdir(process.env.HOME + '/.nimble/pkgs/nimdbx-0.4.1/libmdbx-dist')
-import { db, write } from './'
+import './test/errors'
+import { db, write } from './src/ople'
 
 type User = { name: string }
 
 const user = write(abort => {
-  console.log(db.createCollection('users'))
   const users = db.getCollection<User>('users')
+  if (!users.exists) {
+    console.log(db.createCollection('users'))
+  }
   return users.create({ name: 'alec' })
 })
 

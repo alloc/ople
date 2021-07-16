@@ -5,7 +5,8 @@ import { queryMap } from './queryMap'
 import { OpleCollection } from './sync/collection'
 import { OpleDocument, OpleDocumentOptions } from './sync/document'
 import { OpleFunctions } from './sync/stdlib'
-import { OpleQueryError, OpleRef } from './values'
+import { OpleQueryError, popStackFrames } from './errors'
+import { OpleRef } from './values'
 
 export interface OpleQueries extends OpleFunctions {
   get<T extends object | null>(ref: OpleRef<T>): OpleDocument<T>
@@ -43,6 +44,7 @@ export class OpleQuery {
     const resultStr = snapshot.execSync(query)
     const result = JSON.parse(resultStr, jsonReviver)
     if (result.constructor == OpleQueryError) {
+      popStackFrames(result, 6)
       throw result
     }
     return result

@@ -2,6 +2,7 @@ import { notImplemented } from '../errors'
 import { OpleDocument, OpleDocumentOptions } from './document'
 import { OpleRef } from '../values'
 import { execSync, q } from './transaction'
+import { OpleSet } from './set'
 
 function coerceToRef<T extends object | null = any>(
   ref: string | OpleRef<T>,
@@ -33,9 +34,18 @@ export class OpleCollection<T extends object | null = any> {
     throw notImplemented
   }
 
+  /** Check if this collection exists */
+  get exists() {
+    return q.exists(this.ref)
+  }
+
+  get documents() {
+    return new OpleSet<OpleDocument<T>>({ documents: this.ref })
+  }
+
   /** Read a document in this collection */
   get(id: string) {
-    return execSync('get', new OpleRef(id, this.ref))
+    return q.get(new OpleRef<T>(id, this.ref))
   }
 
   /** Create a document in this collection */

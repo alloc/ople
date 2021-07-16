@@ -1,0 +1,19 @@
+{
+  "folders": [
+	{
+		"path": "."
+	},
+	{
+		"path": "../../nim/napibindings"
+	},
+	{
+		"path": "../../nim/nimdbx"
+	}
+],
+  "settings": {
+    "files.associations": {
+      "nimbase.h": "c",
+      "node_api.h": "c"
+    }
+  }
+}

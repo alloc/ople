@@ -1,4 +1,4 @@
-import type { OpleArrayLike,  } from './array'
+import type { OpleArrayLike } from './array'
 
 export function isOpleSet(value: any): value is OpleSet {
   return value?.constructor === OpleSet
@@ -9,7 +9,9 @@ export function isOpleSet(value: any): value is OpleSet {
  * that are in a specific order. Sets must be formally materialized
  * before you can access their underlying data.
  */
-export class OpleSet<T = any> {}
+export class OpleSet<T = any> {
+  constructor(readonly expr: { readonly [key: string]: any }) {}
+}
 
 export interface OpleSet<T> extends OpleArrayLike<T> {
   // TODO: can lambda return anything, or just a set ref?

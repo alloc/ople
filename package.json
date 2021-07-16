@@ -10,12 +10,17 @@
     "test": "sucrase-node test.ts"
   },
   "devDependencies": {
+    "@babel/code-frame": "^7.14.5",
+    "@types/babel__code-frame": "^7.0.3",
     "@types/bindings": "^1.5.0",
     "@types/node": "^15.12.2",
+    "@types/source-map-support": "^0.5.4",
     "esbuild": "^0.12.9",
     "prettier": "^2.3.1",
     "rollup": "^2.52.1",
     "rollup-plugin-esbuild": "^4.5.0",
+    "source-map-support": "^0.5.19",
+    "stacktrace-parser": "^0.1.10",
     "sucrase": "^3.19.0",
     "ts-morph": "^11.0.0",
     "typescript": "^4.3.2"

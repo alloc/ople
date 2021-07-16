@@ -42,6 +42,10 @@ init proc(exports: Module) =
     "finish": finishSnapshot,
   }
 
+  fn(0, finishTransaction):
+    this.transaction.abort()
+    return nil
+
   fn(0, commitTransaction):
     this.transaction.commit()
     return nil
@@ -52,7 +56,7 @@ init proc(exports: Module) =
 
   exports.registerFn(1, "open"):
     db = initDatabase args[0].getStr
-    return undefined()
+    return nil
 
   exports.registerFn(0, "beginSnapshot"):
     let snapshot = db.beginSnapshot()
