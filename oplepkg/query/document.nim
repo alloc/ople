@@ -7,13 +7,15 @@ import ../query
 import ../ref
 import ./collection
 
+proc parseDocument*(data: string): OpleObject =
+  for key, value in parseCbor(data).map:
+    result[key.text] = newOpleData(value)
+
 proc getDocument*(query: OpleQuery, col: Collection not nil, id: string): OpleObject =
   let doc = col.with(query.snapshot).get id
   if not doc.exists:
     query.fail "instance not found", "Document not found."
-  let node = parseCbor $doc
-  for key, value in node.map:
-    result[key.text] = newOpleData(value)
+  return parseDocument $doc
 
 proc getDocument*(query: OpleQuery, docRef: OpleRef): OpleObject =
   let col = query.getCollection(docRef.collection)

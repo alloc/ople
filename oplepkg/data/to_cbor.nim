@@ -51,8 +51,8 @@ proc writeCbor*(stream: Stream, data: OpleData, kind: OpleDataKind) =
     of ople_set:
       stream.writeCborTag cborOpleSet
       stream.writeCborArrayLen 2
-      stream.writeCbor data.query.callee
-      stream.writeCbor data.query.arguments
+      stream.writeCbor data.set.expr.callee
+      stream.writeCbor data.set.expr.arguments
     of ople_call:
       raise newException(Defect, "ople_call cannot be stored")
     of ople_error:

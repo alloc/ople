@@ -16,13 +16,12 @@ const arrayModule = proj.addSourceFileAtPath(path.resolve('src/sync/array.ts'))
 
 let stmts = queryModule.getStatements()
 const OpleQueries = stmts.find(
-  (stmt) =>
-    Node.isInterfaceDeclaration(stmt) && 'OpleQueries' === stmt.getName(),
+  stmt => Node.isInterfaceDeclaration(stmt) && 'OpleQueries' === stmt.getName(),
 ) as InterfaceDeclaration
 
 stmts = arrayModule.getStatements()
 const OpleArray = stmts.find(
-  (stmt) => Node.isClassDeclaration(stmt) && 'OpleArray' === stmt.getName(),
+  stmt => Node.isClassDeclaration(stmt) && 'OpleArray' === stmt.getName(),
 ) as ClassDeclaration
 
 const queries = [OpleQueries, OpleArray].reduce(
@@ -79,13 +78,13 @@ generatedLines.push(`}\n`)
 
 const OpleFunctions = OpleQueries.getType()
   .getBaseTypes()
-  .find((type) => 'OpleFunctions' === type.getSymbol()?.getName())!
+  .find(type => 'OpleFunctions' === type.getSymbol()?.getName())!
 
 const getPropertyNames = (type: Type) =>
   type
     .getProperties()
-    .map((prop) => prop.getName())
-    .filter((name) => !name.startsWith('__@'))
+    .map(prop => prop.getName())
+    .filter(name => !name.startsWith('__@'))
 
 const queriesByType = {
   global: getPropertyNames(OpleFunctions),

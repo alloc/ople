@@ -2,6 +2,7 @@ import ./error
 import ./query
 import ./query/document
 import ./query/collection
+import ./query/set
 
 type
   OpleFunction* = proc (

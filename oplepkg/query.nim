@@ -38,11 +38,11 @@ proc newQuery*(expression: OpleData, database: Database, snapshot: Snapshot, now
     else: none(Transaction),
   )
 
-template expectArity*(query: OpleQuery, arguments: seq[OpleData], arity: int) =
+template expectArity*(query: OpleQuery, arguments: OpleArray, arity: int) =
   if arity > arguments.len:
     query.fail "invalid arity", invalidArity(arity)
 
-proc expectArgument*(query: OpleQuery, arguments: seq[OpleData], index: int): OpleData =
+proc expectArgument*(query: OpleQuery, arguments: OpleArray, index: int): OpleData =
   query.expectArity(arguments, index + 1)
   return arguments[index]
 
@@ -51,8 +51,17 @@ proc expectKind*(query: OpleQuery, data: OpleData, kind: OpleDataKind): OpleData
     query.fail "invalid argument", invalidKind(kind, data.kind)
   return data
 
-template expectArgument*(query: OpleQuery, arguments: seq[OpleData], index: int, kind: OpleDataKind): OpleData =
+template expectArgument*(query: OpleQuery, arguments: OpleArray, index: int, kind: OpleDataKind): OpleData =
   query.expectKind(query.expectArgument(arguments, index), kind)
+
+proc getArgument*(arguments: OpleArray, index: int): OpleData =
+  result =
+    if arguments.len > index: arguments[index]
+    else: \nil
+
+proc toParams*(arguments: OpleArray): OpleObject =
+  for arg in arguments[1..^1]:
+    result[arg.debugId] = arg
 
 proc dataKey(kind: OpleDataKind): string =
   result = case kind
@@ -68,7 +77,8 @@ proc dataKey(kind: OpleDataKind): string =
     of ople_object: "object"
     of ople_array: "array"
     of ople_page: "page"
-    else: "repr"
+    of ople_set: "set"
+    else: ""
 
 macro query*(fn: untyped): untyped =
   let prevParams = fn.params

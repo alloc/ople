@@ -39,8 +39,14 @@ export class OpleCollection<T extends object | null = any> {
     return q.exists(this.ref)
   }
 
+  /** Get the document refs in this collection */
+  get refs() {
+    return new OpleSet<OpleRef<T>>({ documents: this.ref })
+  }
+
+  /** Read the documents in this collection */
   get documents() {
-    return new OpleSet<OpleDocument<T>>({ documents: this.ref })
+    return new OpleSet<OpleDocument<T>>({ get_documents: this.ref })
   }
 
   /** Read a document in this collection */

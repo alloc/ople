@@ -91,9 +91,9 @@ proc parseOpleCall(p: var JsonParser): OpleData =
 
 proc parseOpleSet(p: var JsonParser): OpleData =
   eat(p, tkCurlyLe)
-  let call = parseOpleCall(p)
+  let data = parseOpleCall(p)
   eat(p, tkCurlyRi)
-  newOpleSet call
+  newOpleSet data.call
 
 proc parseOpleData(p: var JsonParser): OpleData =
   case p.tok

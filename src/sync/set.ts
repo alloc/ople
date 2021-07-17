@@ -1,7 +1,15 @@
+import { queriesByType } from '../queryMap'
+import { OpleRef, OpleTime } from '../values'
 import type { OpleArrayLike } from './array'
+import { OpleCursor, OplePage } from './page'
+import { execSync, q } from './transaction'
 
-export function isOpleSet(value: any): value is OpleSet {
-  return value?.constructor === OpleSet
+type PaginateOpts = {
+  ts?: number | OpleTime
+  before?: OpleCursor
+  after?: OpleCursor
+  /** @default 64 */
+  size?: number
 }
 
 /**
@@ -10,7 +18,11 @@ export function isOpleSet(value: any): value is OpleSet {
  * before you can access their underlying data.
  */
 export class OpleSet<T = any> {
-  constructor(readonly expr: { readonly [key: string]: any }) {}
+  constructor(protected expr: { readonly [key: string]: any }) {}
+
+  paginate(opts: PaginateOpts = {}): OplePage<T> {
+    return q.paginate(this, opts.ts, opts.before, opts.after, opts.size)
+  }
 }
 
 export interface OpleSet<T> extends OpleArrayLike<T> {
@@ -27,3 +39,12 @@ export interface OpleSet<T> extends OpleArrayLike<T> {
 }
 
 type OpleSetElement<T> = T extends OpleSet<infer U> ? U : never
+
+const proto: any = OpleSet.prototype
+queriesByType.array.forEach(callee => {
+  if (proto[callee]) return
+  proto[callee] = function (this: OpleSet, ...args: any[]) {
+    // TODO: create a native function that does this call
+    return execSync(callee, this.expr, ...args)
+  }
+})

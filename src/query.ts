@@ -6,7 +6,9 @@ import { OpleCollection } from './sync/collection'
 import { OpleDocument, OpleDocumentOptions } from './sync/document'
 import { OpleFunctions } from './sync/stdlib'
 import { OpleQueryError, popStackFrames } from './errors'
-import { OpleRef } from './values'
+import { OpleRef, OpleTime } from './values'
+import { OpleCursor, OplePage } from './sync/page'
+import { OpleSet } from './sync/set'
 
 export interface OpleQueries extends OpleFunctions {
   get<T extends object | null>(ref: OpleRef<T>): OpleDocument<T>
@@ -31,6 +33,14 @@ export interface OpleQueries extends OpleFunctions {
     ref: OpleRef<T>,
     params: { data?: Partial<T> } & OpleDocumentOptions,
   ): OpleDocument<T>
+
+  paginate<T>(
+    set: OpleSet,
+    ts?: number | OpleTime,
+    before?: OpleCursor,
+    after?: OpleCursor,
+    size?: number,
+  ): OplePage<T>
 }
 
 export class OpleQuery {

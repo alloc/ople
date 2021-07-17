@@ -1,3 +1,4 @@
+import strutils
 import tables
 import times
 
@@ -57,7 +58,7 @@ type
     of ople_page:
       page*: OplePage
     of ople_set:
-      query*: OpleCall
+      set*: OpleSet
 
   OpleDate* = DateTime
   OpleTime* = DateTime
@@ -71,6 +72,9 @@ type
     data*: OpleData
     before*: OpleRef
     after*: OpleRef
+
+  OpleSet* = ref object of RootObj
+    expr*: OpleCall
 
   OpleRef* = object
     id*: string
@@ -91,6 +95,9 @@ type
   OpleArray* = seq[OpleData]
 
   OpleObject* = Table[string, OpleData]
+
+template isNull*(data: OpleData): bool =
+  data.kind == ople_null
 
 proc newOpleNull*(): auto =
   OpleData(kind: ople_null)
@@ -163,8 +170,8 @@ proc newOplePage*(data: seq[OpleData], before: OpleRef, after: OpleRef): auto =
     )
   )
 
-proc newOpleSet*(query: OpleCall): auto =
-  OpleData(kind: ople_set, query: query)
+proc newOpleSet*(expr: OpleCall): auto =
+  OpleData(kind: ople_set, set: OpleSet(expr: expr))
 
 # For error messages
 proc errorRepr*(kind: OpleDataKind): string =
@@ -202,7 +209,7 @@ proc parseOpleDataKind*(t: string): OpleDataKind =
     of "OplePage": ople_page
     of "OpleSet": ople_set
     else:
-      raise newException(Defect, "cannot convert to OpleDataKind")
+      raise newException(Defect, "cannot convert $1 to OpleDataKind" % [t])
 
 template `\`*(arg: pointer): OpleData =
   assert(arg.isNil)

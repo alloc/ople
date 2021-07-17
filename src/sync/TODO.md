@@ -12,3 +12,5 @@
   - Key
   - Role
   - Token
+- Unsupported parameters:
+  - `events` and `sources` of Paginate
