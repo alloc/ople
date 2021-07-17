@@ -1,4 +1,5 @@
 import cbor
+import options
 import strutils
 import tables
 import ../data
@@ -26,32 +27,40 @@ proc newOpleArray*(node: CborNode): OpleData =
     newOpleArray(data)
 
 proc newOpleObject*(node: CborNode): OpleData =
-  case int64(node.tag)
-  of cborOpleTime:
-    raise newException(Defect, "not implemented")
-  else:
+  try:
+    let tag = int64(node.tag)
+    if tag == cborOpleTime:
+      raise newException(Defect, "not implemented")
+  except:
     var data: Table[string, OpleData]
     for key, value in node.map:
       data[key.text] = newOpleData(value)
-    newOpleObject(data)
+    return newOpleObject(data)
 
 proc newOpleRef*(node: CborNode): OpleData =
   let parts = node.text.split '/'
   newOpleRef parts[1], parts[0]
 
 proc newOpleString*(node: CborNode): OpleData =
-  case int64(node.tag)
-  of cborOpleRef: newOpleRef(node)
-  of cborOpleDate: newOpleDate(node.text)
-  else: newOpleString(node.text)
+  try:
+    let tag = int64(node.tag)
+    if tag == cborOpleRef: 
+      return newOpleRef(node)
+    if tag == cborOpleDate: 
+      return newOpleDate(node.text)
+  except:
+    echo $getCurrentException().type
+    return newOpleString(node.text)
 
 proc newOpleData*(node: CborNode): OpleData =
   case node.kind
   of cborMap: newOpleObject(node)
   of cborArray: newOpleArray(node)
   of cborText: newOpleString(node)
+  of cborUnsigned: newOpleInt(int64(node.uint))
+  of cborNegative: newOpleInt(node.int)
   of cborFloat: newOpleFloat(node.float)
   elif node.isBool: newOpleBool(node.getBool)
   elif node.isNull: newOpleNull()
   else:
-    raise newException(Defect, "unknown cbor type")
+    raise newException(Defect, "unknown cbor type: " & $node.kind)

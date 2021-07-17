@@ -1,4 +1,4 @@
-import { OpleArray, unwrapOpleArray } from '../sync/array'
+import { OpleArray } from '../sync/array'
 import { OpleDate, OpleRef, OpleTime } from '../values'
 import { OpleQueryError } from '../errors'
 import { OpleSet } from '../sync/set'
@@ -52,5 +52,5 @@ function toSet(data: any) {
 }
 
 function toError({ code, description, position }: any) {
-  return new OpleQueryError(code, description, unwrapOpleArray(position))
+  return new OpleQueryError(code, description, position)
 }

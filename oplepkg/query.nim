@@ -46,7 +46,7 @@ proc expectArgument*(query: OpleQuery, arguments: OpleArray, index: int): OpleDa
   query.expectArity(arguments, index + 1)
   return arguments[index]
 
-proc expectKind*(query: OpleQuery, data: OpleData, kind: OpleDataKind): OpleData =
+proc expectKind*(query: OpleQuery, data: OpleData, kind: OpleDataKind): OpleData {.discardable.} =
   if data.kind != kind:
     query.fail "invalid argument", invalidKind(kind, data.kind)
   return data

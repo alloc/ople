@@ -57,6 +57,7 @@
         "nimcache/@m..@s..@snim@snimdbx@snimdbx@sCollection.nim.c",
         "nimcache/@m..@s..@snim@snimdbx@snimdbx@sTransaction.nim.c",
         "nimcache/@m..@s..@snim@snimdbx@snimdbx@sCRUD.nim.c",
+        "nimcache/@m..@s..@snim@snimdbx@snimdbx@sCursor.nim.c",
         "nimcache/@moplepkg@squery.nim.c",
         "nimcache/@moplepkg@sdatabase.nim.c",
         "nimcache/@m..@s..@s..@s.nimble@spkgs@scbor-0.6.0@scbor.nim.c",
@@ -65,6 +66,7 @@
         "nimcache/@moplepkg@sdata@sto_cbor.nim.c",
         "nimcache/@moplepkg@squery@scollection.nim.c",
         "nimcache/@moplepkg@squery@sdocument.nim.c",
+        "nimcache/@moplepkg@squery@sset.nim.c",
         "nimcache/@moplepkg@sfunctions.nim.c",
         "nimcache/@moplepkg@seval.nim.c",
         "nimcache/@mople.nim.c"

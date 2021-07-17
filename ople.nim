@@ -55,7 +55,9 @@ init proc(exports: Module) =
   }).toRef
 
   exports.registerFn(1, "open"):
-    db = initDatabase args[0].getStr
+    let dbPath = args[0].getStr
+    echo "dbPath: " & dbPath
+    db = initDatabase dbPath
     return nil
 
   exports.registerFn(0, "beginSnapshot"):

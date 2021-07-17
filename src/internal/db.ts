@@ -1,7 +1,11 @@
 import bindings from 'bindings'
 import path from 'path'
 
+const pwd = process.cwd()
+process.chdir(process.env.HOME + '/.nimble/pkgs/nimdbx-0.4.1/libmdbx-dist')
 export const db: DatabaseHandle = bindings('ople')
+process.chdir(pwd)
+
 export const dbPath =
   process.env.NODE_ENV === 'test'
     ? require('tempy').file({ name: 'ople_data' })

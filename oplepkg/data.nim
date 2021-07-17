@@ -1,3 +1,4 @@
+import options
 import strutils
 import tables
 import times
@@ -66,12 +67,12 @@ type
   OpleDocument* = ref object of RootObj
     `ref`*: OpleRef
     data*: Table[string, OpleData]
-    ts*: int64 # µsecs since unix epoch
+    ts*: float64 # secs since unix epoch
 
   OplePage* = ref object of RootObj
     data*: OpleData
-    before*: OpleRef
-    after*: OpleRef
+    before*: Option[OpleRef]
+    after*: Option[OpleRef]
 
   OpleSet* = ref object of RootObj
     expr*: OpleCall
@@ -141,15 +142,14 @@ proc newOpleRef*(data: OpleRef): auto =
 proc newOpleRef*(id: string, collection: string): auto =
   OpleData(kind: ople_ref, `ref`: OpleRef(id: id, collection: collection))
 
-proc newOpleDocument*(`ref`: OpleRef, data: Table[string, OpleData], ts: int64): auto =
-  OpleData(
-    kind: ople_document,
-    document: OpleDocument(
-      `ref`: `ref`,
-      data: data,
-      ts: ts
-    )
-  )
+proc toDocument*(r: OpleRef, data: OpleObject, ts: float64): OpleDocument =
+  OpleDocument(`ref`: r, data: data, ts: ts)
+
+proc newOpleDocument*(doc: OpleDocument): auto =
+  OpleData(kind: ople_document, document: doc)
+
+proc newOpleDocument*(r: OpleRef, data: Table[string, OpleData], ts: float64): auto =
+  OpleData(kind: ople_document, document: r.toDocument(data, ts))
 
 proc newOpleObject*(data: Table[string, OpleData]): auto =
   OpleData(kind: ople_object, `object`: data)
@@ -160,7 +160,7 @@ proc newOpleArray*(data: seq[OpleData]): auto =
 proc newOpleError*(error: OpleError, debugPath: seq[string]): auto =
   OpleData(kind: ople_error, error: error, debugPath: debugPath)
 
-proc newOplePage*(data: seq[OpleData], before: OpleRef, after: OpleRef): auto =
+proc newOplePage*(data: seq[OpleData], before: Option[OpleRef], after: Option[OpleRef]): auto =
   OpleData(
     kind: ople_page,
     page: OplePage(

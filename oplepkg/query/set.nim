@@ -1,5 +1,6 @@
 {.experimental: "notnil".}
 import nimdbx
+import options
 import ../query
 import ./collection
 import ./document
@@ -22,18 +23,27 @@ proc paginate*(s: OpleSet) {.query.} =
   let params = arguments.toParams
   let limit = params.getOrDefault("size", \64).int
   var matches: OpleArray
-  var before: OpleRef
-  var after: OpleRef
+  var before: Option[OpleRef]
+  var after: Option[OpleRef]
+  echo "callee => " & call.callee
+  echo "limit => " & $limit
+  echo "params => " & params.repr
   case call.callee
     of qDocuments, qGetDocuments:
-      let matchKeys = call.callee == qDocuments
+      let shouldGetDocs = call.callee == qGetDocuments
       let colRef = call.arguments[0].ref
       let col = query.getCollection colRef.id
       var cur = query.makeCursor(col, params)
       while matches.len < limit and cur.next():
+        let docRef = OpleRef(id: $cur.key, collection: colRef.id)
+        var doc: OpleDocument
+        if shouldGetDocs:
+          let props = parseDocument($cur.value)
+          doc = docRef.toDocument(props["data"].object, props["ts"].float)
         let match =
-          if matchKeys: newOpleRef($cur.key, colRef.id)
-          else: parseDocument($cur.value)
+          if shouldGetDocs: newOpleRef(docRef)
+          else: newOpleDocument(doc)
         matches.add match
+
   discard query.debugPath.pop()
   return newOplePage(matches, before, after)

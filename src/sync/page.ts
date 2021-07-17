@@ -1,7 +1,7 @@
 import { OpleArray } from './array'
 import { OpleRef } from '../values'
 
-export interface OplePage<T> {
+export interface OplePage<T = any> {
   readonly data: OpleArray<T>
   readonly after?: OpleCursor
   readonly before?: OpleCursor

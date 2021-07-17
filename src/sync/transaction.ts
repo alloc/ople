@@ -1,6 +1,12 @@
 import { db, Snapshot, Transaction } from '../internal/db'
-import { makeQuery, OpleQueries } from '../query'
+import { makeQuery, FromQuery, OpleQueries } from '../query'
 import { queryMap, writeQueries } from '../queryMap'
+import { OpleDate, OpleRef, OpleTime } from '../values'
+import { materializeArray, OpleArray } from './array'
+import { OpleCollection } from './collection'
+import { OpleDocument } from './document'
+import { OpleCursor, OplePage } from './page'
+import { OpleSet } from './set'
 
 let snapshot: Snapshot | null = null
 let transaction: Transaction | null = null
@@ -29,13 +35,13 @@ export function execSync(callee: string, ...args: any[]) {
 /**
  * Read from the database.
  */
-export function read<T>(reader: () => T): T {
+export function read<T>(reader: () => T): FromQuery<T> {
   if (snapshot || transaction) {
     throw Error('Nested transactions are forbidden')
   }
   snapshot = db.beginSnapshot()
   try {
-    return reader()
+    return materialize(reader())
   } finally {
     snapshot.finish()
     snapshot = null
@@ -47,7 +53,7 @@ export function read<T>(reader: () => T): T {
  */
 export function write<T>(
   writer: (abort: (message?: string) => never) => T,
-): T | undefined {
+): FromQuery<T> | undefined {
   if (snapshot || transaction) {
     throw Error('Nested transactions are forbidden')
   }
@@ -57,7 +63,7 @@ export function write<T>(
       throw transaction
     })
     transaction.commit()
-    return result
+    return materialize(result)
   } catch (e) {
     transaction.finish()
     if (e !== transaction) {
@@ -66,4 +72,20 @@ export function write<T>(
   } finally {
     transaction = null
   }
+}
+
+function materialize(value: any): any {
+  if (value) {
+    if (Array.isArray(value)) {
+      return value instanceof OpleArray
+        ? [].map.call(value, materialize)
+        : value.map(materialize)
+    }
+    if (value.constructor == Object) {
+      for (const key in value) {
+        value[key] = materialize(value[key])
+      }
+    }
+  }
+  return value
 }

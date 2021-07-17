@@ -7,6 +7,7 @@ export function jsonReplacer(key: string, value: any) {
     typeof value != 'object' ||
     Array.isArray(value) ||
     key == '@ref' ||
+    key == '@set' ||
     key == '@obj' ||
     key == ''
   ) {
@@ -38,5 +39,5 @@ function replaceDate(date: OpleDate) {
 }
 
 function replaceSet(set: OpleSet) {
-  return { '@set': set.expr }
+  return { '@set': (set as any).expr }
 }

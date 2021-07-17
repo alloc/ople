@@ -17,7 +17,10 @@ function coerceToRef<T extends object | null = any>(
   return ref
 }
 
-export class OpleCollection<T extends object | null = any> {
+export class OpleCollection<
+  T extends object | null = any,
+  Meta extends object | null = any,
+> {
   private ref: OpleRef
 
   /**
@@ -30,7 +33,7 @@ export class OpleCollection<T extends object | null = any> {
   }
 
   /** Get the mutable metadata of this collection */
-  get data(): any {
+  get data(): Meta {
     throw notImplemented
   }
 
