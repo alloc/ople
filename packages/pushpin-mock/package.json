@@ -1,0 +1,19 @@
+{
+  "name": "pushpin-mock",
+  "version": "0.1.0",
+  "devDependencies": {
+    "@types/jsonwebtoken": "^8.5.4",
+    "@types/node": "^16.3.3",
+    "@types/ws": "^7.4.7",
+    "typescript": "^4.3.5",
+    "vite": "^2.4.3"
+  },
+  "dependencies": {
+    "@fanoutio/grip": "^3.0.5",
+    "interlocutor": "npm:@alloc/interlocutor@^1.0.7",
+    "jsonwebtoken": "^8.5.1",
+    "raw-body": "^2.4.1",
+    "uid": "^2.0.0",
+    "ws": "^7.5.3"
+  }
+}
