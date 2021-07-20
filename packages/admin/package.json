@@ -1,0 +1,8 @@
+{
+  "name": "@ople/admin",
+  "version": "0.1.0",
+  "devDependencies": {
+    "typescript": "^4.3.5",
+    "vite": "^2.4.3"
+  }
+}
