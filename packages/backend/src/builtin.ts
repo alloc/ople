@@ -1,14 +1,13 @@
 import { query as q, Ref, CollectionRef } from 'faunadb'
+import { Methods } from './method'
 import { db } from './fauna'
-import { api } from './service'
-import { log } from './log'
 
 interface PatchMap {
   [ref: string]: { [key: string]: any }
 }
 
 // TODO: rate limiting
-api.extend({
+export const defaultMethods: Methods<any> = {
   /**
    * Fetch the data of every given ref.
    */
@@ -73,4 +72,4 @@ api.extend({
   'ople.run'() {
     // TODO
   },
-})
+}

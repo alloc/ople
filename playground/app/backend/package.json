@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "dependencies": {
+    "@ople/backend": "link:../../../packages/backend"
+  }
+}

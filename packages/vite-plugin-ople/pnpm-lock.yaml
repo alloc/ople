@@ -1,0 +1,15 @@
+lockfileVersion: 5.3
+
+specifiers:
+  '@ople/backend': link:../backend
+  pushpin-mock: link:../pushpin-mock
+  typescript: link:../../node_modules/typescript
+  vite: link:../../node_modules/vite
+
+dependencies:
+  '@ople/backend': link:../backend
+  pushpin-mock: link:../pushpin-mock
+
+devDependencies:
+  typescript: link:../../node_modules/typescript
+  vite: link:../../node_modules/vite

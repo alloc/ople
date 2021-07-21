@@ -1,0 +1,16 @@
+{
+  "name": "vite-plugin-ople",
+  "version": "0.1.0",
+  "main": "plugin.js",
+  "scripts": {
+    "build": "tsc -p ."
+  },
+  "dependencies": {
+    "@ople/backend": "link:../backend",
+    "pushpin-mock": "link:../pushpin-mock"
+  },
+  "devDependencies": {
+    "typescript": "link:../../node_modules/typescript",
+    "vite": "link:../../node_modules/vite"
+  }
+}
