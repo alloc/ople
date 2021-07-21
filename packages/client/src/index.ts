@@ -3,7 +3,7 @@ export * from './Record'
 export * from './Collection'
 
 export { auto } from './auto'
-export { Ople } from './Ople'
+export { Ople, ReadonlyOple } from './Ople'
 export { getOple, expectOple } from './context'
 export { setEffect, restoreEffects } from './Ople'
 export { setState } from './setState'
@@ -12,7 +12,6 @@ export type {
   OpleSetFn,
   OpleEffect,
   OpleObject,
-  ReadonlyOple,
   ReadonlyOpleObject,
 } from './types'
 

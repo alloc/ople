@@ -27,7 +27,7 @@ export class Ople extends ReadonlyOple {
    * memoized getters (via `get` syntax).
    */
   set(state: object) {
-    setState(state, this)
+    setState(state, this as any)
   }
 
   /** Disable all effects managed by this object. */

@@ -103,13 +103,13 @@ export class Record extends Ople {
    *
    * By using the `autoSync` mixin, you can avoid calling this.
    */
-  sync(): Promise<void> {
-    const { ref } = this
-    if (!ref) {
-      throw Error('Record must be saved first')
-    }
-    const { client } = collectionByRef.get(ref)!
-  }
+  // sync(): Promise<void> {
+  //   const { ref } = this
+  //   if (!ref) {
+  //     throw Error('Record must be saved first')
+  //   }
+  //   const { client } = collectionByRef.get(ref)!
+  // }
 
   /**
    * Delete the server-managed copy of this record, and remove it

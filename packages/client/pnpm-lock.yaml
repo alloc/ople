@@ -5,6 +5,7 @@ specifiers:
   '@alloc/types': ^1.2.6
   '@ople/agent': link:../agent
   '@ople/nason': link:../nason
+  ee-ts: ^2.0.0-rc.6
   fauna-lite: ^0.1.1
   ts-deferred: ^1.0.4
   wana: ^0.13.1
@@ -14,6 +15,7 @@ dependencies:
   '@alloc/types': 1.3.0
   '@ople/agent': link:../agent
   '@ople/nason': link:../nason
+  ee-ts: 2.0.0-rc.6
   fauna-lite: 0.1.1
   ts-deferred: 1.0.4
   wana: 0.13.8
@@ -36,6 +38,13 @@ packages:
     resolution: {integrity: sha512-plcc+hbExy3McchJCEQG3knOsuh3HH+Prx1P6cLIkET/0dLuQDEnrT+s27Axgc9bqfsmNUNHfscgMUdBpC9xfg==}
     dependencies:
       regenerator-runtime: 0.13.7
+    dev: false
+
+  /ee-ts/2.0.0-rc.6:
+    resolution: {integrity: sha512-n52lYxRqYqJhw5b7iol1NHHaz/hShlwKby2bhMM+/QePMe3rpV8F5lL96j678uOHtYirEHUoYP9GhKKhQVk+hQ==}
+    engines: {node: '>=6'}
+    peerDependencies:
+      typescript: '>=3'
     dev: false
 
   /fauna-lite/0.1.1:

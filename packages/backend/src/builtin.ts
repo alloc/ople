@@ -1,6 +1,6 @@
 import { query as q, Ref, CollectionRef } from 'faunadb'
 import { db } from './fauna'
-import { api } from './api'
+import { api } from './service'
 import { log } from './log'
 
 interface PatchMap {

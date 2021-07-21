@@ -6,9 +6,14 @@ import {
   PackedRecord,
 } from '@ople/nason'
 import { FaunaTime, Ref } from 'fauna-lite'
-import { Record, getModified, getLastModified, applyPatch } from './Record'
+import {
+  Record,
+  getCollection,
+  getModified,
+  getLastModified,
+  applyPatch,
+} from './Record'
 import { Collection } from './Collection'
-import { collectionByRef } from './Ref'
 import { prepare } from './prepare'
 import { setHidden } from './common'
 
@@ -29,7 +34,7 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
   return function makeClient(config: ClientConfig): T {
     const records: RecordCache = {}
     const collections: { [name: string]: Collection } = {}
-    const getCollection = (name: string) =>
+    const getCollectionByName = (name: string) =>
       collections[name] ||
       (collections[name] = new Collection(
         new Ref(name, Ref.Native.collections),
@@ -56,7 +61,7 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
           records[ref as any] = record = new Record(ref, ts)
           Object.setPrototypeOf(record, recordType)
           Object.assign(record, data)
-          setHidden(record, '__collection', collection)
+          setHidden(record, '__collection', getCollectionByName(collection))
 
           // TODO: call `prepare` for each superclass
           prepare(record, recordType)
@@ -73,6 +78,7 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
       updateRecord,
       getModified,
       getLastModified,
+      getCollection: record => getCollection(record).ref,
       onSignal() {
         // TODO
       },
@@ -95,7 +101,7 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
         return record || getting
       },
       call: agent.call,
-      collection: getCollection,
+      collection: getCollectionByName,
     }
 
     return Object.setPrototypeOf(client, methods)

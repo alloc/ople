@@ -23,7 +23,7 @@ crawl('.', {
   if (/nason/.test(pkgPath)) {
     const origExternal = external
     external = id => origExternal(id) && !/nason/.test(id)
-  } else if (!/agent|backend|client|config|dev/.test(pkgPath)) {
+  } else if (!/agent|backend|client|config|pushpin/.test(pkgPath)) {
     return
   }
 
