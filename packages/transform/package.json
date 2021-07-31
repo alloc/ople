@@ -1,7 +1,15 @@
 {
   "name": "@ople/transform",
   "version": "0.0.0",
+  "main": "dist/ople-transform.js",
+  "devDependencies": {
+    "@babel/core": "^7.14.8",
+    "@babel/plugin-syntax-typescript": "^7.14.5",
+    "@types/babel__core": "^7.1.15",
+    "@types/debug": "^4.1.7",
+    "endent": "^2.1.0"
+  },
   "dependencies": {
-    "@ople/backend": "*"
+    "debug": "^4.3.2"
   }
 }

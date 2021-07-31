@@ -159,7 +159,7 @@ function newConnectionId(connections: Record<GripConnectionId, any>) {
 
 function generateGripSig() {
   return jwt.sign(
-    { iss: 'dev', exp: Math.ceil(Date.now() / 1000) + 3600 },
+    { iss: 'pushpin', exp: Math.ceil(Date.now() / 1000) + 3600 },
     process.env.GRIP_SIG || ''
   )
 }

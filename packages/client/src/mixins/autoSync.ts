@@ -1,8 +1,7 @@
 import { expectRecord } from '../context'
-import { collectionByRef } from '../Ref'
 import { Listener } from '../Signal'
 import { makeDisposableMap } from '../utils/DisposableMap'
-import { Record } from '../Record'
+import { Record, getCollection, getClient } from '../Record'
 import { setHidden } from '../common'
 
 const autoSyncs = makeDisposableMap()
@@ -64,15 +63,13 @@ export function autoSync(enabled = true, syncInterval = 0) {
 
     let { ref } = self
     if (ref) {
-      const { client } = collectionByRef.get(ref)!
-      client.call('@watch', [self])
+      getClient(self).call('@watch', [self])
     } else {
       saveListener = self.onSave(savePromise => {
         savePromise.then(() => {
           ref = self.ref!
           if (active) {
-            const { client } = collectionByRef.get(ref)!
-            client.call('@watch', [self])
+            getClient(self).call('@watch', [self])
           }
         })
         return false
@@ -83,8 +80,7 @@ export function autoSync(enabled = true, syncInterval = 0) {
       active = false
       saveListener?.dispose()
       if (ref) {
-        const { client } = collectionByRef.get(ref)!
-        client.call('@unwatch', [self])
+        getClient(self).call('@unwatch', [self])
       }
     }
   })

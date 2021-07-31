@@ -16,6 +16,7 @@ specifiers:
   lodge: ^0.1.4
   node-fetch: ^2.6.0
   raw-body: ^2.4.1
+  zeromq: ^5.2.8
 
 dependencies:
   '@alloc/is': 2.1.2
@@ -31,6 +32,7 @@ dependencies:
   lodge: 0.1.7
   node-fetch: 2.6.1
   raw-body: 2.4.1
+  zeromq: 5.2.8
 
 devDependencies:
   '@types/node': 14.14.25
@@ -292,6 +294,10 @@ packages:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
     dev: false
 
+  /nan/2.14.2:
+    resolution: {integrity: sha512-M2ufzIiINKCuDfBSAUr1vWQ+vuVcA9kqx8JJUsbQi6yf1uGRyb7HfpdfUr5qLXf3B/t8dPvcjhKMmlfnP47EzQ==}
+    dev: false
+
   /node-fetch/1.7.3:
     resolution: {integrity: sha512-NhZ4CsKx7cYm2vSrBAr2PvFOe6sWDf0UYLRqA6svUYg7+/TSfVAu49jYC4BvQ4Sms9SZgdqGBgroqfDhJdTyKQ==}
     dependencies:
@@ -302,6 +308,11 @@ packages:
   /node-fetch/2.6.1:
     resolution: {integrity: sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==}
     engines: {node: 4.x || >=6.0.0}
+    dev: false
+
+  /node-gyp-build/4.2.3:
+    resolution: {integrity: sha512-MN6ZpzmfNCRM+3t57PTJHgHyw/h4OWnZ6mR8P5j/uZtqQr46RRuDE/P+g3n0YR/AiYXeWixZZzaip77gdICfRg==}
+    hasBin: true
     dev: false
 
   /object-assign/4.1.1:
@@ -363,4 +374,13 @@ packages:
 
   /whatwg-fetch/3.5.0:
     resolution: {integrity: sha512-jXkLtsR42xhXg7akoDKvKWE40eJeI+2KZqcp2h3NsOrRnDvtWX36KcKl30dy+hxECivdk2BVUHVNrPtoMBUx6A==}
+    dev: false
+
+  /zeromq/5.2.8:
+    resolution: {integrity: sha512-bXzsk7KOmgLSv1tC0Ms1VXBy90+Rz27ZYf27cLuldRYbpqYpuWJfxxHFhO710t22zgWBnmdUP0m3SKFpLI0u5g==}
+    engines: {node: '>=6.0'}
+    requiresBuild: true
+    dependencies:
+      nan: 2.14.2
+      node-gyp-build: 4.2.3
     dev: false

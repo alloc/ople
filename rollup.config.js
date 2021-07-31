@@ -23,14 +23,16 @@ crawl('.', {
   if (/nason/.test(pkgPath)) {
     const origExternal = external
     external = id => origExternal(id) && !/nason/.test(id)
-  } else if (!/agent|backend|client|config|pushpin/.test(pkgPath)) {
+  } else if (
+    !/agent|backend|client|config|pushpin|transform|tnetstring/.test(pkgPath)
+  ) {
     return
   }
 
   const pkg = require('./' + pkgPath)
   const pkgRoot = dirname(pkgPath)
 
-  let input = `${pkgRoot}/src/index.ts`
+  let input = `${pkgRoot}/${pkg.source || 'src/index.ts'}`
   let output = {
     file: `${pkgRoot}/${pkg.main}`,
     format: 'cjs',

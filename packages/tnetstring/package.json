@@ -1,0 +1,7 @@
+{
+  "name": "tnetstring",
+  "version": "0.1.0",
+  "private": true,
+  "source": "tnetstring.ts",
+  "main": "dist/tnetstring.js"
+}

@@ -6,6 +6,7 @@ import { setHidden } from './common'
 import { Collection } from './Collection'
 import { Ople } from './Ople'
 import { emit, Signal } from './Signal'
+import { OpleClient } from './client'
 
 export type RecordEvents = {
   /** This record was changed. */
@@ -141,6 +142,10 @@ export function applyPatch(record: Record, patch: object) {
   Object.assign(record, patch)
   isPatching = false
   return record
+}
+
+export function getClient(record: Record): OpleClient {
+  return getCollection(record).client
 }
 
 /** @internal */
