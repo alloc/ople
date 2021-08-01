@@ -1,10 +1,10 @@
 import { Pick, UnknownProps } from '@alloc/types'
 import { Ople, ReadonlyOple } from './Ople'
-import { Record } from './Record'
+import { OpleRecord } from './Record'
 import { Signal } from './Signal'
 
 export interface RecordCache {
-  [ref: string]: Record & { [key: string]: unknown }
+  [ref: string]: OpleRecord & { [key: string]: unknown }
 }
 
 /** Pass `true` to enable the effect. Pass `false` to disable. */

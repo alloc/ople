@@ -10,7 +10,7 @@ specifiers:
   esbuild: ^0.8.44
   jest: ^24.9.0
   prettier: ^2.0.5
-  recrawl-sync: ^2.0.0
+  recrawl-sync: ^2.2.1
   rollup: ^2.23.0
   rollup-plugin-dts: ^1.4.10
   rollup-plugin-esbuild: ^2.6.1
@@ -28,7 +28,7 @@ devDependencies:
   esbuild: 0.8.44
   jest: 24.9.0
   prettier: 2.2.1
-  recrawl-sync: 2.0.2
+  recrawl-sync: 2.2.1
   rollup: 2.38.5
   rollup-plugin-dts: 1.4.14_rollup@2.38.5+typescript@4.1.5
   rollup-plugin-esbuild: 2.6.1_esbuild@0.8.44+rollup@2.38.5
@@ -232,8 +232,8 @@ packages:
       minimist: 1.2.5
     dev: true
 
-  /@cush/relative/0.1.0:
-    resolution: {integrity: sha512-pnF2c2hhHyC520CmYYKq3hGOS0kipkGBgRnp3z7wx7lDzykaUwQW3wPQmiX9YtbHUcgUu1qQtzstixmeYMwQoA==}
+  /@cush/relative/1.0.0:
+    resolution: {integrity: sha512-RpfLEtTlyIxeNPGKcokS+p3BZII/Q3bYxryFRglh5H3A3T8q9fsLYm72VYAMEOOIBLEa8o93kFLiBDUWKrwXZA==}
     dev: true
 
   /@jest/console/24.9.0:
@@ -3031,11 +3031,12 @@ packages:
       util.promisify: 1.1.1
     dev: true
 
-  /recrawl-sync/2.0.2:
-    resolution: {integrity: sha512-8qprPoeIB7k9r1AoMNcW4lKVBLRyETJsODYB5/tGJtOrU/8Tw4DHRmvPfwjKa/2AP2Kzc/6QHtj+imeeJXP0MQ==}
+  /recrawl-sync/2.2.1:
+    resolution: {integrity: sha512-A2yLDgeXNaduJJMlqyUdIN7fewopnNm/mVeeGytS1d2HLXKpS5EthQ0j8tWeX+as9UXiiwQRwfoslKC+/gjqxg==}
     dependencies:
-      '@cush/relative': 0.1.0
+      '@cush/relative': 1.0.0
       glob-regex: 0.3.2
+      slash: 3.0.0
       tslib: 1.14.1
     dev: true
 
@@ -3322,6 +3323,11 @@ packages:
   /slash/2.0.0:
     resolution: {integrity: sha512-ZYKh3Wh2z1PpEXWr0MpSBZ0V6mZHAQfYevttO11c51CaWjGTaadiKZ+wVt1PbMlDV5qhMFslpZCemhwOK7C89A==}
     engines: {node: '>=6'}
+    dev: true
+
+  /slash/3.0.0:
+    resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
+    engines: {node: '>=8'}
     dev: true
 
   /snapdragon-node/2.1.1:

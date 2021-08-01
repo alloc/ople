@@ -1,4 +1,5 @@
-export * from './fauna'
+export * from './encode'
+export * from './values'
 export * from './batch'
 export * from './reply'
 export * from './types'

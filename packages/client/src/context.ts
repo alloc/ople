@@ -1,7 +1,7 @@
 import { UnknownProps } from '@alloc/types'
 import { OpleObject } from './types'
+import { OpleRecord } from './Record'
 import { Ople } from './Ople'
-import { Record } from './Record'
 
 // The current `Ople` being created or modified.
 let current: any = null
@@ -33,8 +33,8 @@ export function expectOple() {
   throw Error('Expected an Ople context')
 }
 
-export function expectRecord<T extends Record>(): T {
-  if (current instanceof Record) {
+export function expectRecord<T extends OpleRecord>(): T {
+  if (current instanceof OpleRecord) {
     return current as any
   }
   throw Error('Expected a Record context')

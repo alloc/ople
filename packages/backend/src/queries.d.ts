@@ -1,4 +1,4 @@
-import { Ref, FaunaTime, FaunaDate } from 'fauna-lite'
+import { Ref, FaunaTime, FaunaDate } from '@ople/data'
 import { ToExpr, Page, ExprVal } from 'faunadb'
 import { Omit } from '@alloc/types'
 import * as pseudo from './fauna'

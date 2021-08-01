@@ -1,5 +1,7 @@
+lockfileVersion: 5.3
+
+specifiers:
+  '@ople/agent': link:../agent
+
 dependencies:
   '@ople/agent': link:../agent
-lockfileVersion: 5.2
-specifiers:
-  '@ople/agent': '*'

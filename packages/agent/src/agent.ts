@@ -10,7 +10,7 @@ import {
   Patch,
   RefMap,
   ReplyQueue,
-  Ref,
+  OpleRef,
   FetchQueue,
 } from './types'
 
@@ -27,7 +27,7 @@ export interface Agent {
 
 export type AgentFactory = typeof makeAgent
 
-export function makeAgent<Record extends { ref: Ref | null }>({
+export function makeAgent<Record extends { ref: OpleRef | null }>({
   protocol: makeTransport,
   host = 'localhost',
   port = 7999,
@@ -113,9 +113,9 @@ export function makeAgent<Record extends { ref: Ref | null }>({
       calls.push([method, [payload], ''])
     }
     interface BatchResponse {
-      created?: Ref[]
+      created?: OpleRef[]
       fetched?: Record[]
-      pulled?: [Ref, any, any][]
+      pulled?: [OpleRef, any, any][]
     }
     replyQueue.set(batch.id, (error, response: BatchResponse) => {
       if (error) {
@@ -240,9 +240,9 @@ interface PrivateConfig<Record> extends AgentConfig {
   /** Decode a reply. */
   decodeReply: (bytes: Uint8Array) => [string, any, string?]
   /** Update the local version of a `Record` object. */
-  updateRecord: (ref: Ref, ts: any, data: any) => void
+  updateRecord: (ref: OpleRef, ts: any, data: any) => void
   /** Get the collection of a `Record` object. */
-  getCollection: (record: Record) => Ref
+  getCollection: (record: Record) => OpleRef
   /** Get unsaved changes to a `Record` object. */
   getModified: (record: Record) => Set<string>
   /** Get timestamp of the last saved change. */
@@ -260,7 +260,7 @@ const makeBatch = <Record>(): Batch<Record> => {
     '@pull': new Set<Record>(),
     '@create': new Set<Record>(),
     '@delete': new Set<Record>(),
-    '@get': new Set<Ref>(),
+    '@get': new Set<OpleRef>(),
   }
   let resolve!: Function
   return setHidden(batch, {

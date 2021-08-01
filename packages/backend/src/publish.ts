@@ -1,8 +1,10 @@
+import { is } from '@alloc/is'
 import fetch from 'node-fetch'
 import readBody from 'raw-body'
 import HttpAgent from 'agentkeepalive'
-import { FaunaJSON } from 'faunadb'
+import { OpleRef } from 'ople-db'
 import { log } from './log'
+import { makeReplyEncoder } from '../../nason/src'
 
 const url = 'http://localhost:5561/publish/'
 const agent = new HttpAgent()
@@ -11,9 +13,34 @@ const headers = {
   'Content-Type': 'application/json',
 }
 
-/** Publish content to the given channel. */
-export async function publish(channel: string, content: any) {
-  log('publish: %O %O', channel, content)
+export type PublishArgs<T> = T extends any[] ? T : [void] extends [T] ? [] : [T]
+export type Publish<T> = <E extends keyof T>(
+  channel: string | OpleRef,
+  event: E,
+  ...args: PublishArgs<T[E]>
+) => Promise<void>
+
+makeReplyEncoder<any>({
+  isRecord: arg => arg.ref instanceof OpleRef,
+})
+
+export const createPublish = <T>(): Publish<T> =>
+  /** Publish an event to the given channel or record. */
+  async function publish(
+    channel: string | OpleRef,
+    event: keyof T,
+    ...args: any[]
+  ) {
+    if (!is.string(channel)) {
+      channel = channel.toString()
+      event = (channel + '/' + event) as any
+    }
+    await publishImpl(channel, content)
+  }
+
+type PublishFn = (channel: string, content: any) => any
+
+let publishImpl: PublishFn = async (channel, content) => {
   const err: any = Error('Failed to publish')
   const payload = {
     items: [
@@ -47,4 +74,9 @@ export async function publish(channel: string, content: any) {
     }
     throw err
   }
+}
+
+/** Override the publish handler. Used in development. */
+export function onPublish(handler: PublishFn) {
+  publishImpl = handler
 }

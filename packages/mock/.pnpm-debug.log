@@ -38,7 +38,7 @@
       "name": "Error",
       "message": "GET https://registry.npmjs.org/@ople%2Fagent: Not Found - 404",
       "code": "ERR_PNPM_FETCH_404",
-      "stack": "Error: GET https://registry.npmjs.org/@ople%2Fagent: Not Found - 404\n    at RetryOperation._fn (/usr/local/Cellar/node/14.13.1/pnpm-global/4/node_modules/.pnpm/pnpm@6.4.0/node_modules/pnpm/dist/pnpm.cjs:64458:18)\n    at processTicksAndRejections (internal/process/task_queues.js:93:5)"
+      "stack": "Error: GET https://registry.npmjs.org/@ople%2Fagent: Not Found - 404\n    at RetryOperation._fn (/usr/local/lib/node_modules/pnpm/dist/pnpm.cjs:79562:18)\n    at processTicksAndRejections (node:internal/process/task_queues:96:5)"
     }
   }
 }

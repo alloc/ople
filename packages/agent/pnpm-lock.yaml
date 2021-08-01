@@ -1,22 +1,18 @@
 lockfileVersion: 5.3
 
 specifiers:
-  fauna-lite: '*'
+  '@ople/nason': link:../nason
   queue-microtask: npm:@alloc/queue-microtask@^1.1.4
   ts-deferred: ^1.0.4
   uid: ^2.0.0
 
 dependencies:
-  fauna-lite: 0.1.1
+  '@ople/nason': link:../nason
   queue-microtask: /@alloc/queue-microtask/1.1.4
   ts-deferred: 1.0.4
   uid: 2.0.0
 
 packages:
-
-  /@alloc/is/2.1.2:
-    resolution: {integrity: sha512-/qJui7XCIMEDOzpMPZUXYTy4hHdBKsx6sQnSDIOw8cFW/BL4AqZSt0B/DkB+eW9PDa0zD27zp7jyziQfeaYycQ==}
-    dev: false
 
   /@alloc/queue-microtask/1.1.4:
     resolution: {integrity: sha512-RQ73vSCZyYWoCORvA5rT/Xg99Zt+MyRhoVhYY2Xm/lXAyx5nsWCPB3xDiS+3fmll3iZ3tDHmtOdiCBX8n2RdVg==}
@@ -25,12 +21,6 @@ packages:
   /@lukeed/csprng/1.0.0:
     resolution: {integrity: sha512-ruuGHsnabmObBdeMg3vKdGRmh06Oog3eFpf/Tk6X0kDSJDpJTDCj2dqdp1+0VjzIUgHlFF9GBm7uFqfYhhdX9g==}
     engines: {node: '>=8'}
-    dev: false
-
-  /fauna-lite/0.1.1:
-    resolution: {integrity: sha512-j7wFWu1c3qsWcpbcng+Qb3stMaK6j3PiT1PKg7X4mM9kPl0Go16wAdEcYcNNY679VaVRgsg+SuacNVL/DJYEyg==}
-    dependencies:
-      '@alloc/is': 2.1.2
     dev: false
 
   /ts-deferred/1.0.4:

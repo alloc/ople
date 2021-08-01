@@ -1,14 +1,14 @@
 import { utils } from 'nason/src/index'
 import arrayType from 'nason/src/types/array'
 import stringType from 'nason/src/types/string'
-import { makeFaunaEncoder } from './fauna'
+import { makeOpleEncoder } from './encode'
 import { Config, PackedCall } from './types'
 
 const { concat, pack, unpack } = utils
 const nothing = new Uint8Array()
 
 export function makeBatchEncoder<Record>(config: Config<Record>) {
-  const fauna = makeFaunaEncoder(config)
+  const ople = makeOpleEncoder(config)
   return (id: string, calls: PackedCall[]) => {
     const chunks: Uint8Array[] = [pack(stringType.encode(id))]
     for (let index = 0; index < calls.length; index++) {
@@ -16,9 +16,7 @@ export function makeBatchEncoder<Record>(config: Config<Record>) {
       chunks.push(
         pack(stringType.encode(method)),
         pack(
-          args && args.length
-            ? arrayType.encode(args, fauna.serialize)
-            : nothing
+          args && args.length ? arrayType.encode(args, ople.serialize) : nothing
         ),
         pack(stringType.encode(replyId))
       )
@@ -28,7 +26,7 @@ export function makeBatchEncoder<Record>(config: Config<Record>) {
 }
 
 export function makeBatchDecoder<Record>(config: Config<Record>) {
-  const fauna = makeFaunaEncoder(config)
+  const ople = makeOpleEncoder(config)
   return (data: Uint8Array) => {
     let chunk = unpack(data),
       offset = chunk[1],
@@ -47,7 +45,7 @@ export function makeBatchDecoder<Record>(config: Config<Record>) {
       // Decode the arguments.
       chunk = unpack(data, chunk[1])
       args = chunk[0].length
-        ? arrayType.decode(chunk[0], fauna.deserialize)
+        ? arrayType.decode(chunk[0], ople.deserialize)
         : null
 
       // Decode the reply ID.

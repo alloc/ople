@@ -1,24 +1,26 @@
 import { o, Change } from 'wana'
-import { FaunaTime, Ref } from 'fauna-lite'
+import { OpleTime, OpleRef } from '@ople/nason'
 import { makeDisposableMap } from './utils/DisposableMap'
 import { observe } from './utils/observe'
 import { setHidden } from './common'
-import { Collection } from './Collection'
+import { OpleCollection } from './Collection'
 import { Ople } from './Ople'
 import { emit, Signal } from './Signal'
 import { OpleClient } from './client'
 
-export type RecordEvents = {
-  /** This record was changed. */
-  change(change: Change): void
-  /** This record will be saved. */
-  save(saving: Promise<void>): void
-  /** This record has been deleted. */
-  delete(): void
+export namespace OpleRecord {
+  export interface Events {
+    /** This record was changed. */
+    change(change: Change): void
+    /** This record will be saved. */
+    save(saving: Promise<void>): void
+    /** This record has been deleted. */
+    delete(): void
+  }
 }
 
-export interface Record {
-  set(state: Partial<Omit<this, keyof Record>>): void
+export interface OpleRecord {
+  set(state: Partial<Omit<this, keyof OpleRecord>>): void
   /** This record is being saved. */
   onSave: Signal<[saving: Promise<void>]>
   /** This record is pulling changes from the backend. */
@@ -29,20 +31,20 @@ export interface Record {
 
 let isPatching = false
 const modifiedMap = makeDisposableMap()
-const pendingSaves = new WeakMap<Record, Promise<void>>()
-const queuedSaves = new Set<Record>() // TODO
+const pendingSaves = new WeakMap<OpleRecord, Promise<void>>()
+const queuedSaves = new Set<OpleRecord>() // TODO
 
 /**
  * An observable copy of a server-managed JSON document with server-sent events.
  */
-export class Record extends Ople {
+export class OpleRecord extends Ople {
   /**
    * Records created by the current user have no ref until they
    * are saved for the first time.
    */
-  readonly ref: Ref | null
+  readonly ref: OpleRef | null
 
-  constructor(ref?: Ref, lastModified?: FaunaTime) {
+  constructor(ref?: OpleRef, lastModified?: OpleTime) {
     super()
     this.ref = ref || null
 
@@ -71,7 +73,7 @@ export class Record extends Ople {
    *
    * By using the `autoSave` mixin, you can avoid calling this.
    */
-  save(collection?: Collection<this>) {
+  save(collection?: OpleCollection<this>) {
     const ref = this.ref
     if (ref) {
       if (!collection) {
@@ -137,28 +139,28 @@ export class Record extends Ople {
 }
 
 /** Apply changes while leaving `isModified` intact */
-export function applyPatch(record: Record, patch: object) {
+export function applyPatch(record: OpleRecord, patch: object) {
   isPatching = true
   Object.assign(record, patch)
   isPatching = false
   return record
 }
 
-export function getClient(record: Record): OpleClient {
+export function getClient(record: OpleRecord): OpleClient {
   return getCollection(record).client
 }
 
 /** @internal */
-export function getCollection(record: Record): Collection {
+export function getCollection(record: OpleRecord): OpleCollection {
   return (record as any).__collection
 }
 
 /** @internal */
-export function getModified(record: Record): Set<string> {
+export function getModified(record: OpleRecord): Set<string> {
   return (record as any).__modified
 }
 
 /** @internal */
-export function getLastModified(record: Record): number {
+export function getLastModified(record: OpleRecord): number {
   return (record as any).__lastModified
 }

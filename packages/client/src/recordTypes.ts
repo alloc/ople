@@ -1,7 +1,7 @@
 import { EventSource, EventKey, EventArgs } from 'ee-ts'
-import { Ref, FaunaTime } from 'fauna-lite'
+import { OpleRef, OpleTime } from '@ople/nason'
 import { Any } from '@alloc/types'
-import { Record } from './data/Record'
+import { Record } from './Record'
 import { $R } from './symbols'
 
 type InferEvents<T> = [T] extends [Any]
@@ -25,12 +25,12 @@ export interface RecordType<T extends ReadonlyRecord = any>
   /** Decode a serialized record, then cache it. */
   decode(raw: RawRecord): T
   /** The collection ref. */
-  [$R]: Ref
+  [$R]: OpleRef
 }
 
 /** Record data transmitted with a `Ref` and timestamp. */
 export interface RawRecord {
-  ts: FaunaTime
-  ref: Ref
+  ts: OpleTime
+  ref: OpleRef
   data: any
 }

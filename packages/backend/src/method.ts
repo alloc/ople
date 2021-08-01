@@ -1,5 +1,5 @@
 import { query as q, FaunaJSON } from 'faunadb'
-import { publish } from './publish'
+import { Publish, publish, PublishArgs } from './publish'
 import * as grip from './grip'
 
 export interface Methods<Context extends object> {
@@ -26,7 +26,7 @@ export interface MethodResponse {
   end: () => void
 }
 
-export class MethodContext {
+export class MethodContext<T> {
   private response?: MethodResponse
   promise?: Promise<Buffer>
 
@@ -34,18 +34,23 @@ export class MethodContext {
     /** The connection identity. */
     readonly cid: string,
     /** The user identity. */
-    public uid: string | undefined
-  ) {}
+    public uid: string | undefined,
+    /** For sending events to the connection. */
+    publish: Publish<T>
+  ) {
+    this.emit = publish.bind(null, 'c:' + cid) as any
+  }
 
   /** Get the `Ref` for the current user. */
   get user() {
     return q.Ref(q.Collection('users'), this.uid)
   }
 
-  /** Push content to the current connection. */
-  push(content: object) {
-    return publish('c:' + this.cid, content)
-  }
+  /** Send an event to the method caller. */
+  readonly emit: <E extends keyof T>(
+    event: E,
+    ...args: PublishArgs<T[E]>
+  ) => Promise<void>
 
   /** Defer the response indefinitely.  */
   defer(): Readonly<MethodResponse> {

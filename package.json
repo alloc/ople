@@ -20,7 +20,7 @@
     "esbuild": "^0.8.44",
     "jest": "^24.9.0",
     "prettier": "^2.0.5",
-    "recrawl-sync": "^2.0.0",
+    "recrawl-sync": "^2.2.1",
     "rollup": "^2.23.0",
     "rollup-plugin-dts": "^1.4.10",
     "rollup-plugin-esbuild": "^2.6.1",

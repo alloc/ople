@@ -1,7 +1,8 @@
-import { Ref } from 'fauna-lite'
+import { OpleRef } from '@ople/nason'
 import { OpleClient } from './client'
-import { Record } from './Record'
+import { OpleRecord } from './Record'
 
-export class Collection<T extends Record = any> {
-  constructor(readonly ref: Ref, readonly client: OpleClient) {}
+/** Local cache for records from the same collection. */
+export class OpleCollection<T extends OpleRecord = any> {
+  constructor(readonly ref: OpleRef, readonly client: OpleClient) {}
 }

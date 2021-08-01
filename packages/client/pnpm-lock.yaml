@@ -6,7 +6,6 @@ specifiers:
   '@ople/agent': link:../agent
   '@ople/nason': link:../nason
   ee-ts: ^2.0.0-rc.6
-  fauna-lite: ^0.1.1
   ts-deferred: ^1.0.4
   wana: ^0.13.1
 
@@ -16,7 +15,6 @@ dependencies:
   '@ople/agent': link:../agent
   '@ople/nason': link:../nason
   ee-ts: 2.0.0-rc.6
-  fauna-lite: 0.1.1
   ts-deferred: 1.0.4
   wana: 0.13.8
 
@@ -45,12 +43,6 @@ packages:
     engines: {node: '>=6'}
     peerDependencies:
       typescript: '>=3'
-    dev: false
-
-  /fauna-lite/0.1.1:
-    resolution: {integrity: sha512-j7wFWu1c3qsWcpbcng+Qb3stMaK6j3PiT1PKg7X4mM9kPl0Go16wAdEcYcNNY679VaVRgsg+SuacNVL/DJYEyg==}
-    dependencies:
-      '@alloc/is': 2.1.2
     dev: false
 
   /queue-microtask/1.2.2:

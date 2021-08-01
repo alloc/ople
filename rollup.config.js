@@ -17,14 +17,16 @@ const resolvePlugin = nodeResolve({
 
 crawl('.', {
   only: ['packages/*/package.json'],
-  skip: ['node_modules'],
+  skip: ['node_modules', 'vendor'],
 }).forEach(pkgPath => {
   let external = id => !/^[./]/.test(id)
   if (/nason/.test(pkgPath)) {
     const origExternal = external
     external = id => origExternal(id) && !/nason/.test(id)
   } else if (
-    !/agent|backend|client|config|pushpin|transform|tnetstring/.test(pkgPath)
+    !/agent|backend|client|config|data|pushpin|transform|tnetstring/.test(
+      pkgPath
+    )
   ) {
     return
   }
@@ -55,14 +57,13 @@ crawl('.', {
     external,
   })
 
-  if (pkg.typings)
-    configs.push({
-      input,
-      output: {
-        file: `${pkgRoot}/${pkg.typings}`,
-        format: 'es',
-      },
-      plugins: [dtsPlugin],
-      external,
-    })
+  configs.push({
+    input,
+    output: {
+      file: `${pkgRoot}/${pkg.main.replace(/.js$/, '.d.ts')}`,
+      format: 'es',
+    },
+    plugins: [dtsPlugin],
+    external,
+  })
 })

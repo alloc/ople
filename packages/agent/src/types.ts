@@ -1,7 +1,7 @@
 import type { Deferred } from 'ts-deferred'
-import type { Ref } from 'fauna-lite'
+import type { OpleRef } from '@ople/nason'
 
-export type { Ref }
+export type { OpleRef }
 
 export interface AgentConfig {
   /** The transport strategy. Pass the `ws` or `http` export, or provide your own. */
@@ -53,7 +53,7 @@ export type RefMap<T> = { [ref: string]: T }
 export type Patch = { [key: string]: any }
 
 export type Batch<Record> = { [method: string]: Set<any> } & {
-  [P in OpleMethod]: Set<P extends '@get' ? Ref : Record>
+  [P in OpleMethod]: Set<P extends '@get' ? OpleRef : Record>
 } & {
     id: string
     calls: PackedCall[]

@@ -1,11 +1,11 @@
 import { Encoder, use } from 'nason/src/index'
 import arrayType from 'nason/src/types/array'
 import stringType from 'nason/src/types/string'
-import { FaunaDate, FaunaTime, Ref } from 'fauna-lite'
+import { OpleDate, OpleTime, OpleRef } from './values'
 import { Config } from './types'
 
-export function makeFaunaEncoder<Record>({
-  Record,
+export function makeOpleEncoder<Record>({
+  isRecord,
   packRecord,
   unpackRecord,
 }: Config<Record>) {
@@ -13,7 +13,7 @@ export function makeFaunaEncoder<Record>({
   // to represent Records in-memory, the data marshalling cannot
   // be implemented in an isomorphic context.
   const recordType: Encoder<any> = {
-    test: hasConstructor(Record),
+    test: isRecord,
     encode(record, encode) {
       const packed = packRecord(record)
       const packedType: Encoder<any> = Array.isArray(packed)
@@ -48,20 +48,20 @@ export function makeFaunaEncoder<Record>({
 const hasConstructor = (ctr: Function) => (val: any) =>
   ctr === (val && val.constructor)
 
-const refType: Encoder<Ref> = {
-  test: hasConstructor(Ref),
+const refType: Encoder<OpleRef> = {
+  test: hasConstructor(OpleRef),
   encode: ref => stringType.encode(ref.toString()),
-  decode: data => Ref.from(stringType.decode(data)),
+  decode: data => OpleRef.from(stringType.decode(data)),
 }
 
-const timeType: Encoder<FaunaTime> = {
-  test: hasConstructor(FaunaTime),
+const timeType: Encoder<OpleTime> = {
+  test: hasConstructor(OpleTime),
   encode: time => stringType.encode(time.isoTime),
-  decode: bytes => new FaunaTime(stringType.decode(bytes)),
+  decode: bytes => new OpleTime(stringType.decode(bytes)),
 }
 
-const dateType: Encoder<FaunaDate> = {
-  test: hasConstructor(FaunaDate),
+const dateType: Encoder<OpleDate> = {
+  test: hasConstructor(OpleDate),
   encode: date => stringType.encode(date.isoDate),
-  decode: bytes => new FaunaDate(stringType.decode(bytes)),
+  decode: bytes => new OpleDate(stringType.decode(bytes)),
 }

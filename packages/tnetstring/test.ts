@@ -28,6 +28,8 @@ test('dump a byte array', () => {
 test('dump the rainbow', () => {
   // null
   expect(tns.dump(null)).toMatchInlineSnapshot(`"0:~"`)
+  // boolean
+  expect(tns.dump(false)).toMatchInlineSnapshot(`"5:false!"`)
   // integer
   expect(tns.dump(0)).toMatchInlineSnapshot(`"1:0#"`)
   // float

@@ -5,43 +5,53 @@ import {
   Config as Coding,
   PackedRecord,
 } from '@ople/nason'
-import { FaunaTime, Ref } from 'fauna-lite'
+import { OpleTime, OpleRef } from '@ople/nason'
 import {
-  Record,
+  OpleRecord,
   getCollection,
   getModified,
   getLastModified,
   applyPatch,
 } from './Record'
-import { Collection } from './Collection'
+import { OpleCollection } from './Collection'
 import { prepare } from './prepare'
 import { setHidden } from './common'
 
 export { ws, http } from '@ople/agent'
 
+type SignalHandlers = { [name: string]: (...args: any[]) => void }
+
 export interface OpleClient {
   readonly cache: {
-    get<T extends Record>(ref: Ref<T>): T | null
+    get<T extends OpleRecord>(ref: OpleRef<T>): T | null
   }
-  get<T extends Record>(ref: Ref<T>, force?: boolean): Promise<T>
+  get<T extends OpleRecord>(ref: OpleRef<T>, force?: boolean): Promise<T>
   call: Agent['call']
-  collection(name: string): Collection
+  collection(name: string): OpleCollection
+  /**
+   * Subscribe to global signals from the backend.
+   */
+  subscribe(handlers: SignalHandlers): void
+  /**
+   * Subscribe to ref-specific signals from the backend.
+   */
+  subscribe(ref: OpleRef, handlers: SignalHandlers): void
 }
 
 export function defineClient<T extends OpleClient>(collectionTypes: {
-  [name: string]: typeof Record
+  [name: string]: typeof OpleRecord
 }) {
   return function makeClient(config: ClientConfig): T {
     const records: RecordCache = {}
-    const collections: { [name: string]: Collection } = {}
+    const collections: { [name: string]: OpleCollection } = {}
     const getCollectionByName = (name: string) =>
       collections[name] ||
-      (collections[name] = new Collection(
-        new Ref(name, Ref.Native.collections),
+      (collections[name] = new OpleCollection(
+        new OpleRef(name, OpleRef.Native.collections),
         client
       ))
 
-    function updateRecord(ref: Ref, ts: FaunaTime, data: any) {
+    function updateRecord(ref: OpleRef, ts: OpleTime, data: any) {
       const record = records[ref as any]
       if (record) {
         data.__lastModified = ts
@@ -49,16 +59,16 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
       }
     }
 
-    const coding: Coding<Record> = {
-      Record,
-      packRecord: (record: Record) => record.ref!,
+    const coding: Coding<OpleRecord> = {
+      isRecord: arg => (arg && arg.constructor) === OpleRecord,
+      packRecord: (record: OpleRecord) => record.ref!,
       unpackRecord([ref, ts, data]: PackedRecord) {
         let record = updateRecord(ref, ts, data)
         if (!record) {
           const collection = ref.collection!.id
           const recordType = collectionTypes[collection]
 
-          records[ref as any] = record = new Record(ref, ts)
+          records[ref as any] = record = new OpleRecord(ref, ts)
           Object.setPrototypeOf(record, recordType)
           Object.assign(record, data)
           setHidden(record, '__collection', getCollectionByName(collection))
@@ -71,7 +81,7 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
     }
 
     // The agent handles remote communication.
-    const agent = makeAgent<Record>({
+    const agent = makeAgent<OpleRecord>({
       ...config,
       encodeBatch: makeBatchEncoder(coding),
       decodeReply: makeReplyDecoder(coding),
@@ -102,6 +112,17 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
       },
       call: agent.call,
       collection: getCollectionByName,
+      subscribe(
+        refOrHandlers: OpleRef | SignalHandlers,
+        handlers?: SignalHandlers
+      ) {
+        let ref: OpleRef | undefined
+        if (handlers) {
+          ref = refOrHandlers as OpleRef
+        } else {
+          handlers = refOrHandlers as SignalHandlers
+        }
+      },
     }
 
     return Object.setPrototypeOf(client, methods)
@@ -120,5 +141,5 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
 interface ClientConfig extends AgentConfig {}
 
 interface RecordCache {
-  [ref: string]: Record
+  [ref: string]: OpleRecord
 }

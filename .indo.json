@@ -4,9 +4,6 @@
       "url": "https://github.com/aleclarson/faunadb-js",
       "head": "ople"
     },
-    "vendor/fauna-lite": {
-      "url": "https://github.com/aleclarson/fauna-lite"
-    },
     "vendor/nason": {
       "url": "https://github.com/aleclarson/nason"
     },

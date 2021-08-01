@@ -5,7 +5,7 @@
   "module": "dist/nason.mjs",
   "typings": "dist/nason.d.ts",
   "dependencies": {
-    "fauna-lite": "^0.1.1",
+    "@alloc/is": "^2.1.1",
     "nason": "^1.2.0"
   }
 }
