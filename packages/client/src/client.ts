@@ -16,6 +16,7 @@ import {
 import { OpleCollection } from './Collection'
 import { prepare } from './prepare'
 import { setHidden } from './common'
+import { setEffect } from './Ople'
 
 export { ws, http } from '@ople/agent'
 
@@ -52,7 +53,7 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
       ))
 
     function updateRecord(ref: OpleRef, ts: OpleTime, data: any) {
-      const record = records[ref as any]
+      const record = records[ref]
       if (record) {
         data.__lastModified = ts
         return applyPatch(record, data)
@@ -68,7 +69,7 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
           const collection = ref.collection!.id
           const recordType = collectionTypes[collection]
 
-          records[ref as any] = record = new OpleRecord(ref, ts)
+          records[ref] = record = new OpleRecord(ref, ts)
           Object.setPrototypeOf(record, recordType)
           Object.assign(record, data)
           setHidden(record, '__collection', getCollectionByName(collection))
@@ -80,6 +81,8 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
       },
     }
 
+    const signalMap: { [name: string]: Set<SignalHandlers> } = {}
+
     // The agent handles remote communication.
     const agent = makeAgent<OpleRecord>({
       ...config,
@@ -89,8 +92,10 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
       getModified,
       getLastModified,
       getCollection: record => getCollection(record).ref,
-      onSignal() {
-        // TODO
+      onSignal(name, args = []) {
+        signalMap[name].forEach(handlers => {
+          handlers[name](...args)
+        })
       },
     })
 
@@ -103,10 +108,10 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
 
     const client: OpleClient = {
       cache: {
-        get: (ref): any => records[ref as any] || null,
+        get: (ref): any => records[ref] || null,
       },
       async get(ref, force): Promise<any> {
-        const record = records[ref as any]
+        const record = records[ref]
         const getting = (force || !record) && agent.call('@get', [ref])
         return record || getting
       },
@@ -116,12 +121,29 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
         refOrHandlers: OpleRef | SignalHandlers,
         handlers?: SignalHandlers
       ) {
-        let ref: OpleRef | undefined
+        let refPrefix: string | undefined
         if (handlers) {
-          ref = refOrHandlers as OpleRef
+          refPrefix = (refOrHandlers as OpleRef).toString()
         } else {
           handlers = refOrHandlers as SignalHandlers
         }
+        setEffect(handlers, active => {
+          for (let name in handlers) {
+            if (refPrefix) {
+              name = refPrefix + name
+            }
+            let set = signalMap[name]
+            if (active) {
+              set ||= signalMap[name] = new Set()
+              set.add(handlers)
+            } else {
+              set.delete(handlers)
+              if (!set.size) {
+                delete signalMap[name]
+              }
+            }
+          }
+        })
       },
     }
 

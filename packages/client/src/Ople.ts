@@ -7,7 +7,7 @@ import { $effects, $disposed } from './symbols'
 import { signalTraps } from './Signal'
 
 export abstract class ReadonlyOple {
-  protected [$O]: Observable
+  [$O]: Observable
   protected [$effects]: Map<object, OpleEffect>
   protected [$disposed]: boolean
 

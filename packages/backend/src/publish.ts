@@ -20,6 +20,10 @@ export type Publish<T> = <E extends keyof T>(
   ...args: PublishArgs<T[E]>
 ) => Promise<void>
 
+export type Publisher<T> = {
+  [E in keyof T]: (...args: PublishArgs<T[E]>) => Promise<void>
+}
+
 makeReplyEncoder<any>({
   isRecord: arg => arg.ref instanceof OpleRef,
 })

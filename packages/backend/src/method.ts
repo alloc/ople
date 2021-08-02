@@ -1,5 +1,6 @@
-import { query as q, FaunaJSON } from 'faunadb'
-import { Publish, publish, PublishArgs } from './publish'
+import { is } from '@alloc/is'
+import { OpleRef } from 'ople-db'
+import { Publish, PublishArgs } from './publish'
 import * as grip from './grip'
 
 export interface Methods<Context extends object> {
@@ -26,19 +27,53 @@ export interface MethodResponse {
   end: () => void
 }
 
-export class MethodContext<T> {
+type TypedString<T> = T & string
+
+class CallerId extends String {}
+class UserId extends String {}
+
+export class UserRef<T> extends OpleRef {
+  constructor(uid: string, publish: Publish<T>) {
+    super(uid, new OpleRef('users', OpleRef.Native.collections))
+    return new Proxy(this, {
+      get(self, key: keyof OpleRef) {
+        if (self[key]) {
+          return self[key]
+        }
+        return (...args: any) => publish(self, key as any, ...args)
+      },
+    })
+  }
+}
+
+type SignalTypes = { [name: string]: any }
+type SignalTypeConfig = {
+  global: SignalTypes
+  user: SignalTypes
+}
+
+export class MethodContext<Signals, UserSignals> {
   private response?: MethodResponse
+  /** The caller identity. */
+  readonly cid: TypedString<CallerId>
+  /** The user identity. */
+  readonly uid?: TypedString<UserId>
+  /** Caller metadata set by past calls. */
+  readonly meta: Record<string, string>
+  readonly user?: UserRef<Signals>
+  /** When defined, this call is extended beyond  */
   promise?: Promise<Buffer>
 
   constructor(
-    /** The connection identity. */
-    readonly cid: string,
-    /** The user identity. */
-    public uid: string | undefined,
-    /** For sending events to the connection. */
-    publish: Publish<T>
+    cid: string,
+    uid: string | undefined,
+    meta: Record<string, string>
   ) {
-    this.emit = publish.bind(null, 'c:' + cid) as any
+    this.cid = new CallerId(cid) as string
+    if (is.defined(uid)) {
+      this.uid = new UserId(uid) as string
+    }
+    this.meta = meta
   }
 
   /** Get the `Ref` for the current user. */
@@ -46,11 +81,8 @@ export class MethodContext<T> {
     return q.Ref(q.Collection('users'), this.uid)
   }
 
-  /** Send an event to the method caller. */
-  readonly emit: <E extends keyof T>(
-    event: E,
-    ...args: PublishArgs<T[E]>
-  ) => Promise<void>
+  /** Get a publisher for a specific channel. */
+  publish(channel: string | OpleRef): Publisher {}
 
   /** Defer the response indefinitely.  */
   defer(): Readonly<MethodResponse> {

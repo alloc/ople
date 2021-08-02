@@ -55,7 +55,7 @@ export class OpleRecord extends Ople {
     // Track which properties have been modified since
     // the most recent `save` command.
     modifiedMap.set(this, () =>
-      observe(this as any, change => {
+      observe(this, change => {
         isPatching || modified.add(change.key)
       })
     )

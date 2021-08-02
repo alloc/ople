@@ -1,11 +1,15 @@
-import { Class, is } from '@alloc/is'
+import { is } from '@alloc/is'
 
-export class OpleRef<T extends object = any> {
+class OpleRef<T extends object | null = any> extends String {
   constructor(
     readonly id: string,
     readonly collection?: OpleRef,
     readonly database?: OpleRef
-  ) {}
+  ) {
+    super(
+      collection == OpleRef.Native.collections ? collection.id + '/' + id : id
+    )
+  }
 
   /** This enforces type nominality. */
   protected _ref!: { data: T }
@@ -22,18 +26,6 @@ export class OpleRef<T extends object = any> {
   }
 
   /**
-   * Encode this ref into a string.
-   *
-   * Database refs are not supported.
-   */
-  toString() {
-    const { id, collection } = this
-    return collection == OpleRef.Native.collections
-      ? collection.id + '/' + id
-      : id
-  }
-
-  /**
    * Convert an encoded ref into a `Ref` instance.
    */
   static from(encodedRef: string) {
@@ -44,14 +36,21 @@ export class OpleRef<T extends object = any> {
 
   static Native = {
     collections: new OpleRef('collections'),
-    indexes: new OpleRef('indexes'),
-    databases: new OpleRef('databases'),
-    functions: new OpleRef('functions'),
-    roles: new OpleRef('roles'),
-    keys: new OpleRef('keys'),
-    access_providers: new OpleRef('access_providers'),
   }
 }
+
+// Refs are boxed strings.
+type Ref<T extends object | null = any> = OpleRef<T> & string
+
+const Ref: {
+  new <T extends object | null = any>(id: string, collection?: Ref<T>): Ref<T>
+  from: <T extends object | null = any>(encodedRef: string) => Ref<T>
+  Native: {
+    collections: Ref
+  }
+} = OpleRef as any
+
+export { Ref as OpleRef }
 
 export class OpleTime {
   readonly isoTime: string
