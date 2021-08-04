@@ -1,5 +1,5 @@
 import { o, Change } from 'wana'
-import { OpleTime, OpleRef } from '@ople/nason'
+import { OpleTime, OpleRef } from './values'
 import { makeDisposableMap } from './utils/DisposableMap'
 import { observe } from './utils/observe'
 import { setHidden } from './common'
@@ -133,7 +133,8 @@ export class OpleRecord extends Ople {
   }
 
   toJSON(): object {
-    // TODO
+    // TODO: ignore hidden properties, but include `ref` if truthy
+    // TODO: include OpleRecord, OpleRef, OpleTime, and OpleDate values
     return null as any
   }
 }
@@ -161,6 +162,6 @@ export function getModified(record: OpleRecord): Set<string> {
 }
 
 /** @internal */
-export function getLastModified(record: OpleRecord): number {
+export function getLastModified(record: OpleRecord): OpleTime {
   return (record as any).__lastModified
 }

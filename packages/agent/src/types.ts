@@ -1,7 +1,6 @@
 import type { Deferred } from 'ts-deferred'
-import type { OpleRef } from '@ople/nason'
 
-export type { OpleRef }
+type OpleRef = { id: string; collection?: OpleRef }
 
 export interface AgentConfig {
   /** The transport strategy. Pass the `ws` or `http` export, or provide your own. */

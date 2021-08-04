@@ -1,4 +1,4 @@
-import { OpleRef } from '@ople/nason'
+import { OpleRef } from './values'
 import { OpleClient } from './client'
 import { OpleRecord } from './Record'
 

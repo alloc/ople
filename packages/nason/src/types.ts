@@ -1,30 +1,50 @@
-import { OpleTime, OpleRef } from './values'
+export type PackedCall = [method: string, args: any[] | null, replyId: string]
+export type PackedReply = [replyId: string, result: any, error?: string]
 
-/** Configuration for `@ople/nason` */
-export type Config<OpleRecord> = {
-  isRecord: (value: any) => boolean
-} & RecordPacking<OpleRecord>
+export interface Packer<T, U> {
+  test: (value: unknown) => boolean
+  pack: (value: T) => U
+  unpack: (value: U) => T
+}
 
-type RecordPacking<Record> =
-  | Client.RecordPacking<Record>
-  | Server.RecordPacking<Record>
+export type RecordPacker<
+  OpleRecord extends object = object,
+  OpleRef extends object = any,
+  OpleTime extends object = any
+> =
+  | Client.RecordPacker<OpleRef, OpleTime, OpleRecord>
+  | Server.RecordPacker<OpleRef, OpleTime, OpleRecord>
 
 namespace Client {
-  export type RecordPacking<OpleRecord> = {
-    packRecord: (record: OpleRecord) => OpleRef
-    unpackRecord: (record: PackedRecord) => OpleRecord
+  export type PackedRecord<OpleRef extends object = object> = [
+    ref: OpleRef | null,
+    data: object
+  ]
+
+  export interface RecordPacker<
+    OpleRef extends object = object,
+    OpleTime extends object = object,
+    OpleRecord extends object = object
+  > {
+    test: (value: unknown) => boolean
+    pack: (record: OpleRecord) => Client.PackedRecord<OpleRef>
+    unpack: (record: Server.PackedRecord<OpleRef, OpleTime>) => OpleRecord
   }
 }
 
 namespace Server {
-  export type RecordPacking<OpleRecord> = {
-    packRecord: (record: OpleRecord) => PackedRecord
-    unpackRecord: (ref: string) => OpleRef
+  export type PackedRecord<
+    OpleRef extends object = object,
+    OpleTime extends object = object
+  > = [ref: OpleRef, ts: OpleTime, data: object]
+
+  export interface RecordPacker<
+    OpleRef extends object = object,
+    OpleTime extends object = object,
+    OpleRecord extends object = object
+  > {
+    test: (value: unknown) => boolean
+    pack: (record: OpleRecord) => Server.PackedRecord<OpleRef, OpleTime>
+    unpack: (record: Client.PackedRecord<OpleRef>) => OpleRecord
   }
 }
-
-export type PackedRecord = [ref: OpleRef, ts: OpleTime, data: any]
-
-export type PackedCall = [method: string, args: any[] | null, replyId: string]
-
-export type Reply = [replyId: string, result: any, error?: string]

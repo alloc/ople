@@ -1,7 +1,7 @@
 import { EventSource, EventKey, EventArgs } from 'ee-ts'
-import { OpleRef, OpleTime } from '@ople/nason'
 import { Any } from '@alloc/types'
-import { Record } from './Record'
+import { OpleRef, OpleTime } from './values'
+import { OpleRecord } from './Record'
 import { $R } from './symbols'
 
 type InferEvents<T> = [T] extends [Any]
@@ -18,7 +18,7 @@ type TargetedEvents<T, E> = {
 export type ReadonlyRecord<
   T extends object = any,
   E extends object = any
-> = ReadonlyOpleObject<T & Record, E>
+> = ReadonlyOpleObject<T & OpleRecord, E>
 
 export interface RecordType<T extends ReadonlyRecord = any>
   extends EventSource<TargetedEvents<T, InferEvents<T>>> {

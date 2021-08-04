@@ -5,7 +5,7 @@ import {
   Config as Coding,
   PackedRecord,
 } from '@ople/nason'
-import { OpleTime, OpleRef } from '@ople/nason'
+import { OpleTime, OpleRef } from './values'
 import {
   OpleRecord,
   getCollection,
@@ -17,6 +17,7 @@ import { OpleCollection } from './Collection'
 import { prepare } from './prepare'
 import { setHidden } from './common'
 import { setEffect } from './Ople'
+import { getEncoder } from './nason'
 
 export { ws, http } from '@ople/agent'
 
@@ -60,26 +61,22 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
       }
     }
 
-    const coding: Coding<OpleRecord> = {
-      isRecord: arg => (arg && arg.constructor) === OpleRecord,
-      packRecord: (record: OpleRecord) => record.ref!,
-      unpackRecord([ref, ts, data]: PackedRecord) {
-        let record = updateRecord(ref, ts, data)
-        if (!record) {
-          const collection = ref.collection!.id
-          const recordType = collectionTypes[collection]
+    const coding = getEncoder(([ref, ts, data]) => {
+      let record = updateRecord(ref, ts, data)
+      if (!record) {
+        const collection = ref.collection!.id
+        const recordType = collectionTypes[collection]
 
-          records[ref] = record = new OpleRecord(ref, ts)
-          Object.setPrototypeOf(record, recordType)
-          Object.assign(record, data)
-          setHidden(record, '__collection', getCollectionByName(collection))
+        records[ref] = record = new OpleRecord(ref, ts)
+        Object.setPrototypeOf(record, recordType)
+        Object.assign(record, data)
+        setHidden(record, '__collection', getCollectionByName(collection))
 
-          // TODO: call `prepare` for each superclass
-          prepare(record, recordType)
-        }
-        return record
-      },
-    }
+        // TODO: call `prepare` for each superclass
+        prepare(record, recordType)
+      }
+      return record
+    })
 
     const signalMap: { [name: string]: Set<SignalHandlers> } = {}
 
@@ -90,7 +87,7 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
       decodeReply: makeReplyDecoder(coding),
       updateRecord,
       getModified,
-      getLastModified,
+      getLastModified: record => getLastModified(record).date.getTime(),
       getCollection: record => getCollection(record).ref,
       onSignal(name, args = []) {
         signalMap[name].forEach(handlers => {

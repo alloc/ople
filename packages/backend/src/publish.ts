@@ -2,7 +2,7 @@ import { is } from '@alloc/is'
 import fetch from 'node-fetch'
 import readBody from 'raw-body'
 import HttpAgent from 'agentkeepalive'
-import { OpleRef } from 'ople-db'
+import { OpleDocument, OpleRef } from 'ople-db'
 import { log } from './log'
 import { makeReplyEncoder } from '../../nason/src'
 
@@ -26,25 +26,25 @@ export type Publisher<T> = {
 
 makeReplyEncoder<any>({
   isRecord: arg => arg.ref instanceof OpleRef,
+  packRecord: (arg: OpleDocument) => [arg.ref, arg.ts, arg.data],
 })
 
-export const createPublish = <T>(): Publish<T> =>
-  /** Publish an event to the given channel or record. */
-  async function publish(
-    channel: string | OpleRef,
-    event: keyof T,
-    ...args: any[]
-  ) {
-    if (!is.string(channel)) {
-      channel = channel.toString()
-      event = (channel + '/' + event) as any
-    }
-    await publishImpl(channel, content)
+/** Publish an event to the given channel or record. */
+export async function publishUnsafely(
+  channel: string | OpleRef,
+  event: any,
+  ...args: any[]
+) {
+  if (!is.string(channel)) {
+    channel = channel.toString()
+    event = (channel + '/' + event) as any
   }
+  await doPublish(channel, content)
+}
 
 type PublishFn = (channel: string, content: any) => any
 
-let publishImpl: PublishFn = async (channel, content) => {
+let doPublish: PublishFn = async (channel, content) => {
   const err: any = Error('Failed to publish')
   const payload = {
     items: [
@@ -81,6 +81,6 @@ let publishImpl: PublishFn = async (channel, content) => {
 }
 
 /** Override the publish handler. Used in development. */
-export function onPublish(handler: PublishFn) {
-  publishImpl = handler
+export function overridePublish(fn: PublishFn) {
+  doPublish = fn
 }
