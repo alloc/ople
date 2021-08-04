@@ -7,7 +7,9 @@ import dts from 'rollup-plugin-dts'
 const configs = []
 export default configs
 
-const dtsPlugin = dts()
+const dtsPlugin = dts({
+  respectExternal: true,
+})
 const esPlugin = esbuild({
   target: 'es2018',
 })

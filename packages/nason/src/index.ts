@@ -2,9 +2,9 @@ import { Encoder, use } from 'nason/src/index'
 import arrayType from 'nason/src/types/array'
 import objectType from 'nason/src/types/object'
 import stringType from 'nason/src/types/string'
-import { Packer, RecordPacker } from './types'
+import { Nason, Packer, RecordPacker } from './types'
 
-export function makeNason<
+export const makeNason = <
   OpleRef extends object,
   OpleTime extends object,
   OpleDate extends object,
@@ -16,15 +16,13 @@ export function makeNason<
     OpleDate: Packer<OpleDate, string>,
     OpleRecord: RecordPacker<OpleRecord, OpleRef, OpleTime>
   ]
-) {
-  const encodeAny = use([
+): Nason =>
+  use([
     [0, encodeString(types[0])],
     [1, encodeString(types[1])],
     [2, encodeString(types[2])],
     [3, encodeRecord(types[3])],
   ])
-  return encodeAny
-}
 
 const encodeString = <T>({
   test,

@@ -1,3 +1,7 @@
+import { WrappedEncoder } from 'nason/src/index'
+
+export interface Nason extends WrappedEncoder {}
+
 export type PackedCall = [method: string, args: any[] | null, replyId: string]
 export type PackedReply = [replyId: string, result: any, error?: string]
 
