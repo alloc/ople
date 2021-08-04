@@ -10,7 +10,7 @@ import {
   Patch,
   RefMap,
   ReplyQueue,
-  OpleRef,
+  Ref,
   FetchQueue,
 } from './types'
 
@@ -27,7 +27,10 @@ export interface Agent {
 
 export type AgentFactory = typeof makeAgent
 
-export function makeAgent<Record extends { ref: OpleRef | null }>({
+export function makeAgent<
+  OpleRef extends Ref,
+  OpleRecord extends { ref: OpleRef | null }
+>({
   protocol: makeTransport,
   host = 'localhost',
   port = 7999,
@@ -38,10 +41,10 @@ export function makeAgent<Record extends { ref: OpleRef | null }>({
   getModified,
   getLastModified,
   onSignal,
-}: PrivateConfig<Record>): Agent {
-  let watched = new Set<Record>()
+}: PrivateConfig<OpleRef, OpleRecord>): Agent {
+  let watched = new Set<OpleRecord>()
   let replyQueue: ReplyQueue = new Map()
-  let fetchQueue: FetchQueue<Record> = {}
+  let fetchQueue: FetchQueue<OpleRecord> = {}
 
   const transport = makeTransport({
     host,
@@ -80,9 +83,9 @@ export function makeAgent<Record extends { ref: OpleRef | null }>({
   })
 
   /** The unsent batch */
-  let nextBatch = makeBatch<Record>()
+  let nextBatch = makeBatch<OpleRecord>()
   /** The batches awaiting a response */
-  let batches: { [batchId: string]: Batch<Record> } = {}
+  let batches: { [batchId: string]: Batch<OpleRecord> } = {}
 
   const IDLE = 0
   const FLUSHING = 1
@@ -114,7 +117,7 @@ export function makeAgent<Record extends { ref: OpleRef | null }>({
     }
     interface BatchResponse {
       created?: OpleRef[]
-      fetched?: Record[]
+      fetched?: OpleRecord[]
       pulled?: [OpleRef, any, any][]
     }
     replyQueue.set(batch.id, (error, response: BatchResponse) => {
@@ -156,7 +159,7 @@ export function makeAgent<Record extends { ref: OpleRef | null }>({
     status = IDLE
   }
 
-  function getPatches(records: Set<Record>) {
+  function getPatches(records: Set<OpleRecord>) {
     const patches: RefMap<Patch> = {}
     records.forEach(record => {
       const patch: Patch = {}
@@ -164,7 +167,7 @@ export function makeAgent<Record extends { ref: OpleRef | null }>({
       if (modified.size) {
         patches[record.ref as any] = patch
         modified.forEach(key => {
-          patch[key] = record[key as keyof Record]
+          patch[key] = record[key as keyof OpleRecord]
         })
         modified.clear()
       }
@@ -176,7 +179,7 @@ export function makeAgent<Record extends { ref: OpleRef | null }>({
     return null
   }
 
-  function getPullMap(records: Set<Record>) {
+  function getPullMap(records: Set<OpleRecord>) {
     const pulls: RefMap<number> = {}
     records.forEach(record => {
       pulls[record.ref as any] = getLastModified(record)
@@ -198,7 +201,7 @@ export function makeAgent<Record extends { ref: OpleRef | null }>({
           }
           promise = fetchQueue[ref].promise
         } else {
-          const [record] = args as [Record]
+          const [record] = args as [OpleRecord]
           if (method == '@watch') {
             nextBatch['@unwatch'].delete(record)
             watched.add(record)
@@ -234,7 +237,7 @@ export function makeAgent<Record extends { ref: OpleRef | null }>({
   }
 }
 
-interface PrivateConfig<Record> extends AgentConfig {
+interface PrivateConfig<OpleRef, OpleRecord> extends AgentConfig {
   /** Encode a batch request. */
   encodeBatch: (batchId: string, calls: PackedCall[]) => Uint8Array
   /** Decode a reply. */
@@ -242,11 +245,11 @@ interface PrivateConfig<Record> extends AgentConfig {
   /** Update the local version of a `Record` object. */
   updateRecord: (ref: OpleRef, ts: any, data: any) => void
   /** Get the collection of a `Record` object. */
-  getCollection: (record: Record) => OpleRef
+  getCollection: (record: OpleRecord) => OpleRef
   /** Get unsaved changes to a `Record` object. */
-  getModified: (record: Record) => Set<string>
+  getModified: (record: OpleRecord) => Set<string>
   /** Get timestamp of the last saved change. */
-  getLastModified: (record: Record) => number
+  getLastModified: (record: OpleRecord) => number
   /** Receive signals from the backend. */
   onSignal: (name: string, args?: any[]) => void
 }
@@ -260,7 +263,7 @@ const makeBatch = <Record>(): Batch<Record> => {
     '@pull': new Set<Record>(),
     '@create': new Set<Record>(),
     '@delete': new Set<Record>(),
-    '@get': new Set<OpleRef>(),
+    '@get': new Set<Ref>(),
   }
   let resolve!: Function
   return setHidden(batch, {

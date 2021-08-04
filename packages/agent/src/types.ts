@@ -1,6 +1,9 @@
 import type { Deferred } from 'ts-deferred'
 
-export type OpleRef = { id: string; collection?: OpleRef }
+export type Ref = {
+  readonly id: string
+  readonly collection?: Ref
+}
 
 export interface AgentConfig {
   /** The transport strategy. Pass the `ws` or `http` export, or provide your own. */
@@ -52,7 +55,7 @@ export type RefMap<T> = { [ref: string]: T }
 export type Patch = { [key: string]: any }
 
 export type Batch<Record> = { [method: string]: Set<any> } & {
-  [P in OpleMethod]: Set<P extends '@get' ? OpleRef : Record>
+  [P in OpleMethod]: Set<P extends '@get' ? Ref : Record>
 } & {
     id: string
     calls: PackedCall[]

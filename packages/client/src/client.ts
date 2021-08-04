@@ -1,11 +1,6 @@
 import { makeAgent, Agent, AgentConfig } from '@ople/agent'
-import {
-  makeBatchEncoder,
-  makeReplyDecoder,
-  Config as Coding,
-  PackedRecord,
-} from '@ople/nason'
-import { OpleTime, OpleRef } from './values'
+import { makeBatchEncoder, makeReplyDecoder } from '@ople/nason'
+import { OpleRef, OpleTime } from './values'
 import {
   OpleRecord,
   getCollection,
@@ -78,10 +73,11 @@ export function defineClient<T extends OpleClient>(collectionTypes: {
       return record
     })
 
+    // TODO: use this for global signals only
     const signalMap: { [name: string]: Set<SignalHandlers> } = {}
 
     // The agent handles remote communication.
-    const agent = makeAgent<OpleRecord>({
+    const agent = makeAgent<OpleRef, OpleRecord>({
       ...config,
       encodeBatch: makeBatchEncoder(coding),
       decodeReply: makeReplyDecoder(coding),
