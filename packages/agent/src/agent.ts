@@ -12,6 +12,7 @@ import {
   ReplyQueue,
   Ref,
   FetchQueue,
+  ReplyHandler,
 } from './types'
 
 declare const console: { error: Function }
@@ -28,8 +29,8 @@ export interface Agent {
 export type AgentFactory = typeof makeAgent
 
 export function makeAgent<
-  OpleRef extends Ref,
-  OpleRecord extends { ref: OpleRef | null }
+  OpleRef extends Ref & string,
+  OpleRecord extends { ref: OpleRef | null; toJSON(): object }
 >({
   protocol: makeTransport,
   host = 'localhost',
@@ -77,7 +78,7 @@ export function makeAgent<
       }
       // Non-replies are server-sent events.
       else if (Array.isArray(result)) {
-        onSignal(result[0], result.slice(1))
+        onSignal(result[0], result[1])
       }
     },
   })
@@ -98,29 +99,62 @@ export function makeAgent<
       return
     }
     const batch = (batches[nextBatch.id] = nextBatch)
-    const calls: PackedCall[] = []
-    for (const method in batch) {
-      const records = batch[method]
-      const payload =
-        method == '@push'
-          ? (batch.patches = getPatches(records))
-          : method == '@pull'
-          ? getPullMap(records)
-          : Array.from(
-              records,
-              method == '@create'
-                ? record => [record.ref, getCollection(record)]
-                : record => record.ref
-            )
+    const calls = Object.entries(batch)
+      .map(
+        ([method, records]: [string, any]): PackedCall => {
+          let payload: any
+          let onReply: ReplyHandler | undefined
 
-      calls.push([method, [payload], ''])
-    }
-    interface BatchResponse {
-      created?: OpleRef[]
-      fetched?: OpleRecord[]
-      pulled?: [OpleRef, any, any][]
-    }
-    replyQueue.set(batch.id, (error, response: BatchResponse) => {
+          if (method == '@push') {
+            payload = batch.patches = getPatches(records)
+          } else if (method == '@pull') {
+            payload = getPullMap(records)
+            onReply = (error, pulled: [OpleRef, any, any][]) =>
+              error
+                ? console.error(error)
+                : pulled.forEach(([ref, ts, data]) =>
+                    updateRecord(ref, ts, data)
+                  )
+          } else if (method == '@create') {
+            payload = Array.from(records, (record: OpleRecord) => [
+              getCollection(record).id,
+              record.toJSON(),
+            ])
+            onReply = (error, created: [OpleRef, any, any][]) => {
+              if (error) {
+                console.error(error)
+              } else {
+                let i = 0
+                records.forEach((record: OpleRecord) => {
+                  const [ref, ts, data] = created[i++]
+                  updateRecord(ref, ts, data)
+                })
+              }
+            }
+          } else {
+            payload = Array.from(records, (record: OpleRecord) => record.ref)
+            if (method == '@get')
+              onReply = (error, records: OpleRecord[]) =>
+                error
+                  ? console.error(error)
+                  : records.forEach(record => {
+                      fetchQueue[record.ref!].resolve(record)
+                      delete fetchQueue[record.ref!]
+                    })
+          }
+
+          let replyId = ''
+          if (onReply) {
+            replyId = makeId()
+            replyQueue.set(replyId, onReply)
+          }
+
+          return [method, [payload], replyId]
+        }
+      )
+      .concat(batch.calls)
+
+    replyQueue.set(batch.id, error => {
       if (error) {
         if (error == errors.disconnect) {
           mergeSets(nextBatch, batch, '@get')
@@ -129,32 +163,21 @@ export function makeAgent<
           // TODO: have another promise for push/create/delete?
           return batch.resolve(nextBatch.promise)
         }
-        return console.error(error)
-      }
-
-      const { created, fetched, pulled } = response
-
-      if (created) {
-        let i = 0
-        batch['@create'].forEach(record => {
-          record.ref = created[i++]
-        })
-      }
-
-      if (fetched)
-        for (const record of fetched) {
-          fetchQueue[record.ref as any].resolve(record)
-          delete fetchQueue[record.ref as any]
+        try {
+          const { reason, callIndex } = JSON.parse(error)
+          console.error(
+            `Function "${calls[callIndex][0]}" threw an error` +
+              (reason ? `\n  ↳  ${reason.replace(/\n/g, '\n     ')}` : ``)
+          )
+        } catch {
+          console.error(error)
         }
-
-      if (pulled)
-        for (const [ref, ts, data] of pulled) {
-          updateRecord(ref, ts, data)
-        }
-
-      batch.resolve()
+      } else {
+        batch.resolve()
+      }
     })
-    transport.send(encodeBatch(batch.id, calls.concat(batch.calls)))
+
+    transport.send(encodeBatch(batch.id, calls))
     nextBatch = makeBatch()
     status = IDLE
   }
@@ -165,7 +188,7 @@ export function makeAgent<
       const patch: Patch = {}
       const modified = getModified(record)
       if (modified.size) {
-        patches[record.ref as any] = patch
+        patches[record.ref!] = patch
         modified.forEach(key => {
           patch[key] = record[key as keyof OpleRecord]
         })
@@ -182,7 +205,7 @@ export function makeAgent<
   function getPullMap(records: Set<OpleRecord>) {
     const pulls: RefMap<number> = {}
     records.forEach(record => {
-      pulls[record.ref as any] = getLastModified(record)
+      pulls[record.ref!] = getLastModified(record)
     })
     return pulls
   }

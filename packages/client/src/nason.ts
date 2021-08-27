@@ -26,7 +26,6 @@ export const getEncoder = (
     },
     {
       test: arg => arg instanceof OpleRecord,
-      pack: record => [record.ref, record.toJSON()],
       unpack: unpackRecord,
     },
   ])

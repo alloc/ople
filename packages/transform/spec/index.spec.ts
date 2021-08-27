@@ -9,22 +9,71 @@ function transform(code: string) {
   })?.code
 }
 
-test('simple example', () => {
-  const output = transform(`
-    import { auto, Ople } from '@ople/client'
+describe('Ople subclass', () => {
+  test('with constructor and prepare method', () => {
+    const output = transform(`
+      import { auto, Ople } from '@ople/client'
 
-    class Foo extends Ople {
-      constructor(readonly foo: number) {
-        super()
+      class Foo extends Ople {
+        constructor(readonly foo: number) {
+          super()
+        }
+        prepare() {
+          auto(() => {
+            console.log('foo:', this.foo)
+          })
+        }
       }
-      prepare() {
-        auto(() => {
-          console.log('foo:', this.foo)
-        })
-      }
-    }
-  `)
+    `)
 
-  console.log(output)
-  expect(output).toBe(null)
+    console.log(output)
+    // expect(output).toBe(null)
+  })
+
+  test('no prepare method', () => {
+    const output = transform(`
+      import { Ople } from '@ople/client'
+
+      class Foo extends Ople {
+        constructor(readonly foo: number) {
+          super()
+        }
+      }
+    `)
+
+    console.log(output)
+    // expect(output).toBe(null)
+  })
+})
+
+describe('OpleRecord subclass', () => {
+  test('with prepare method / no constructor', () => {
+    const output = transform(`
+      import { auto, OpleRecord } from '@ople/client'
+
+      class Foo extends OpleRecord {
+        prepare() {
+          auto(() => {
+            console.log('foo:', this.foo)
+          })
+        }
+      }
+    `)
+
+    console.log(output)
+    // expect(output).toBe(null)
+  })
+
+  test('no constructor or prepare method', () => {
+    const output = transform(`
+      import { OpleRecord } from '@ople/client'
+  
+      class Foo extends OpleRecord {
+        foo = true
+      }
+    `)
+
+    console.log(output)
+    // expect(output).toBe(null)
+  })
 })

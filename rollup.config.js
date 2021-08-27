@@ -4,6 +4,7 @@ import nodeResolve from '@rollup/plugin-node-resolve'
 import esbuild from 'rollup-plugin-esbuild'
 import dts from 'rollup-plugin-dts'
 
+/** @type import('rollup').RollupOptions[] */
 const configs = []
 export default configs
 
@@ -17,6 +18,8 @@ const resolvePlugin = nodeResolve({
   extensions: ['.ts', '.js'],
 })
 
+const enabledPackages = /agent|backend|client|dev|init|pushpin|transform|tnetstring/
+
 crawl('.', {
   only: ['packages/*/package.json'],
   skip: ['node_modules', 'vendor'],
@@ -25,11 +28,7 @@ crawl('.', {
   if (/nason/.test(pkgPath)) {
     const origExternal = external
     external = id => origExternal(id) && !/nason/.test(id)
-  } else if (
-    !/agent|backend|client|config|data|pushpin|transform|tnetstring/.test(
-      pkgPath
-    )
-  ) {
+  } else if (!enabledPackages.test(pkgPath)) {
     return
   }
 
@@ -40,6 +39,7 @@ crawl('.', {
   let output = {
     file: `${pkgRoot}/${pkg.main}`,
     format: 'cjs',
+    exports: 'auto',
     sourcemap: true,
     externalLiveBindings: false,
   }
@@ -59,13 +59,26 @@ crawl('.', {
     external,
   })
 
-  configs.push({
-    input,
-    output: {
-      file: `${pkgRoot}/${pkg.main.replace(/.js$/, '.d.ts')}`,
-      format: 'es',
-    },
-    plugins: [dtsPlugin],
-    external,
-  })
+  // configs.push({
+  //   input,
+  //   output: {
+  //     file: `${pkgRoot}/${pkg.main.replace(/.js$/, '.d.ts')}`,
+  //     format: 'es',
+  //   },
+  //   plugins: [dtsPlugin],
+  //   external,
+  // })
+
+  if (pkg.name === '@ople/dev') {
+    configs.push({
+      input: `${pkgRoot}/src/cli/main.ts`,
+      output: {
+        file: `${pkgRoot}/dist/cli.js`,
+        format: 'cjs',
+        sourcemap: true,
+      },
+      plugins: [esPlugin],
+      external,
+    })
+  }
 })

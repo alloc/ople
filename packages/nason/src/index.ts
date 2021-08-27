@@ -41,6 +41,9 @@ const encodeRecord = <T extends object>({
 }: RecordPacker<T>): Encoder<T> => ({
   test,
   encode(record, encode) {
+    if (!pack) {
+      throw Error('Record packing not supported')
+    }
     const packed = pack(record)
     const packedType: Encoder<any> = Array.isArray(packed)
       ? arrayType
@@ -49,6 +52,9 @@ const encodeRecord = <T extends object>({
     return packedType.encode(packed, encode)
   },
   decode(bytes, decode) {
+    if (!unpack) {
+      throw Error('Record unpacking not supported')
+    }
     const isArray = bytes[0] === 5
     const packedType: Encoder<any> = isArray ? arrayType : objectType
     this.decode = bytes => unpack(packedType.decode(bytes, decode))

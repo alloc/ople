@@ -20,10 +20,8 @@ export type RecordPacker<
   | Server.RecordPacker<OpleRef, OpleTime, OpleRecord>
 
 namespace Client {
-  export type PackedRecord<OpleRef extends object = object> = [
-    ref: OpleRef | null,
-    data: object
-  ]
+  /** Client cannot send an `OpleRecord` */
+  export type PackedRecord = never
 
   export interface RecordPacker<
     OpleRef extends object = object,
@@ -31,7 +29,7 @@ namespace Client {
     OpleRecord extends object = object
   > {
     test: (value: unknown) => boolean
-    pack: (record: OpleRecord) => Client.PackedRecord<OpleRef>
+    pack?: never
     unpack: (record: Server.PackedRecord<OpleRef, OpleTime>) => OpleRecord
   }
 }
@@ -49,6 +47,6 @@ namespace Server {
   > {
     test: (value: unknown) => boolean
     pack: (record: OpleRecord) => Server.PackedRecord<OpleRef, OpleTime>
-    unpack: (record: Client.PackedRecord<OpleRef>) => OpleRecord
+    unpack?: never
   }
 }

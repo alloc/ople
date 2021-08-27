@@ -1,13 +1,15 @@
 import type { Plugin } from 'vite'
 import * as pushpin from 'pushpin-mock'
 import { handleRequest } from '@ople/backend'
+import { babelOpleClient } from '@ople/transform'
+import babel from '@rollup/plugin-babel'
 
 const URL_PREFIX = '/@ople-dev'
 
 // TODO: generate frontend<>backend glue
 // TODO: transform Ople/Record subclasses in frontend code
-export function opleDevServer(): Plugin {
-  return {
+export function opleDevServer(): Plugin[] {
+  const mainPlugin: Plugin = {
     name: 'ople:dev-server',
     configureServer(server) {
       pushpin.createServer({
@@ -29,4 +31,11 @@ export function opleDevServer(): Plugin {
       })
     },
   }
+
+  return [
+    mainPlugin,
+    babel({
+      plugins: [babelOpleClient],
+    }),
+  ]
 }

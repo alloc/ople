@@ -1,6 +1,7 @@
 import type { ViteDevServer } from 'vite'
 import jwt from 'jsonwebtoken'
 import { uid } from 'uid'
+import { warnOnce } from 'misty'
 import WebSocket from 'ws'
 import readBody from 'raw-body'
 import Interlocutor from 'interlocutor'
@@ -11,10 +12,26 @@ import {
 } from '@fanoutio/grip'
 
 export interface ServerOptions extends Omit<WebSocket.ServerOptions, 'server'> {
+  originUrl: string
   server: ViteDevServer
 }
 
-export function createServer({ server, ...options }: ServerOptions) {
+export interface Pushpin extends WebSocket.Server {
+  /** Push bytes to a connection. */
+  push: (cid: string, data: Uint8Array) => void
+  /** Publish bytes to a channel. */
+  publish: (channel: string, data: Uint8Array) => void
+  /** Subscribe a connection to a channel. */
+  subscribe: (cid: string, channel: string) => void
+  /** Unsubscribe a connection from a channel. */
+  unsubscribe: (cid: string, channel: string) => void
+}
+
+export function createPushpin({
+  originUrl,
+  server,
+  ...options
+}: ServerOptions) {
   if (!server.httpServer) {
     throw Error('Incompatible with middleware mode')
   }
@@ -29,7 +46,7 @@ export function createServer({ server, ...options }: ServerOptions) {
     channels: {},
   }
 
-  const gateway = createGateway(state, server.middlewares)
+  const gateway = createGateway(originUrl, state, server.middlewares)
   wss.on('connection', socket => {
     let connectionId: string
     const connection: GripConnection = { meta: {}, channels: new Set(), socket }
@@ -50,12 +67,30 @@ export function createServer({ server, ...options }: ServerOptions) {
 
     socket.on('message', content => {
       gateway.forward(connectionId, [
-        new WebSocketEvent('TEXT', content.toString('utf8')),
+        new WebSocketEvent(
+          typeof content == 'string' ? 'TEXT' : 'BINARY',
+          content as any
+        ),
       ])
     })
   })
 
-  return wss
+  return Object.assign(wss as Pushpin, <Pushpin>{
+    push(connectionId, data) {
+      state.connections[connectionId]?.socket.send(data)
+    },
+    publish(channelId, data) {
+      state.channels[channelId]?.forEach(connectionId => {
+        state.connections[connectionId].socket.send(data)
+      })
+    },
+    subscribe(connectionId, channelId) {
+      subscribe(state, connectionId, channelId)
+    },
+    unsubscribe(connectionId, channelId) {
+      unsubscribe(state, connectionId, channelId)
+    },
+  })
 }
 
 type GripConnectionId = string
@@ -80,6 +115,7 @@ const todoHeaders = [
 ]
 
 function createGateway(
+  originUrl: string,
   state: GripState,
   handler: (req: any, res: any) => void
 ) {
@@ -89,7 +125,7 @@ function createGateway(
       const connection = state.connections[connectionId]
       const payload = encodeWebSocketEvents(events)
       const req = agent.request({
-        path: '/@ople-dev',
+        path: originUrl,
         method: 'POST',
         headers: {
           'content-length': '' + Buffer.byteLength(payload),
@@ -107,7 +143,7 @@ function createGateway(
           }
           // Unsupported header
           else if (todoHeaders.includes(name)) {
-            console.warn(name + ' not implemented')
+            warnOnce(`[pushpin] "${name}" header is not implemented`)
           }
         }
         const body = await readBody(res as any)
@@ -116,25 +152,19 @@ function createGateway(
           if (event.type === 'TEXT') {
             const text = event.content as string
             if (text.startsWith('c:')) {
-              const { type, channel: channelId } = JSON.parse(text.slice(2))
-              let channel = state.channels[channelId]
+              const { type, channel } = JSON.parse(text.slice(2))
 
               // Subscribe
               if (type === 'subscribe') {
-                connection.channels.add(channelId)
-                channel ||= state.channels[channelId] = new Set()
-                channel.add(connectionId)
+                subscribe(state, connectionId, channel)
               }
               // Unsubscribe
               else if (type === 'unsubscribe') {
-                connection.channels.delete(channelId)
-                if (channel) {
-                  removeFromNestedSet(state.channels, channelId, connectionId)
-                }
+                unsubscribe(state, connectionId, channel)
               }
               // Invalid
               else {
-                console.warn('Invalid control event: %O', type)
+                warnOnce(`[pushpin] "${type}" is an invalid control event`)
               }
             }
             // Message
@@ -147,6 +177,29 @@ function createGateway(
       req.write(payload)
       req.end()
     },
+  }
+}
+
+function subscribe(state: GripState, connectionId: string, channelId: string) {
+  const connection = state.connections[connectionId]
+  if (connection) {
+    const channel =
+      state.channels[channelId] || (state.channels[channelId] = new Set())
+    connection.channels.add(channelId)
+    channel.add(connectionId)
+  }
+}
+
+function unsubscribe(
+  state: GripState,
+  connectionId: string,
+  channelId: string
+) {
+  const channel = state.channels[channelId]
+  const connection = state.connections[connectionId]
+  if (channel && connection) {
+    connection.channels.delete(channelId)
+    removeFromNestedSet(state.channels, channelId, connectionId)
   }
 }
 

@@ -43,15 +43,10 @@ export function babelOpleClient(
           return
         }
 
-        if (!opleImports.prepare) {
-          debug('Inserting "prepare" import')
-          const prepareIdent = t.identifier('prepare')
-          lastOpleImport.specifiers.push(
-            t.importSpecifier(prepareIdent, prepareIdent)
-          )
-        }
-
-        const prepareCalls: [className: string, impl: t.BlockStatement][] = []
+        const prepareCalls: [
+          className: string,
+          impl: t.BlockStatement | null
+        ][] = []
 
         path.traverse({
           ClassDeclaration(path) {
@@ -87,11 +82,19 @@ export function babelOpleClient(
                   }
                 })
 
-                if (prepareImpl) {
+                // Always pass OpleRecord types to the `prepare` export
+                // so they can be used
+                if (prepareImpl || opleType === 'OpleRecord') {
                   const body = path.get('body').get('body')
-                  const method = body[prepareIndex].node as t.ClassMethod
-                  prepareCalls.push([className, method.body])
+                  prepareCalls.push([
+                    className,
+                    prepareImpl
+                      ? (body[prepareIndex].node as t.ClassMethod).body
+                      : null,
+                  ])
+                }
 
+                if (prepareImpl) {
                   clas.body.body.splice(prepareIndex, 1)
                   if (!hasConstructor)
                     clas.body.body.unshift(
@@ -113,18 +116,28 @@ export function babelOpleClient(
           },
         })
 
-        prepareCalls.forEach(([className, impl]) => {
-          // Copy the `prepare` method into an arrow function that is passed
-          // to the `prepare` export.
-          path.node.body.push(
-            t.expressionStatement(
-              t.callExpression(t.identifier('prepare'), [
-                t.identifier(className),
-                t.functionExpression(null, [], impl),
-              ])
+        if (prepareCalls.length) {
+          prepareCalls.forEach(([className, impl]) => {
+            const args: any[] = [t.identifier(className)]
+            if (impl) {
+              args.push(t.functionExpression(null, [], impl))
+            }
+            // Copy the `prepare` method into a function that is passed
+            // to the `prepare` export.
+            path.node.body.push(
+              t.expressionStatement(
+                t.callExpression(t.identifier('prepare'), args)
+              )
             )
-          )
-        })
+          })
+          if (!opleImports.prepare) {
+            debug('Inserting "prepare" import')
+            const prepareIdent = t.identifier('prepare')
+            lastOpleImport.specifiers.push(
+              t.importSpecifier(prepareIdent, prepareIdent)
+            )
+          }
+        }
       },
     },
   }
