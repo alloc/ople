@@ -1,6 +1,8 @@
 import { notImplemented } from './errors'
 import { q } from './sync/transaction'
 
+export type { OpleDocument } from './sync/document'
+
 export class OpleRef<T extends object | null = any> {
   constructor(readonly id: string, readonly collection?: OpleRef) {}
 
@@ -10,6 +12,21 @@ export class OpleRef<T extends object | null = any> {
 
   get isCollection(): boolean {
     return this.collection?.id == 'collections'
+  }
+
+  toString() {
+    const { id, collection } = this
+    return collection
+      ? collection !== OpleRef.Native.collections
+        ? collection.id + '/' + id
+        : id
+      : '@' + id
+  }
+
+  static from(encodedRef: string) {
+    const [scope, id] = encodedRef.split('/')
+    const collection = new OpleRef(scope, OpleRef.Native.collections)
+    return id ? new OpleRef(id, collection) : collection
   }
 
   static Native = {
@@ -28,7 +45,7 @@ export class OpleDate {
    */
   constructor(date: string) {}
 
-  toString() {
+  toString(): string {
     throw notImplemented
   }
 
@@ -41,7 +58,7 @@ export type OpleTimeUnit = 'millisecond' | 'nanosecond'
 export class OpleTime {
   constructor(time: string | number, unit?: OpleTimeUnit) {}
 
-  toString() {
+  toString(): string {
     throw notImplemented
   }
 
