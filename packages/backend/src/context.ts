@@ -1,6 +1,5 @@
+// import { dump } from 'tnetstring'
 import { encodeReply } from './nason'
-import { dump } from 'tnetstring'
-import { BatchError } from './batch'
 
 export interface ServerContext {
   /** Batch queues for predictable ordering */

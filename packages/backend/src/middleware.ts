@@ -1,5 +1,4 @@
 import { IncomingMessage, ServerResponse } from 'http'
-import type { NextFunction } from 'connect'
 import readBody from 'raw-body'
 import { is } from '@alloc/is'
 import { PackedCall } from '@ople/nason'
@@ -28,11 +27,7 @@ export const createMiddleware = ({
   context,
   onError,
 }: MiddlewareConfig) =>
-  async function handleRequest(
-    req: IncomingMessage,
-    res: ServerResponse,
-    next: NextFunction
-  ) {
+  async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     let status = 200
     let output: any
 

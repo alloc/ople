@@ -18,7 +18,8 @@ const resolvePlugin = nodeResolve({
   extensions: ['.ts', '.js'],
 })
 
-const enabledPackages = /agent|backend|client|dev|init|pushpin|transform|tnetstring/
+const enabledPackages = /backend|codegen|pushpin|transform/
+//  /agent|backend|client|dev|init|pushpin|transform|tnetstring/
 
 crawl('.', {
   only: ['packages/*/package.json'],
@@ -59,15 +60,15 @@ crawl('.', {
     external,
   })
 
-  // configs.push({
-  //   input,
-  //   output: {
-  //     file: `${pkgRoot}/${pkg.main.replace(/.js$/, '.d.ts')}`,
-  //     format: 'es',
-  //   },
-  //   plugins: [dtsPlugin],
-  //   external,
-  // })
+  configs.push({
+    input,
+    output: {
+      file: `${pkgRoot}/${pkg.main.replace(/.js$/, '.d.ts')}`,
+      format: 'es',
+    },
+    plugins: [dtsPlugin],
+    external,
+  })
 
   if (pkg.name === '@ople/dev') {
     configs.push({

@@ -19,7 +19,7 @@ export async function init() {
   if (!fs.exists(initFile)) {
     throw Error(`"${initFile}" not found`)
   }
-  
+
   const initPath = path.resolve(initFile)
   const bundle = await rollup({
     input: initPath,
@@ -58,9 +58,9 @@ export async function init() {
     },
   }
 
-    vm.runInNewContext(bundled.output[0].code, sandbox, {
-      filename: initPath,
-    })
+  vm.runInNewContext(bundled.output[0].code, sandbox, {
+    filename: initPath,
+  })
 
   const opleConfig = sandbox.ople.config!
   const opleEnv = sandbox.ople.env
@@ -80,5 +80,5 @@ export async function init() {
   // Emit the generated clients.
   emitClients(initPath, opleConfig)
 
-  return [opleConfig, opleEnv]
+  return [opleConfig, opleEnv] as const
 }

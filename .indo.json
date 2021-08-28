@@ -1,17 +1,10 @@
 {
   "repos": {
-    "vendor/faunadb": {
-      "url": "https://github.com/aleclarson/faunadb-js",
-      "head": "ople"
-    },
     "vendor/nason": {
       "url": "https://github.com/aleclarson/nason"
     },
     "vendor/wana": {
       "url": "https://github.com/alloc/wana"
     }
-  },
-  "alias": {
-    "faunadb": "@aleclarson/faunadb"
   }
 }
