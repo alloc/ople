@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "main": "dist/ople.js",
   "module": "dist/ople.mjs",
-  "typings": "dist/ople.d.ts",
+  "typings": "src/index.ts",
   "repository": "alloc/ople",
   "author": "Alec Larson",
   "files": [

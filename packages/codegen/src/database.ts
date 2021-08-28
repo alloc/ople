@@ -52,12 +52,19 @@ function printDocumentTypes(
 ) {
   const prelude: string[] = []
   const documentTypes: string[] = []
-  for (const [collectionId, type] of collectionTypes) {
-    if (!type) {
-      documentTypes.push(collectionId + ': Record<string, any>')
-    } else if (sourceFile == type.getSourceFile()) {
-      documentTypes.push(collectionId + ': ' + type.)
+  for (const [collectionId, typeNode] of collectionTypes) {
+    let documentType: string
+    if (!typeNode) {
+      documentType = 'Record<string, any>'
+    } else {
+      const symbol = typeNode.getSymbol()
+      documentType = typeNode.getText()
+      if (symbol && sourceFile !== typeNode.getSourceFile()) {
+        const [decl] = symbol.getDeclarations()
+        console.log(decl.getText())
+      }
     }
+    documentTypes.push(collectionId + ': ' + documentType)
   }
   return endent`
     ${prelude.join('\n')}${prelude.length ? '\n' : ''}
