@@ -7,7 +7,7 @@ type PatchMap = Record<string, Record<string, any>>
 type CreatePayload = [collection: string, data: object][]
 
 // TODO: add hard limits to array lengths
-export const coreFunctions: Record<string, Callee> = {
+export const coreFunctions: Record<string, Callee | undefined> = {
   async '@get'(_caller, refs: OpleRef[]) {
     // TODO: run "canRead" hook
     return read(() => refs.map(db.get))
@@ -24,11 +24,11 @@ export const coreFunctions: Record<string, Callee> = {
     return documents
   },
   async '@push'(_caller, payload: PatchMap) {
-    const rejected: PatchMap = {}
+    throw Error('not implemented')
+    // TODO: validate the patches with `zod`
     // TODO: split patches into two groups (valid and invalid)
     // TODO: notify relevant channels
     // TODO: run "onUpdate" hook
-    return rejected
   },
   async '@pull'(_caller, payload: PullMap) {
     const refs = Object.keys(payload).map(OpleRef.from)
@@ -41,8 +41,7 @@ export const coreFunctions: Record<string, Callee> = {
     )
   },
   async '@delete'(_caller, refs: OpleRef[]) {
-    const rejected: OpleRef[] = []
-    return rejected
+    throw Error('not implemented')
   },
   async '@watch'(_caller, refs: OpleRef[], ts?: number) {
     // TODO: subscribe connection to relevant channels
@@ -54,6 +53,6 @@ export const coreFunctions: Record<string, Callee> = {
     return { errors }
   },
   async '@unwatch'(_caller, refs: OpleRef[]) {
-    // TODO
+    throw Error('not implemented')
   },
 }

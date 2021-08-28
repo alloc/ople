@@ -1,7 +1,7 @@
 import { expectRecord } from '../context'
 import { Listener } from '../Signal'
 import { makeDisposableMap } from '../utils/DisposableMap'
-import { Record, getCollection, getClient } from '../Record'
+import { OpleRecord, getClient } from '../Record'
 import { setHidden } from '../common'
 
 const autoSyncs = makeDisposableMap()
@@ -20,7 +20,7 @@ interface AutoSync {
 
 /** @internal */
 export function scheduleSync(
-  self: Record & Partial<AutoSync>,
+  self: OpleRecord & Partial<AutoSync>,
   delay = self[kSyncInterval] || 0
 ) {
   if (delay > 0) {
@@ -35,7 +35,7 @@ export function scheduleSync(
 
 /** Pull remote changes when they occur. Local changes are ignored. */
 export function autoSync(enabled = true, syncInterval = 0) {
-  const self = expectRecord<Record & AutoSync>()
+  const self = expectRecord<OpleRecord & AutoSync>()
 
   if (!enabled) {
     return autoSyncs.unset(self)

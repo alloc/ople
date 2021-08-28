@@ -20,7 +20,8 @@
     "ople-db": "link:../../vendor/ople-db",
     "raw-body": "^2.4.1",
     "tnetstring": "link:../tnetstring",
-    "zeromq": "^5.2.8"
+    "zeromq": "^5.2.8",
+    "zod": "^3.8.1"
   },
   "devDependencies": {
     "@types/connect": "^3.4.35",

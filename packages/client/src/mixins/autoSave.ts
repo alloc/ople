@@ -1,12 +1,12 @@
 import { ChangeObserver } from 'wana'
-import { getModified, Record } from '../Record'
+import { getModified, OpleRecord } from '../Record'
 import { expectRecord } from '../context'
 import { OpleEffect } from '../types'
 import { setEffect } from '../Ople'
 import { Listener } from '../Signal'
 import { observe } from '../utils/observe'
 
-const autoSaves = new Map<Record, OpleEffect>()
+const autoSaves = new Map<OpleRecord, OpleEffect>()
 
 export const isAutoSaved = (record: any) => autoSaves.has(record)
 

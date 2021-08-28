@@ -1,5 +1,6 @@
 import { is } from '@alloc/is'
 import { PackedCall } from '@ople/nason'
+import { ZodError } from 'zod'
 import { invokeFunction } from './invoke'
 import { coreFunctions } from './core'
 import { Caller } from './callees'
@@ -26,43 +27,48 @@ export function processBatch(
   let callIndex = -1
   let batchPromise = Promise.resolve(batchQueues[callerId])
   batchPromise = batchPromise.then(async () => {
-    async function next([calleeId, args, replyId]: PackedCall, index: number) {
-      callIndex = index
-      const result = await invokeFunction(caller, calleeId, args)
-      if (replyId) {
-        resolve(callerId, replyId, result)
-      }
-    }
-
     try {
       let callPromise: Promise<any> = Promise.resolve()
       for (let i = 0; i < batch.length; i++) {
-        const call = batch[i]
+        const call = batch[i],
+          [calleeId, args, replyId] = call
 
         // Core functions run in parallel.
-        const coreFunction = coreFunctions[call[0]]
+        const coreFunction = coreFunctions[calleeId]
         if (coreFunction) {
-          callPromise = next(call, i).then(bindResult(callPromise), error => {
-            if (!failed) {
-              failed = true
-              callIndex = i
-              throw error
+          callIndex = i
+          callPromise = Promise.resolve(coreFunction(caller, ...args!)).then(
+            bindResult(callPromise),
+            error => {
+              if (!failed) {
+                failed = true
+                callIndex = i
+                throw error
+              }
+              // TODO: wait for all built-in calls to finish, then send all
+              //   of their errors to the client.
+              if (is.error(error)) onError(error, call)
+              else log.error(error, call)
             }
-            // TODO: wait for all built-in calls to finish, then send all
-            //   of their errors to the client.
-            if (is.error(error)) onError(error, call)
-            else log.error(error, call)
-          })
+          )
         } else {
           await callPromise
-          callPromise = next(call, i)
+          callIndex = i
+          callPromise = invokeFunction(caller, calleeId, args).then(result => {
+            if (replyId) {
+              resolve(callerId, replyId, result)
+            }
+          })
         }
       }
       resolve(callerId, batchId, null)
     } catch (error: any) {
       if (is.error(error)) {
         onError(error, batch[callIndex])
-        error = '' // Keep the error secret.
+        error =
+          error instanceof ZodError
+            ? `Invalid argument: ` + error.issues[0].path.join('.')
+            : `` // Keep the error secret.
       }
       throw {
         batch,

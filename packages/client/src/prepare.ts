@@ -38,8 +38,10 @@ export function prepare(self: Ople | OpleClass, ctr: any) {
     }
   } else {
     // Multiple `onPrepare` listeners may exist for an Ople class.
-    const prepareFns = self[$prepareFns] || (self[$prepareFns] = [])
-    prepareFns.push(ctr)
+    if (ctr) {
+      const prepareFns = self[$prepareFns] || (self[$prepareFns] = [])
+      prepareFns.push(ctr)
+    }
   }
 }
 
