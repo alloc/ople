@@ -3,9 +3,8 @@ import invariant from 'tiny-invariant'
 import { ChangeObserver, no, o, shallowChanges } from 'wana'
 import { OpleCollection, OpleRef, OpleTime } from './values'
 import { setHidden } from './common'
-import { getOple, setEffect, setOnceEffect } from './Ople/context'
+import { getOple, setEffect, setOnceEffect, OpleEffect } from './OpleContext'
 import { OpleBackend } from './OpleBackend'
-import { OpleEffect } from './types'
 
 type Data = Record<string, any>
 

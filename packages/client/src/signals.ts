@@ -1,8 +1,12 @@
 import { is } from '@alloc/is'
 import { AnyFn, Disposable } from '@alloc/types'
 import invariant from 'tiny-invariant'
-import { getOple, setEffect, withOple } from './Ople/context'
+import { getOple, setEffect, withOple } from './OpleContext'
 import { Ople } from './Ople'
+
+export interface SignalFactory<Signals extends Record<string, AnyFn>> {
+  <P extends string & keyof Signals>(signalId: P): Signals[P]
+}
 
 export function makeSignalFactory<Signals extends Record<string, AnyFn>>(
   addListener: (target: any, signalId: string, listener: OpleListener) => void,
@@ -11,7 +15,7 @@ export function makeSignalFactory<Signals extends Record<string, AnyFn>>(
     signalId: string,
     listener: OpleListener
   ) => void
-): <P extends string & keyof Signals>(signalId: P) => Signals[P] {
+): SignalFactory<Signals> {
   return (signalId: string): any => (arg: any, listener?: any) => {
     let target: any
     if (is.function(arg)) {

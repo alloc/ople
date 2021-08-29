@@ -1,7 +1,6 @@
 import invariant from 'tiny-invariant'
 import { Auto, mountAuto, AutoConfig } from 'wana'
-import { getOple, withOple } from './Ople/context'
-import { setEffect } from './Ople/context'
+import { getOple, setEffect, withOple } from './OpleContext'
 
 /**
  * Invoke the given function immediately and whenever the

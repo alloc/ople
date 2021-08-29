@@ -1,5 +1,4 @@
-import { OpleEffect } from './types'
-import { withOple } from './Ople/context'
+import { withOple, OpleEffect } from './OpleContext'
 
 export class Ople<T extends Record<string, any> | void = any> {
   active = true

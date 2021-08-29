@@ -1,10 +1,7 @@
 import { is } from '@alloc/is'
-import { Ople, setEffect } from '../Ople'
-import { OpleEffect } from '../types'
-
-interface Disposable {
-  dispose(): void
-}
+import { Disposable } from '@alloc/types'
+import { Ople } from '../Ople'
+import { OpleEffect, setEffect } from '../OpleContext'
 
 /**
  * Disposable maps are useful for setting an `Ople` effect

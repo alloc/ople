@@ -4,7 +4,7 @@ export { Ople } from './Ople'
 export { useOple } from './useOple'
 
 // Advanced use
-export { setEffect } from './Ople/context'
+export { setEffect } from './OpleContext'
 export { defineBackend } from './OpleBackend'
 export { attachAuto } from './auto'
 
@@ -13,6 +13,6 @@ export * from 'wana'
 
 // Types
 export type { OpleRef, OpleRefHandle } from './OpleRef'
-export type { OpleEffect } from './types'
+export type { OpleEffect } from './OpleContext'
 export type { OpleCollection } from './values'
-export type { OpleSignal } from './OpleSignal'
+export type { OpleListener } from './signals'

@@ -1,14 +1,14 @@
 import { AnyFn } from '@alloc/types'
-import { is } from '@alloc/is'
 import { makeAgent, Agent, ReplyHandler, AgentConfig } from '@ople/agent'
 import { makeBatchEncoder, makeReplyDecoder, PackedCall } from '@ople/nason'
+import invariant from 'tiny-invariant'
 import { uid } from 'uid'
-import { PutCache } from './utils/PutCache'
-import { defer, Deferred } from './utils/defer'
-import { OpleCollection, OpleTime } from './values'
 import { getEncoder } from './nason'
-import { makeSignalFactory, OpleListener, OpleSignal } from './signals'
-import { setEffect, withOple } from './Ople/context'
+import { makeSignalFactory, OpleListener, SignalFactory } from './signals'
+import { defer, Deferred } from './utils/defer'
+import { PutCache } from './utils/PutCache'
+import { OpleCollection, OpleTime } from './values'
+import { withOple } from './OpleContext'
 import {
   OpleBatch,
   OpleMethod,
@@ -19,8 +19,6 @@ import {
 } from './OpleBatch'
 import {
   applyPatch,
-  getCollection,
-  initHandle,
   initRef,
   OpleRef,
   OpleRefHandle,
@@ -28,11 +26,8 @@ import {
   takeChanges,
   toRef,
 } from './OpleRef'
-import invariant from 'tiny-invariant'
 
 export { ws, http } from '@ople/agent'
-
-type SignalHandlers = { [name: string]: (...args: any[]) => void }
 
 export interface OpleBackend<Signals extends Record<string, AnyFn> = any> {
   readonly cache: {
@@ -45,7 +40,7 @@ export interface OpleBackend<Signals extends Record<string, AnyFn> = any> {
   call: Agent['call']
   function(name: string): Function
   collection(name: string): OpleCollection
-  signal(name: string): OpleSignal
+  signal: SignalFactory<Signals>
 }
 
 export function defineBackend(config: AgentConfig) {

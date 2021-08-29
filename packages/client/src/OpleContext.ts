@@ -1,6 +1,5 @@
 import invariant from 'tiny-invariant'
-import type { OpleEffect } from '../types'
-import type { Ople } from '../Ople'
+import type { Ople } from './Ople'
 
 let current: Ople | null = null
 
@@ -21,6 +20,9 @@ export function withOple<In extends any[], Out>(
     current = parent
   }
 }
+
+/** Pass `true` to enable the effect. Pass `false` to disable. */
+export type OpleEffect = (active: boolean) => void
 
 /**
  * Tell the active `Ople` context to update the `effect` associated
