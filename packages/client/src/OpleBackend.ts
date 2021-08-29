@@ -1,4 +1,5 @@
 import { AnyFn } from '@alloc/types'
+import { is } from '@alloc/is'
 import { makeAgent, Agent, ReplyHandler, AgentConfig } from '@ople/agent'
 import { makeBatchEncoder, makeReplyDecoder, PackedCall } from '@ople/nason'
 import { uid } from 'uid'
@@ -6,7 +7,8 @@ import { PutCache } from './utils/PutCache'
 import { defer, Deferred } from './utils/defer'
 import { OpleCollection, OpleTime } from './values'
 import { getEncoder } from './nason'
-import { OpleSignal } from './OpleSignal'
+import { makeSignalFactory, OpleListener, OpleSignal } from './signals'
+import { setEffect, withOple } from './Ople/context'
 import {
   OpleBatch,
   OpleMethod,
@@ -48,24 +50,19 @@ export interface OpleBackend<Signals extends Record<string, AnyFn> = any> {
 
 export function defineBackend(config: AgentConfig) {
   const handleCache = new PutCache<OpleRefHandle>()
-  const collections: Record<string, OpleCollection> = {}
 
-  const coding = getEncoder(([ref, ts, data]) => initHandle(data, ref, ts))
-
-  // TODO: use this for global signals only
-  const signalMap: { [name: string]: Set<SignalHandlers> } = {}
-
-  /** Refs whose data is being fetched */
-  const fetchQueue: Record<string, Deferred<OpleRefHandle>> = {}
+  // Cache the promises of refs being fetched, so we can
+  // avoid duplicate @get calls.
+  const fetching: Record<string, Deferred<OpleRefHandle>> = {}
 
   const enqueueMethodCall = (batch: OpleBatch, call: OpleMethodCall) => {
     if (call[0] == '@get') {
       const [ref] = call[1]
-      if (!fetchQueue[ref]) {
-        fetchQueue[ref] = defer()
+      if (!fetching[ref]) {
+        fetching[ref] = defer()
         batch.call('@get', ref)
       }
-      return fetchQueue[ref]
+      return fetching[ref]
     }
     const [handle] = call[1]
     if (call[0] == '@watch') {
@@ -156,13 +153,18 @@ export function defineBackend(config: AgentConfig) {
           error
             ? console.error(error)
             : handles.forEach(handle => {
-                fetchQueue[handle].resolve(handle)
-                delete fetchQueue[handle]
+                fetching[handle].resolve(handle)
+                delete fetching[handle]
               }),
       ]
     },
   }
 
+  const collections: Record<string, OpleCollection> = {}
+  const getCollection = (name: string) =>
+    collections[name] || (collections[name] = new OpleCollection(name, backend))
+
+  const coding = getEncoder(getCollection)
   const watched = new Set<OpleRefHandle>()
   const encodeBatch = makeBatchEncoder(coding)
 
@@ -219,11 +221,44 @@ export function defineBackend(config: AgentConfig) {
         batch.queues['@watch'] = new Set(watched)
         agent.flush()
       }
-      signalMap[name].forEach(handlers => {
-        handlers[name](...args)
-      })
+      const handlers = signals[name]
+      if (handlers)
+        handlers.forEach(handler => {
+          withOple(handler.context!, handler, args)
+        })
     },
   })
+
+  const signals: { [name: string]: Set<OpleListener> } = {}
+
+  function addListener(target: any, signalId: string, listener: OpleListener) {
+    if (target) {
+      const ref = toRef(target)
+      invariant(ref, 'Target ref must exist')
+      signalId = ref + ':' + signalId
+    }
+    let listeners = signals[signalId]
+    if (!listeners) {
+      listeners = signals[signalId] = new Set()
+    }
+    listeners.add(listener)
+  }
+
+  function removeListener(
+    target: any,
+    signalId: string,
+    listener: OpleListener
+  ) {
+    if (target) {
+      const ref = toRef(target)
+      invariant(ref, 'Target ref must exist')
+      signalId = ref + ':' + signalId
+    }
+    const listeners = signals[signalId]
+    if (listeners?.delete(listener) && !listeners.size) {
+      delete signals[signalId]
+    }
+  }
 
   const backend: OpleBackend = {
     cache: {
@@ -238,13 +273,9 @@ export function defineBackend(config: AgentConfig) {
     },
     call: agent.call,
     function: name => agent.call.bind(agent, name),
-    collection: name =>
-      collections[name] ||
-      (collections[name] = new OpleCollection(name, backend)),
-    signal() {
-      // TODO
-    },
+    collection: getCollection,
+    signal: makeSignalFactory(addListener, removeListener),
   }
 
-  return Object.setPrototypeOf(backend, methods)
+  return backend
 }

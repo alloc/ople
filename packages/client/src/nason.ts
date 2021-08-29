@@ -1,18 +1,20 @@
 import { makeNason } from '@ople/nason'
-import { OpleDate, OpleRef, OpleTime } from './values'
-import { OpleRecord } from './Record'
+import { OpleCollection, OpleDate, OpleRef, OpleTime } from './values'
+import { initHandle, OpleRefHandle } from './OpleRef'
 
 const hasConstructor = (ctr: Function) => (val: any) =>
   ctr === (val && val.constructor)
 
-export const getEncoder = (
-  unpackRecord: (record: [ref: OpleRef, ts: OpleTime, data: any]) => OpleRecord
-) =>
-  makeNason<OpleRef, OpleTime, OpleDate, OpleRecord>([
+export const getEncoder = (getCollection: (name: string) => OpleCollection) =>
+  makeNason<OpleRef, OpleTime, OpleDate, OpleRefHandle>([
     {
-      test: hasConstructor(OpleRef),
+      test: val => val instanceof OpleRef,
       pack: String,
-      unpack: ref => OpleRef.from(ref),
+      unpack(encodedRef) {
+        const [scope, id] = encodedRef.split('/')
+        const collection = getCollection(scope)
+        return id ? new OpleRef(id, collection) : collection
+      },
     },
     {
       test: hasConstructor(OpleTime),
@@ -25,7 +27,6 @@ export const getEncoder = (
       unpack: isoDate => new OpleDate(isoDate),
     },
     {
-      test: arg => arg instanceof OpleRecord,
-      unpack: unpackRecord,
+      unpack: ([ref, ts, data]) => initHandle(data, ref, ts),
     },
   ])

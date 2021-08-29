@@ -2,26 +2,26 @@ import { Encoder, use } from 'nason/src/index'
 import arrayType from 'nason/src/types/array'
 import objectType from 'nason/src/types/object'
 import stringType from 'nason/src/types/string'
-import { Nason, Packer, RecordPacker } from './types'
+import { Nason, Packer, HandlePacker } from './types'
 
 export const makeNason = <
   OpleRef extends object,
   OpleTime extends object,
   OpleDate extends object,
-  OpleRecord extends object
+  OpleHandle extends object
 >(
   types: [
     OpleRef: Packer<OpleRef, string>,
     OpleTime: Packer<OpleTime, string>,
     OpleDate: Packer<OpleDate, string>,
-    OpleRecord: RecordPacker<OpleRecord, OpleRef, OpleTime>
+    OpleHandle: HandlePacker<OpleHandle, OpleRef, OpleTime>
   ]
 ): Nason =>
   use([
     [0, encodeString(types[0])],
     [1, encodeString(types[1])],
     [2, encodeString(types[2])],
-    [3, encodeRecord(types[3])],
+    [3, encodeHandle(types[3])],
   ])
 
 const encodeString = <T>({
@@ -34,21 +34,21 @@ const encodeString = <T>({
   decode: bytes => unpack(stringType.decode(bytes)),
 })
 
-const encodeRecord = <T extends object>({
-  test,
+const encodeHandle = <T extends object>({
+  test = () => false,
   pack,
   unpack,
-}: RecordPacker<T>): Encoder<T> => ({
+}: HandlePacker<T>): Encoder<T> => ({
   test,
-  encode(record, encode) {
+  encode(handle, encode) {
     if (!pack) {
       throw Error('Record packing not supported')
     }
-    const packed = pack(record)
+    const packed = pack(handle)
     const packedType: Encoder<any> = Array.isArray(packed)
       ? arrayType
       : objectType
-    this.encode = record => packedType.encode(pack(record), encode)
+    this.encode = handle => packedType.encode(pack(handle), encode)
     return packedType.encode(packed, encode)
   },
   decode(bytes, decode) {

@@ -3,17 +3,18 @@ import type { OpleBackend } from './OpleBackend'
 
 type Data = Record<string, any>
 
-export class OpleCollection<T extends Data = any> {
-  constructor(readonly id: string, readonly backend: OpleBackend) {}
-
-  // @ts-ignore
-  protected _type: 'OpleCollection' & { data: T }
-}
-
 export class OpleRef<T extends Data = any> {
-  constructor(readonly id: string, readonly collection: OpleCollection) {}
+  readonly collection: OpleCollection
 
-  get backend() {
+  constructor(
+    readonly id: string,
+    readonly scope: OpleCollection | OpleBackend
+  ) {
+    // When the `scope` is not a collection, this ref points to a collection.
+    this.collection = scope instanceof OpleCollection ? scope : (this as any)
+  }
+
+  get backend(): OpleBackend {
     return this.collection.backend
   }
 
@@ -23,6 +24,20 @@ export class OpleRef<T extends Data = any> {
 
   // @ts-ignore
   protected _type: 'OpleRef' & { data: T }
+}
+
+export class OpleCollection<T extends Data = any> extends OpleRef<T> {
+  constructor(id: string, backend: OpleBackend) {
+    super(id, backend)
+  }
+
+  get backend() {
+    return this.scope as OpleBackend
+  }
+
+  toString() {
+    return this.id
+  }
 }
 
 export class OpleTime {

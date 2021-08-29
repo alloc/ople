@@ -25,6 +25,7 @@ export const coreFunctions: Record<string, Callee | undefined> = {
   },
   async '@push'(_caller, payload: PatchMap) {
     throw Error('not implemented')
+    // TODO: run "canWrite" hook
     // TODO: validate the patches with `zod`
     // TODO: split patches into two groups (valid and invalid)
     // TODO: notify relevant channels
@@ -41,19 +42,22 @@ export const coreFunctions: Record<string, Callee | undefined> = {
     )
   },
   async '@delete'(_caller, refs: OpleRef[]) {
-    throw Error('not implemented')
+    // TODO: run "canWrite" hook
+    // write(() => {
+    //   refs.forEach(ref => {
+    //     db.delete(ref)
+    //   })
+    // })
   },
-  async '@watch'(caller, refs: OpleRef[], ts?: number) {
-    // TODO: subscribe connection to relevant channels
-    // TODO: return latest values after checking "If-Modified-Since" header
-    caller.
-    const errors: string[] = []
-    // TODO: check if access is allowed!
-    if (true) {
+  async '@watch'(caller, refs: OpleRef[]) {
+    for (const ref of refs) {
+      // TODO: check if access is allowed!
+      caller.context.subscribe(caller.id, 'r:' + ref.toString())
     }
-    return { errors }
   },
-  async '@unwatch'(_caller, refs: OpleRef[]) {
-    throw Error('not implemented')
+  async '@unwatch'(caller, refs: OpleRef[]) {
+    for (const ref of refs) {
+      caller.context.unsubscribe(caller.id, 'r:' + ref.toString())
+    }
   },
 }
