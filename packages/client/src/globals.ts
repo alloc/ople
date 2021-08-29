@@ -1,1 +1,0 @@
-export { globals } from 'wana'

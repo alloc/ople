@@ -1,56 +1,29 @@
 import { is } from '@alloc/is'
+import type { OpleBackend } from './OpleBackend'
 
-class OpleRef<T extends object | null = any> extends String {
-  constructor(
-    readonly id: string,
-    readonly collection?: OpleRef,
-    readonly database?: OpleRef
-  ) {
-    super(
-      collection == OpleRef.Native.collections ? collection.id + '/' + id : id
-    )
-  }
+type Data = Record<string, any>
 
-  /** This enforces type nominality. */
-  protected _ref!: { data: T }
+export class OpleCollection<T extends Data = any> {
+  constructor(readonly id: string, readonly backend: OpleBackend) {}
 
-  equals(ref: OpleRef | undefined): boolean {
-    return (
-      !!ref &&
-      this.id == ref.id &&
-      (this.collection
-        ? this.collection.equals(ref.collection)
-        : !ref.collection) &&
-      (this.database ? this.database.equals(ref.database) : !ref.database)
-    )
-  }
-
-  /**
-   * Convert an encoded ref into a `Ref` instance.
-   */
-  static from(encodedRef: string) {
-    const [scope, id] = encodedRef.split('/')
-    const collection = new OpleRef(scope, OpleRef.Native.collections)
-    return id ? new OpleRef(id, collection) : collection
-  }
-
-  static Native = {
-    collections: new OpleRef('collections'),
-  }
+  // @ts-ignore
+  protected _type: 'OpleCollection' & { data: T }
 }
 
-// Refs are boxed strings.
-type Ref<T extends object | null = any> = OpleRef<T> & string
+export class OpleRef<T extends Data = any> {
+  constructor(readonly id: string, readonly collection: OpleCollection) {}
 
-const Ref: {
-  new <T extends object | null = any>(id: string, collection?: Ref<T>): Ref<T>
-  from: <T extends object | null = any>(encodedRef: string) => Ref<T>
-  Native: {
-    collections: Ref
+  get backend() {
+    return this.collection.backend
   }
-} = OpleRef as any
 
-export { Ref as OpleRef }
+  toString() {
+    return this.collection.id + '/' + this.id
+  }
+
+  // @ts-ignore
+  protected _type: 'OpleRef' & { data: T }
+}
 
 export class OpleTime {
   readonly isoTime: string
@@ -69,8 +42,8 @@ export class OpleTime {
     return new Date(this.isoTime)
   }
 
-  /** This enforces type nominality. */
-  protected _type!: 'OpleTime'
+  // @ts-ignore
+  protected _type: 'OpleTime'
 }
 
 export class OpleDate {
@@ -88,6 +61,6 @@ export class OpleDate {
     return new Date(this.isoDate)
   }
 
-  /** This enforces type nominality. */
-  protected _type!: 'OpleDate'
+  // @ts-ignore
+  protected _type: 'OpleDate'
 }

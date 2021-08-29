@@ -13,15 +13,15 @@ export const coreFunctions: Record<string, Callee | undefined> = {
     return read(() => refs.map(db.get))
   },
   async '@create'(_caller, payload: CreatePayload) {
-    const documents: OpleDocument[] = []
+    const created: [OpleRef, OpleTime][] = []
     for (const [collection, data] of payload) {
       // TODO: run "canWrite" hook
       const document = write(() => db.getCollection(collection).create(data))
       if (document) {
-        documents.push(document)
+        created.push([document.ref, document.ts])
       }
     }
-    return documents
+    return created
   },
   async '@push'(_caller, payload: PatchMap) {
     throw Error('not implemented')
@@ -43,9 +43,10 @@ export const coreFunctions: Record<string, Callee | undefined> = {
   async '@delete'(_caller, refs: OpleRef[]) {
     throw Error('not implemented')
   },
-  async '@watch'(_caller, refs: OpleRef[], ts?: number) {
+  async '@watch'(caller, refs: OpleRef[], ts?: number) {
     // TODO: subscribe connection to relevant channels
     // TODO: return latest values after checking "If-Modified-Since" header
+    caller.
     const errors: string[] = []
     // TODO: check if access is allowed!
     if (true) {

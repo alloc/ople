@@ -1,6 +1,7 @@
+import invariant from 'tiny-invariant'
 import { Auto, mountAuto, AutoConfig } from 'wana'
-import { getOple, withOple, expectOple } from './context'
-import { setEffect } from './Ople'
+import { getOple, withOple } from './Ople/context'
+import { setEffect } from './Ople/context'
 
 /**
  * Invoke the given function immediately and whenever the
@@ -27,9 +28,10 @@ export function auto(effect: () => void, config: AutoConfig = {}) {
  * but not vice versa. Call `auto.dispose()` to stop the reaction early.
  */
 export function attachAuto(auto: Auto) {
-  const parent = expectOple()
-  const setState = mountAuto(auto)
+  const parent = getOple()
+  invariant(parent, 'Must be in an Ople context')
 
+  const setState = mountAuto(auto)
   const { onCommit, onDispose } = auto
 
   auto.onCommit = observer => {

@@ -1,8 +1,10 @@
-import type { Deferred } from 'ts-deferred'
-
-export type Ref = {
+export type Ref = string & {
   readonly id: string
-  readonly collection?: Ref
+  readonly collection: Collection
+}
+
+export type Collection = {
+  readonly id: string
 }
 
 export interface AgentConfig {
@@ -37,30 +39,17 @@ export interface Transport {
 export type ReplyHandler = (error: string | null, result?: any) => void
 export type ReplyQueue = Map<string, ReplyHandler>
 
-export type FetchQueue<Record> = RefMap<Deferred<Record>>
-
 export type PackedCall = [method: string, args: any[] | null, replyId: string]
-
-export type OpleMethod =
-  | '@push'
-  | '@pull'
-  | '@watch'
-  | '@unwatch'
-  | '@create'
-  | '@delete'
-  | '@get'
 
 export type RefMap<T> = { [ref: string]: T }
 
 export type Patch = { [key: string]: any }
 
-export type Batch<Record> = { [method: string]: Set<any> } & {
-  [P in OpleMethod]: Set<P extends '@get' ? Ref : Record>
-} & {
-    id: string
-    calls: PackedCall[]
-    patches: RefMap<Patch> | null
-    fetches: RefMap<Deferred<Record>>
-    promise: Promise<void>
-    resolve: (value?: PromiseLike<void>) => void
-  }
+export type Deferred = {
+  promise: Promise<void>
+  resolve: (value?: PromiseLike<void>) => void
+}
+
+export type BatchLike = Deferred & {
+  id: string
+}

@@ -16,8 +16,16 @@
     "@ople/agent": "link:../agent",
     "@ople/nason": "link:../nason",
     "ee-ts": "^2.0.0-rc.6",
+    "tiny-invariant": "^1.1.0",
     "ts-deferred": "^1.0.4",
+    "uid": "^2.0.0",
     "wana": "^0.13.1"
+  },
+  "devDependencies": {
+    "@types/react": "^17.0.9"
+  },
+  "peerDependencies": {
+    "react": "*"
   },
   "keywords": [
     "ople",

@@ -5,8 +5,11 @@ specifiers:
   '@alloc/types': ^1.2.6
   '@ople/agent': link:../agent
   '@ople/nason': link:../nason
+  '@types/react': ^17.0.9
   ee-ts: ^2.0.0-rc.6
+  tiny-invariant: ^1.1.0
   ts-deferred: ^1.0.4
+  uid: ^2.0.0
   wana: ^0.13.1
 
 dependencies:
@@ -15,8 +18,13 @@ dependencies:
   '@ople/agent': link:../agent
   '@ople/nason': link:../nason
   ee-ts: 2.0.0-rc.6
+  tiny-invariant: 1.1.0
   ts-deferred: 1.0.4
+  uid: 2.0.0
   wana: 0.13.8
+
+devDependencies:
+  '@types/react': 17.0.19
 
 packages:
 
@@ -37,6 +45,31 @@ packages:
     dependencies:
       regenerator-runtime: 0.13.7
     dev: false
+
+  /@lukeed/csprng/1.0.0:
+    resolution: {integrity: sha512-ruuGHsnabmObBdeMg3vKdGRmh06Oog3eFpf/Tk6X0kDSJDpJTDCj2dqdp1+0VjzIUgHlFF9GBm7uFqfYhhdX9g==}
+    engines: {node: '>=8'}
+    dev: false
+
+  /@types/prop-types/15.7.4:
+    resolution: {integrity: sha512-rZ5drC/jWjrArrS8BR6SIr4cWpW09RNTYt9AMZo3Jwwif+iacXAqgVjm0B0Bv/S1jhDXKHqRVNCbACkJ89RAnQ==}
+    dev: true
+
+  /@types/react/17.0.19:
+    resolution: {integrity: sha512-sX1HisdB1/ZESixMTGnMxH9TDe8Sk709734fEQZzCV/4lSu9kJCPbo2PbTRoZM+53Pp0P10hYVyReUueGwUi4A==}
+    dependencies:
+      '@types/prop-types': 15.7.4
+      '@types/scheduler': 0.16.2
+      csstype: 3.0.8
+    dev: true
+
+  /@types/scheduler/0.16.2:
+    resolution: {integrity: sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew==}
+    dev: true
+
+  /csstype/3.0.8:
+    resolution: {integrity: sha512-jXKhWqXPmlUeoQnF/EhTtTl4C9SnrxSH/jZUih3jmO6lBKr99rP3/+FmrMj4EFpOXzMtXHAZkd3x0E6h6Fgflw==}
+    dev: true
 
   /ee-ts/2.0.0-rc.6:
     resolution: {integrity: sha512-n52lYxRqYqJhw5b7iol1NHHaz/hShlwKby2bhMM+/QePMe3rpV8F5lL96j678uOHtYirEHUoYP9GhKKhQVk+hQ==}
@@ -59,8 +92,19 @@ packages:
     resolution: {integrity: sha512-a54FxoJDIr27pgf7IgeQGxmqUNYrcV338lf/6gH456HZ/PhX+5BcwHXG9ajESmwe6WRO0tAzRUrRmNONWgkrew==}
     dev: false
 
+  /tiny-invariant/1.1.0:
+    resolution: {integrity: sha512-ytxQvrb1cPc9WBEI/HSeYYoGD0kWnGEOR8RY6KomWLBVhqz0RgTwVO9dLrGz7dC+nN9llyI7OKAgRq8Vq4ZBSw==}
+    dev: false
+
   /ts-deferred/1.0.4:
     resolution: {integrity: sha1-WBReuu71uPKikLjOw9Bgg5+Uicc=}
+    dev: false
+
+  /uid/2.0.0:
+    resolution: {integrity: sha512-hFw+zKBA1szYdbZWj6FjTxZzJnKNf+wTDcsxlJaXS64MCy9LQEmJUVieGYHCKek/WRyFIcs0cEXtGIQmfvHe2A==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@lukeed/csprng': 1.0.0
     dev: false
 
   /use-memo-one/1.1.2:

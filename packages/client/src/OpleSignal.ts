@@ -1,15 +1,15 @@
 import { is } from '@alloc/is'
 import { Any, Disposable } from '@alloc/types'
 import { makeFunctionType, setHidden } from './common'
-import { getOple, withOple } from './context'
-import { Ople, setEffect } from './Ople'
+import { getOple, setEffect, withOple } from './Ople/context'
+import { Ople } from './Ople'
 
 const makeCacheKey = (signal: Function): any =>
   Symbol.for(signal.name + '.listeners')
 
 export const signalKeyRE = /^(on|will|did)[A-Z]/
 
-export function emit<T>(signal: Signal<T>, ...args: SignalArgs<T>) {
+export function emit<T>(signal: OpleSignal<T>, ...args: HandlerArgs<T>) {
   const cacheKey = makeCacheKey(signal)
   const cache: Set<Listener> = signal.target[cacheKey]
   if (cache && cache.size) {
@@ -18,13 +18,13 @@ export function emit<T>(signal: Signal<T>, ...args: SignalArgs<T>) {
       listener(...args) !== false || listener.dispose()
     }
     for (listener of Array.from(cache)) {
-      withOple(listener.ople || null, recv)
+      withOple(listener.context || null, recv)
     }
   }
 }
 
 export const makeSignal = makeFunctionType(
-  <T>(target: any): Signal<T> =>
+  <T>(target: any): OpleSignal<T> =>
     function signal(listener: Listener) {
       if ('signal' in (listener as any)) {
         throw Error('Signal handlers cannot be reused')
@@ -39,20 +39,15 @@ export const makeSignal = makeFunctionType(
       listener.signal = signal as any
       listener.dispose = disposeListener
 
-      const ople = getOple()
-      if (ople) {
-        setEffect(listener, active => {
-          if (active) {
-            cache.add(listener)
-            listener.ople = ople
-          } else {
-            cache.delete(listener)
-            listener.ople = void 0
-          }
-        })
-      } else {
-        cache.add(listener)
-      }
+      setEffect(listener, active => {
+        if (active) {
+          cache.add(listener)
+          listener.context = getOple()
+        } else {
+          cache.delete(listener)
+          listener.context = void 0
+        }
+      })
 
       return listener
     } as any,
@@ -73,40 +68,46 @@ export const signalTraps: ProxyHandler<any> = {
   },
 }
 
+interface A {
+  b(): void
+  b(a: number): number
+}
+
+// import {AnyFn} from '@alloc/types'
+// type SignalFactory<T extends Record<string, AnyFn>> = <P extends keyof T>(name: P) => 
+
 /** The source of a single event type */
-export interface Signal<T = any> {
+export interface OpleSignal<T = any> {
   (handler: Handler<T>): Listener<T>
-  /** The signal target. */
-  target: any
+  (target: T extends [infer U] ? U extends  handler: Handler<T>): Listener<T>
 }
 
 /** The listener of an `ople.Signal` object */
 export interface Listener<T = any> extends Handler<T>, Disposable {
   /** The signal being listened to. */
-  signal: Signal<T>
+  signal: OpleSignal<T>
+  /** The signal target. */
+  target?: any
   /**
    * The `Ople` context this listener was created in.
    *
    * This property only exists when listening.
    */
-  ople?: Ople
+  context?: Ople
 }
 
 //
 // Internal
 //
 
-type SignalArgs<T> = [T] extends [Any] ? any[] : T extends any[] ? T : [T]
+type HandlerArgs<T> = [T] extends [Any] ? any[] : T extends any[] ? T : [T]
 
 interface Handler<T = any> {
-  (...args: SignalArgs<T>): boolean | void
+  (...args: HandlerArgs<T>): boolean | void
 }
 
 function disposeListener(this: Listener) {
-  if (this.ople) {
-    setEffect(this, null, this.ople)
-  } else {
-    const cacheKey = makeCacheKey(this.signal)
-    this.signal.target[cacheKey].delete(this)
+  if (this.context) {
+    withOple(this.context, setEffect, [this, null])
   }
 }
