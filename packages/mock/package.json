@@ -1,7 +1,0 @@
-{
-  "name": "@ople/mock",
-  "version": "0.1.0",
-  "dependencies": {
-    "@ople/agent": "link:../agent"
-  }
-}

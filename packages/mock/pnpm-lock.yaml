@@ -1,7 +1,0 @@
-lockfileVersion: 5.3
-
-specifiers:
-  '@ople/agent': link:../agent
-
-dependencies:
-  '@ople/agent': link:../agent

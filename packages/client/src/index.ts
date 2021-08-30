@@ -4,8 +4,8 @@ export { Ople } from './Ople'
 export { useOple } from './useOple'
 
 // Advanced use
+export * from './OpleBackend'
 export { setEffect } from './OpleContext'
-export { defineBackend } from './OpleBackend'
 export { attachAuto } from './auto'
 
 // Observables
