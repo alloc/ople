@@ -1,4 +1,4 @@
-import { OpleConfig, OpleEnv, BackendClient, DatabaseClient } from './types'
+import { BackendClient, DatabaseClient } from './types'
 
 declare const ople: {
   config: OpleConfig
@@ -10,7 +10,7 @@ const config = (ople.config = {
   clients: {
     backend: {
       backendPath: './backend',
-      outPath: './app/client.ts',
+      outPath: './client/backend.ts',
     },
     database: {
       outPath: './backend/db.ts',
@@ -18,18 +18,11 @@ const config = (ople.config = {
   },
 })
 
-declare global {
-  const setEnv: typeof api.setEnv
-  const openCollection: typeof api.openCollection
-  const emitBackendClient: typeof api.emitBackendClient
-  const emitDatabaseClient: typeof api.emitDatabaseClient
-}
-
 const api = {
   setEnv(env: OpleEnv) {
     ople.env = env
   },
-  openCollection(name: string) {
+  openCollection<T extends object = any>(name: string) {
     config.collections.add(name)
   },
   emitBackendClient(options: Partial<BackendClient>) {
@@ -38,6 +31,16 @@ const api = {
   emitDatabaseClient(options: Partial<DatabaseClient>) {
     Object.assign(config.clients.database, options)
   },
+}
+
+declare global {
+  // Placeholder type for Signals interface
+  interface OpleRef<T> {}
+
+  const setEnv: typeof api.setEnv
+  const openCollection: typeof api.openCollection
+  const emitBackendClient: typeof api.emitBackendClient
+  const emitDatabaseClient: typeof api.emitDatabaseClient
 }
 
 declare const global: any

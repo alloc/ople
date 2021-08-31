@@ -29,7 +29,11 @@ import {
 
 export { ws, http } from '@ople/agent'
 
-export interface OpleBackend<Signals extends Record<string, AnyFn> = any> {
+export interface OpleBackend<
+  Collections extends Record<string, OpleCollection> = any,
+  Functions extends Record<string, AnyFn> = any,
+  Signals extends Record<string, AnyFn> = any
+> {
   readonly cache: {
     /** Get a remote object by its ref. */
     get<T>(ref: OpleRef<T>): T | null
@@ -38,12 +42,17 @@ export interface OpleBackend<Signals extends Record<string, AnyFn> = any> {
   }
   get<T>(ref: OpleRef<T>, force?: boolean): Promise<T>
   call: Agent['call']
-  function(name: string): Function
+  collection<P extends keyof Collections>(name: P): Collections[P]
   collection(name: string): OpleCollection
-  signal: SignalFactory<Signals>
+  functions: Functions
+  signals: Signals
 }
 
-export function defineBackend(config: AgentConfig) {
+export function defineBackend<
+  Collections extends Record<string, OpleCollection> = any,
+  Functions extends Record<string, AnyFn> = any,
+  Signals extends Record<string, AnyFn> = any
+>(config: AgentConfig) {
   const handleCache = new PutCache<OpleRefHandle>()
 
   // Cache the promises of refs being fetched, so we can
@@ -216,21 +225,26 @@ export function defineBackend(config: AgentConfig) {
         batch.queues['@watch'] = new Set(watched)
         agent.flush()
       }
-      const handlers = signals[name]
-      if (handlers)
-        handlers.forEach(handler => {
-          withOple(handler.context!, handler, args)
-        })
+
+      emit(name, args)
+
+      // When the first argument is an OpleRef, we need to notify
+      // any ref-specific listeners.
+      if (!name.startsWith('r:') && args[0]?.constructor == OpleRef) {
+        emit('r:' + args[0] + ':' + name, args.slice(1))
+      }
     },
   })
 
   const signals: { [name: string]: Set<OpleListener> } = {}
+  const emit = (name: string, args: any[]) =>
+    signals[name]?.forEach(handler => {
+      withOple(handler.context!, handler, args)
+    })
 
   function addListener(target: any, signalId: string, listener: OpleListener) {
     if (target) {
-      const ref = toRef(target)
-      invariant(ref, 'Target ref must exist')
-      signalId = ref + ':' + signalId
+      signalId = 'r:' + toRef(target) + ':' + signalId
     }
     let listeners = signals[signalId]
     if (!listeners) {
@@ -245,9 +259,7 @@ export function defineBackend(config: AgentConfig) {
     listener: OpleListener
   ) {
     if (target) {
-      const ref = toRef(target)
-      invariant(ref, 'Target ref must exist')
-      signalId = ref + ':' + signalId
+      signalId = 'r:' + toRef(target) + ':' + signalId
     }
     const listeners = signals[signalId]
     if (listeners?.delete(listener) && !listeners.size) {
@@ -255,7 +267,7 @@ export function defineBackend(config: AgentConfig) {
     }
   }
 
-  const backend: OpleBackend = {
+  const backend: OpleBackend<Collections, Functions, Signals> = {
     cache: {
       get: (ref): any => handleCache.get(ref) || null,
       put(data) {
@@ -267,10 +279,20 @@ export function defineBackend(config: AgentConfig) {
       return (!force && handleCache.get(ref)) || agent.call('@get', [ref])
     },
     call: agent.call,
-    function: name => agent.call.bind(agent, name),
     collection: getCollection,
-    signal: makeSignalFactory(addListener, removeListener),
+    functions: makeFunctionMap(name => agent.call.bind(agent, name) as any),
+    signals: makeFunctionMap(
+      makeSignalFactory<Signals>(addListener, removeListener)
+    ),
   }
 
   return backend
+}
+
+function makeFunctionMap<T, P extends string & keyof T>(
+  get: (key: P) => T[P]
+): T {
+  return new Proxy(get, {
+    get: (_, key: string) => get(key as P),
+  }) as any
 }

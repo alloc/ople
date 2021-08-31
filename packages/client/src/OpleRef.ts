@@ -8,15 +8,6 @@ import { OpleBackend } from './OpleBackend'
 
 type Data = Record<string, any>
 
-/** Points to an object in the database. */
-type Ref<T extends Data = any> = string & OpleRef<T>
-
-/** Manages an object in the database. */
-type RefHandle<T extends Data = any> = string &
-  Omit<OpleRefHandle<T>, 'takeChanges' | 'onCreate'>
-
-export { Ref as OpleRef, RefHandle as OpleRefHandle }
-
 const $ref = Symbol.for('ople.ref')
 
 /**
@@ -89,7 +80,7 @@ class OpleRefHandle<T extends Data = any> {
     Object.keys(arg1).forEach(key => this._changed.add(key))
   }
 
-  save(collection?: string | OpleCollection) {
+  save(collection?: string | OpleCollection<T>) {
     if (this._changed.size) {
       if (firstSaves.has(this)) {
         return
@@ -151,6 +142,20 @@ class OpleRefHandle<T extends Data = any> {
     this._ref.backend.call('@delete', [this])
   }
 }
+
+const Ref = OpleRef
+const RefHandle = OpleRefHandle
+
+/** Points to an object in the database. */
+type Ref<T extends Data = any> = string & OpleRef<T>
+
+/** Manages an object in the database. */
+type RefHandle<T extends Data = any> = string &
+  Omit<OpleRefHandle<T>, 'takeChanges' | 'onCreate'>
+
+export { Ref as OpleRef, RefHandle as OpleRefHandle }
+
+export type OpleRefLike<T extends Data = any> = Ref<T> | RefHandle<T>
 
 /** Track which keys have changed while the current `Ople` context is active. */
 function trackChanges(handle: OpleRefHandle) {

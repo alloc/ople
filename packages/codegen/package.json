@@ -5,16 +5,22 @@
   "module": "dist/index.mjs",
   "typings": "dist/index.d.ts",
   "dependencies": {
+    "array-flatten": "^3.0.0",
     "endent": "^2.1.0",
     "esbuild": "^0.12.22",
+    "filespy": "^1.2.4",
     "is": "npm:@alloc/is@^2.1.1",
+    "redent": "^3.0.0",
     "resolve": "^1.17.0",
     "rollup": "^2.56.3",
     "rollup-plugin-esbuild": "^4.5.0",
+    "ts-debounce": "^3.0.0",
     "ts-morph": "^7.1.2"
   },
   "devDependencies": {
+    "@ople/backend": "link:../backend",
     "@ople/client": "link:../client",
+    "@ople/init": "link:../init",
     "@types/resolve": "^1.17.1"
   }
 }

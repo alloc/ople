@@ -26,7 +26,7 @@ export class OpleRef<T extends Data = any> {
   protected _type: 'OpleRef' & { data: T }
 }
 
-export class OpleCollection<T extends Data = any> extends OpleRef<T> {
+export class OpleCollection<T extends Data = any> extends OpleRef {
   constructor(id: string, backend: OpleBackend) {
     super(id, backend)
   }
@@ -38,6 +38,9 @@ export class OpleCollection<T extends Data = any> extends OpleRef<T> {
   toString() {
     return this.id
   }
+
+  // @ts-ignore
+  protected _documentType: T
 }
 
 export class OpleTime {

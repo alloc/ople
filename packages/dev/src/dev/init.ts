@@ -5,7 +5,6 @@ import Module from 'module'
 import esbuild from 'rollup-plugin-esbuild'
 import { rollup } from 'rollup'
 import { db, write } from 'ople-db'
-import { emitClients } from './emit'
 
 const getModuleCache = (): Record<string, any> => (Module as any)._cache
 const setModuleCache = (cache: Record<string, any>) =>
@@ -76,9 +75,6 @@ export async function init() {
       }
     }
   })
-
-  // Emit the generated clients.
-  emitClients(initPath, opleConfig)
 
   return [opleConfig, opleEnv] as const
 }

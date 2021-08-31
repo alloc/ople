@@ -1,6 +1,5 @@
 import {
   ts,
-  FunctionDeclaration,
   FunctionExpression,
   Identifier,
   MethodDeclaration,
@@ -8,13 +7,40 @@ import {
   PropertyAssignment,
   ShorthandPropertyAssignment,
   Signature,
-  SignaturedDeclaration,
   SourceFile,
-  TypeNode,
   Type,
 } from 'ts-morph'
+import { findReferencedTypes } from '../common'
 
-type ExposedFunction =
+export type OpleFunction = {
+  name: string
+  signature: string[]
+  referencedTypes: Set<Node>
+  file: SourceFile
+}
+
+export function parseFunctions(file: SourceFile) {
+  const nodes = findExposedFunctions(file)
+  const signs = extractSignatures(nodes)
+  return Object.keys(signs).map(
+    (name): OpleFunction => ({
+      name,
+      signature: signs[name].map(sign => printSignature(sign, name)),
+      referencedTypes: getReferencedTypes(signs[name]),
+      file,
+    })
+  )
+}
+
+function getReferencedTypes(signs: Signature[]) {
+  const referencedTypes = new Set<Node>()
+  signs.forEach(sign => {
+    findReferencedTypes(sign.getDeclaration(), referencedTypes)
+  })
+  return referencedTypes
+}
+
+export type ExposedFunction =
   | Identifier
   | FunctionExpression
   | MethodDeclaration
@@ -71,7 +97,7 @@ export function findExposedFunctions(source: SourceFile) {
   return exposedFunctions
 }
 
-type SignatureMap = Record<string, Signature[]>
+export type SignatureMap = Record<string, Signature[]>
 
 export function extractSignatures(nodes: ExposedFunction[]) {
   const signatureMap: SignatureMap = {}
@@ -120,16 +146,6 @@ function findSignatures(ident: Identifier) {
     : [node.getSignature()]
 }
 
-export function printSignatures(signMap: SignatureMap) {
-  let code = ''
-  for (const [name, signs] of Object.entries(signMap)) {
-    for (const sign of signs) {
-      code += printSignature(sign, name) + '\n'
-    }
-  }
-  return code
-}
-
 function printSignature(sign: Signature, name = '') {
   const decl = sign.getDeclaration()
   if (!Node.isParameteredNode(decl)) {
@@ -145,7 +161,12 @@ function printSignature(sign: Signature, name = '') {
   const returnType = getText(decl.getReturnType())
   const typeParams = sign.getTypeParameters().map(getText).join(', ')
 
-  return `function ${name}${
-    typeParams.length ? `<${typeParams}>` : ``
-  }(${params}): ${returnType}`
+  const [docs] = sign.getDocumentationComments()
+
+  return (
+    (docs ? `/**${docs.getText().replace(/(^|\n)/g, `\n * `)}\n */\n` : ``) +
+    name +
+    (typeParams.length ? `<${typeParams}>` : ``) +
+    `(${params}): ${returnType}`
+  )
 }

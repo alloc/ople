@@ -1,4 +1,4 @@
-import { events } from '../..'
+import { events } from '../events'
 import { app, fatal, log } from './app'
 
 events.on('error', onError)

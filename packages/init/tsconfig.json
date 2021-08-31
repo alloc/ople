@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["init.ts"],
+  "include": ["init.ts", "types.d.ts"],
   "compilerOptions": {
     "esModuleInterop": false,
     "typeRoots": [],

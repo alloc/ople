@@ -2,6 +2,7 @@ import { is } from '@alloc/is'
 import { AnyFn, Disposable } from '@alloc/types'
 import invariant from 'tiny-invariant'
 import { getOple, setEffect, withOple } from './OpleContext'
+import { toRef } from './OpleRef'
 import { Ople } from './Ople'
 
 export interface SignalFactory<Signals extends Record<string, AnyFn>> {
@@ -22,6 +23,7 @@ export function makeSignalFactory<Signals extends Record<string, AnyFn>>(
       listener = arg
     } else {
       target = arg
+      invariant(toRef(target), 'Target ref must exist')
     }
     setEffect(listener, active => {
       if (active) {

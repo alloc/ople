@@ -1,0 +1,3 @@
+function foo() {}
+
+exposeFunction(foo)

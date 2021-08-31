@@ -5,7 +5,6 @@
     "outDir": "dist",
     "module": "commonjs",
     "sourceMap": true,
-    "typeRoots": ["./@types", "./node_modules/@types"],
-    "types": ["@ople/init/types"]
+    "typeRoots": ["./@types", "./node_modules/@types"]
   }
 }

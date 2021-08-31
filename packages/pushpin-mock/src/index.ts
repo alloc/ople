@@ -12,6 +12,7 @@ import {
 } from '@fanoutio/grip'
 
 export interface ServerOptions extends Omit<WebSocket.ServerOptions, 'server'> {
+  gripSecret: string
   originUrl: string
   server: ViteDevServer
 }
@@ -28,6 +29,7 @@ export interface Pushpin extends WebSocket.Server {
 }
 
 export function createPushpin({
+  gripSecret,
   originUrl,
   server,
   ...options
@@ -46,7 +48,12 @@ export function createPushpin({
     channels: {},
   }
 
-  const gateway = createGateway(originUrl, state, server.middlewares)
+  const gateway = createGateway(
+    gripSecret,
+    originUrl,
+    state,
+    server.middlewares
+  )
   wss.on('connection', socket => {
     let connectionId: string
     const connection: GripConnection = { meta: {}, channels: new Set(), socket }
@@ -115,6 +122,7 @@ const todoHeaders = [
 ]
 
 function createGateway(
+  gripSecret: string,
   originUrl: string,
   state: GripState,
   handler: (req: any, res: any) => void
@@ -130,7 +138,7 @@ function createGateway(
         headers: {
           'content-length': '' + Buffer.byteLength(payload),
           'connection-id': connectionId,
-          'grip-sig': generateGripSig(),
+          'grip-sig': generateGripSig(gripSecret),
           ...connection.meta,
         },
       })
@@ -210,10 +218,10 @@ function newConnectionId(connections: Record<GripConnectionId, any>) {
     }
 }
 
-function generateGripSig() {
+function generateGripSig(secret: string) {
   return jwt.sign(
     { iss: 'pushpin', exp: Math.ceil(Date.now() / 1000) + 3600 },
-    process.env.GRIP_SIG || ''
+    secret
   )
 }
 

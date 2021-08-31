@@ -18,19 +18,21 @@ const resolvePlugin = nodeResolve({
   extensions: ['.ts', '.js'],
 })
 
-const enabledPackages = /agent|backend|codegen|nason|pushpin|transform/
+const enabledPackages = /codegen|dev/
 //  /agent|backend|client|dev|init|pushpin|transform|tnetstring/
 
 crawl('.', {
   only: ['packages/*/package.json'],
   skip: ['node_modules', 'vendor'],
 }).forEach(pkgPath => {
+  if (!enabledPackages.test(pkgPath)) {
+    return
+  }
+
   let external = id => !/^[./]/.test(id)
   if (/nason/.test(pkgPath)) {
     const origExternal = external
     external = id => origExternal(id) && !/nason/.test(id)
-  } else if (!enabledPackages.test(pkgPath)) {
-    return
   }
 
   const pkg = require('./' + pkgPath)

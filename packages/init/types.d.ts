@@ -1,6 +1,6 @@
 declare global {
   interface OpleEnv {
-    gripSig: string
+    gripSecret: string
   }
   interface OpleConfig {
     collections: Set<string>
@@ -19,5 +19,3 @@ export type BackendClient = {
 export type DatabaseClient = {
   outPath: string
 }
-
-export { OpleEnv, OpleConfig }
