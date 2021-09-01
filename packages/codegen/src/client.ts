@@ -13,7 +13,7 @@ const mergeIntoSet = <T>(
  * Generate the module that calls `defineBackend`
  * on the frontend.
  */
-export function printClientModule(parser: OpleParser) {
+export function printClientModule(parser: OpleParser, backendUrl: string) {
   const { functions, collections } = parser
   const referencedTypes = new Set<Node>()
 
@@ -39,7 +39,7 @@ export function printClientModule(parser: OpleParser) {
 
   const opleClientId = '@ople/client'
   const imports: Record<string, string[]> = {
-    [opleClientId]: ['defineBackend'],
+    [opleClientId]: ['defineBackend', 'OpleProtocol'],
   }
   if (collectionTypes.length) {
     imports[opleClientId].push('OpleCollection')
@@ -99,7 +99,11 @@ export function printClientModule(parser: OpleParser) {
       ${signalTypes.join('\n')}
     }
 
-    const backend = defineBackend<Collections, Functions, Signals>()
+    const backend = defineBackend<Collections, Functions, Signals>({
+      protocol: OpleProtocol.ws,
+      url: "${backendUrl}",
+    })
+
     export default backend
 
     const { functions, signals } = backend

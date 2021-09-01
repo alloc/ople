@@ -2,17 +2,8 @@ import { Protocol } from '../types'
 
 declare const console: any
 
-export const ws: Protocol = ({
-  host,
-  port,
-  onReply,
-  onConnect,
-  onDisconnect,
-}) => {
-  const isLocal = host == 'localhost'
-  const socket = new WebSocket(
-    `ws${isLocal ? '' : 's'}://${host}${isLocal ? ':' + port : ''}`
-  )
+export const ws: Protocol = ({ url, onReply, onConnect, onDisconnect }) => {
+  const socket = new WebSocket(url)
   socket.binaryType = 'arraybuffer'
   socket.onmessage = event => onReply(new Uint8Array(event.data))
   socket.onerror = event => {

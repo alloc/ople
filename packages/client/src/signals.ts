@@ -5,11 +5,11 @@ import { getOple, setEffect, withOple } from './OpleContext'
 import { toRef } from './OpleRef'
 import { Ople } from './Ople'
 
-export interface SignalFactory<Signals extends Record<string, AnyFn>> {
+export interface SignalFactory<Signals extends object> {
   <P extends string & keyof Signals>(signalId: P): Signals[P]
 }
 
-export function makeSignalFactory<Signals extends Record<string, AnyFn>>(
+export function makeSignalFactory<Signals extends object>(
   addListener: (target: any, signalId: string, listener: OpleListener) => void,
   removeListener: (
     target: any,

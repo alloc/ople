@@ -18,6 +18,7 @@
     "ts-morph": "^7.1.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.15.0",
     "@ople/backend": "link:../backend",
     "@ople/client": "link:../client",
     "@ople/init": "link:../init",

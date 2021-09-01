@@ -1,0 +1,13 @@
+{
+  "name": "@ople/react",
+  "source": "src/index.ts",
+  "devDependencies": {
+    "@ople/client": "link:../client",
+    "@types/react": "^17.0.19",
+    "react": "^17.0.2"
+  },
+  "peerDependencies": {
+    "@ople/client": "*",
+    "react": "*"
+  }
+}

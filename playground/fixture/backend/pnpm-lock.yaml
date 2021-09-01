@@ -1,0 +1,7 @@
+lockfileVersion: 5.3
+
+specifiers:
+  '@ople/backend': link:../../../packages/backend
+
+dependencies:
+  '@ople/backend': link:../../../packages/backend

@@ -1,69 +1,137 @@
 import vm from 'vm'
+import log from 'lodge'
+import path from 'path'
 import babel from '@rollup/plugin-babel'
 import esbuild from 'rollup-plugin-esbuild'
+import nodeResolve from '@rollup/plugin-node-resolve'
+import * as net from 'net'
+import * as http from 'http'
 import * as vite from 'vite'
 import * as rollup from 'rollup'
 import { createPushpin } from 'pushpin-mock'
 import { generateServer } from '@ople/codegen'
-// import { makeOriginContext } from '@ople/backend'
 import { babelOpleClient } from '@ople/transform'
 import { generateModules } from '../dev/watch'
 import { init } from '../dev/init'
-import { app } from './app'
+import { relativeToCwd } from '../common'
+import { createSandbox } from '../dev/sandbox'
+import { startTask } from 'misty/task'
 
-const port = 5000
-
-app.command('dev').action(async () => {
+export default async function () {
   const [opleConfig, opleEnv] = await init()
 
-  const codegen = await generateModules(
-    process.cwd(),
-    opleConfig.clients.backend.outPath
+  const projectRoot = process.cwd()
+  const backendPort = 5000
+  const backendRoot = path.resolve(
+    projectRoot,
+    opleConfig.clients.backend.backendPath
   )
+
+  let opleServer: Promise<http.Server | null> = Promise.resolve(null)
 
   const viteServer = await vite.createServer({
     plugins: [
       babel({
         plugins: [babelOpleClient],
+        babelHelpers: 'bundled',
       }),
     ],
   })
 
+  await viteServer.listen()
+  const viteAddress = viteServer.httpServer!.address() as net.AddressInfo
+
+  const pushpinPath = '/@ople-dev'
+
+  log('')
+  const codegen = await generateModules(
+    projectRoot,
+    opleConfig.clients.backend.outPath,
+    `ws://localhost:${viteAddress.port}${pushpinPath}`
+  )
+
   const pushpin = createPushpin({
-    path: `/@ople-dev`,
+    path: pushpinPath,
     gripSecret: opleEnv.gripSecret,
-    originUrl: `http://localhost:${port}`,
+    originUrl: `http://localhost:${backendPort}`,
     server: viteServer,
   })
 
-  const entryPath = '\0.ople-entry.js'
+  const entryId = 'ople-entry.js'
+  const entryPath = path.join(backendRoot, entryId)
+
   const entryPlugin: rollup.Plugin = {
     name: `ople-entry`,
-    resolveId(id) {
-      return id === entryPath ? id : null
+    resolveId(id, importer) {
+      if (id === entryId) {
+        return entryPath
+      }
     },
     load(id) {
       if (id === entryPath) {
         return generateServer({
+          dev: true,
+          port: backendPort,
           imports: Array.from(codegen.functionsByFile.keys(), file =>
-            file.getFilePath()
+            relativeToCwd(file.getFilePath().replace(/\.ts$/, ''), backendRoot)
           ),
-          port,
         })
       }
     },
   }
 
   const watcher = rollup.watch({
-    input: entryPath,
-    plugins: [entryPlugin, esbuild({ target: 'node16' })],
+    input: entryId,
+    plugins: [entryPlugin, nodeResolve(), esbuild({ target: 'node16' })],
+    external: id => !/^[./]/.test(id),
+    watch: {
+      skipWrite: true,
+      clearScreen: false,
+    },
   })
 
-  watcher.on('event', event => {
+  watcher.on('event', async event => {
     if (event.code == 'BUNDLE_END') {
       const bundle = event.result
-      console.log(bundle)
-      debugger
+      const bundled = await bundle.generate({
+        format: 'cjs',
+        exports: 'auto',
+        externalLiveBindings: false,
+        sourcemap: 'inline',
+        sourcemapExcludeSources: true,
+      })
+      const code = bundled.output[0].code
+      opleServer = runOpleServer(code).catch(err => {
+        log.error(err)
+        return null
+      })
+    } else if (event.code == 'ERROR') {
+      log.error(event.error)
     }
   })
-})
+
+  async function runOpleServer(code: string) {
+    const task = startTask('Starting server...')
+    const oldServer = await opleServer
+    if (oldServer) {
+      task.update('Restarting server...')
+      await new Promise<void>((resolve, reject) =>
+        oldServer.close(err => (err ? reject(err) : resolve()))
+      )
+    }
+    type Serve = (config: typeof pushpin) => http.Server
+    const sandbox = createSandbox({
+      sharedModules: ['ople-db'],
+    })
+    const serve: Serve = sandbox.load(code, entryPath)
+    return new Promise<http.Server>((resolve, reject) => {
+      const server = serve(pushpin).on('error', reject)
+      server.on('listening', () => {
+        task.finish(
+          `Ople ready @ ` + log.lgreen(`http://localhost:${backendPort}`)
+        )
+        resolve(server)
+      })
+    })
+  }
+}

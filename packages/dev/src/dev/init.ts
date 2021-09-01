@@ -1,14 +1,10 @@
-import vm from 'vm'
 import fs from 'saxon'
 import path from 'path'
-import Module from 'module'
 import esbuild from 'rollup-plugin-esbuild'
+import nodeResolve from '@rollup/plugin-node-resolve'
 import { rollup } from 'rollup'
 import { db, write } from 'ople-db'
-
-const getModuleCache = (): Record<string, any> => (Module as any)._cache
-const setModuleCache = (cache: Record<string, any>) =>
-  ((Module as any)._cache = cache)
+import { createSandbox } from './sandbox'
 
 /**
  * Execute the local `ople.init.ts` module.
@@ -20,9 +16,11 @@ export async function init() {
   }
 
   const initPath = path.resolve(initFile)
+  console.log(initPath)
   const bundle = await rollup({
     input: initPath,
     plugins: [
+      nodeResolve(),
       esbuild({
         target: 'node14',
       }),
@@ -34,35 +32,18 @@ export async function init() {
     sourcemap: 'inline',
   })
 
-  const require = Module.createRequire(initPath)
-  const sandboxModules: Record<string, any> = {}
-  const sandbox = {
-    require(id: string) {
-      const modulePath = require.resolve(id)
-      let mod = sandboxModules[modulePath]
-      if (!mod) {
-        const modules = getModuleCache()
-        setModuleCache(sandboxModules)
-        try {
-          mod = require(modulePath)
-        } finally {
-          setModuleCache(modules)
-        }
-      }
-      return mod
-    },
+  const global = {
     ople: {
       config: null as OpleConfig | null,
       env: null as OpleEnv | null,
     },
   }
 
-  vm.runInNewContext(bundled.output[0].code, sandbox, {
-    filename: initPath,
-  })
+  const sandbox = createSandbox({ global })
+  sandbox.load(bundled.output[0].code, initPath)
 
-  const opleConfig = sandbox.ople.config!
-  const opleEnv = sandbox.ople.env
+  const opleConfig = global.ople.config!
+  const opleEnv = global.ople.env
   if (!opleEnv) {
     throw Error(`"setEnv" must be called in ${initFile}`)
   }

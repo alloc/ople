@@ -126,7 +126,8 @@ export class OpleParser extends EventEmitter {
       }
     }
 
-    const emitUpdate = debounce(() => this.emit('update'), 200)
+    let emitUpdate = (() => {}) as { (): void; cancel(): void }
+    emitUpdate.cancel = () => {}
 
     const initPath = 'ople.init.ts'
     const watcher = filespy(root, {
@@ -175,14 +176,21 @@ export class OpleParser extends EventEmitter {
         }
       })
       .on('ready', () => {
-        this.emit('ready')
+        if (!closed) {
+          this.emit('ready')
+          emitUpdate = debounce(() => this.emit('update'), 200)
+        }
       })
       .on('error', err => {
-        console.error(err)
-        this.close()
+        if (!closed) {
+          console.error(err)
+          this.close()
+        }
       })
 
+    let closed = false
     this.close = () => {
+      closed = true
       emitUpdate.cancel()
       return watcher.close()
     }

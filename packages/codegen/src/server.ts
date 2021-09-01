@@ -1,21 +1,34 @@
 import endent from 'endent'
 
 export function generateServer({
-  imports,
+  dev,
   port,
+  imports,
 }: {
-  imports: string[]
+  dev: boolean
   port: number
+  imports: string[]
 }) {
+  const makeContext = dev ? `makeOriginContext` : `makePushpinContext`
   return endent`
-    import { env, serve, makeOriginContext } from "@ople/backend"
-    Object.assign(global, env)
+    import { serve, ${makeContext} } from "@ople/backend"
+    import "@ople/backend/global"
 
     ${imports.map(path => `import "${path}"`).join(`\n`)}
 
-    serve({
-      port: ${port},
-      context: global.opleContext,
-    })
+    ${
+      dev
+        ? endent`
+          export default (config) =>
+            serve({
+              port: ${port},
+              context: ${makeContext}(config),
+            })`
+        : endent`
+          serve({
+            port: ${port},
+            context: ${makeContext}(),
+          })`
+    }
   `
 }

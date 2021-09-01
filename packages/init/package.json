@@ -2,5 +2,5 @@
   "name": "@ople/init",
   "version": "0.1.0",
   "source": "init.ts",
-  "main": "dist/init.js"
+  "module": "dist/init.js"
 }

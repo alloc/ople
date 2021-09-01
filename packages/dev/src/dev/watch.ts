@@ -6,14 +6,17 @@ import { codeFrameColumns } from '@babel/code-frame'
 import { OpleParser, printClientModule, warningsByFile } from '@ople/codegen'
 import { relativeToCwd } from '../common'
 
-export function generateModules(root: string, clientModulePath: string) {
+export function generateModules(
+  root: string,
+  clientModulePath: string,
+  backendUrl: string
+) {
   const parser = new OpleParser(root)
 
   function generate() {
-    clear()
     const task = startTask('Generating modules...')
     try {
-      fs.write(clientModulePath, printClientModule(parser))
+      fs.write(clientModulePath, printClientModule(parser, backendUrl))
       task.finish('Modules generated')
       printWarnings()
     } catch (err) {
@@ -39,9 +42,14 @@ export function generateModules(root: string, clientModulePath: string) {
   }
 
   return new Promise<OpleParser>(resolve => {
-    parser.on('update', generate).on('ready', () => {
-      generate()
-      resolve(parser)
-    })
+    parser
+      .on('ready', () => {
+        generate()
+        resolve(parser)
+      })
+      .on('update', () => {
+        // clear()
+        generate()
+      })
   })
 }

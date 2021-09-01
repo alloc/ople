@@ -1,0 +1,6 @@
+{
+  "name": "client",
+  "dependencies": {
+    "@ople/client": "link:../../../packages/client"
+  }
+}

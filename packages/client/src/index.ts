@@ -1,12 +1,12 @@
 export { ref, toRef } from './OpleRef'
 export { auto } from './auto'
 export { Ople } from './Ople'
-export { useOple } from './useOple'
 
 // Advanced use
 export * from './OpleBackend'
 export { setEffect } from './OpleContext'
 export { attachAuto } from './auto'
+export { OpleProtocol } from '@ople/agent'
 
 // Observables
 export * from 'wana'

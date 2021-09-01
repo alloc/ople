@@ -1,0 +1,7 @@
+lockfileVersion: 5.3
+
+specifiers:
+  '@ople/client': link:../../../packages/client
+
+dependencies:
+  '@ople/client': link:../../../packages/client

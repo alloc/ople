@@ -14,7 +14,8 @@
     "@ople/codegen": "link:../codegen",
     "@ople/init": "link:../init",
     "@ople/transform": "link:../transform",
-    "@rollup/plugin-babel": "*",
+    "@rollup/plugin-babel": "^5.3.0",
+    "@rollup/plugin-node-resolve": "^13.0.4",
     "ansi-italic": "^0.1.1",
     "cac": "^6.0.0",
     "debounce": "^1.2.0",
@@ -25,8 +26,10 @@
     "misty": "^1.4.0",
     "ople-db": "link:../../vendor/ople-db",
     "pushpin-mock": "link:../pushpin-mock",
+    "redent": "^3.0.0",
     "rollup": "^2.56.3",
     "rollup-plugin-esbuild": "^4.5.0",
+    "sandboxed-module": "^2.0.4",
     "saxon": "^0.2.10",
     "smart-restart": "^2.4.0",
     "source-map-support": "^0.5.19",
@@ -40,6 +43,7 @@
     "@types/dedent": "^0.7.0",
     "@types/node": "^14.14.25",
     "@types/prettier": "^2.0.2",
+    "@types/sandboxed-module": "^2.0.30",
     "@types/source-map-support": "^0.5.2"
   }
 }

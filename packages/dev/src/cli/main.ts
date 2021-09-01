@@ -1,19 +1,18 @@
 import { events } from '../events'
-import { app, fatal, log } from './app'
+import { fatal } from 'misty'
+import log from 'lodge'
+import cac from 'cac'
 
 events.on('error', onError)
 
-const command = process.argv[2]
+const app = cac()
 
-if (!command || /^(--help|-h)$/.test(command)) {
-  require('./start')
-  require('./build')
-  require('./pushpin')
-  require('./fauna')
-  app.outputHelp()
-} else {
-  require('./' + command)
-  app.help().parse()
+app.command('dev').action(runCommand('./dev'))
+
+app.help().parse()
+
+function runCommand(id: string) {
+  return (...args: any[]) => require(id).default(...args)
 }
 
 function onError(error: { code: string; [key: string]: any }) {

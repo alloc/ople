@@ -18,8 +18,6 @@ declare const console: { error: Function }
 export type { AgentConfig }
 
 export interface Agent {
-  readonly host: string
-  readonly port: number
   call<T = any>(method: string, args?: any[]): PromiseLike<T>
   onReply(replyId: string, handler: ReplyHandler): void
   flush(): void
@@ -29,8 +27,7 @@ export type AgentFactory = typeof makeAgent
 
 export function makeAgent<RefHandle, Batch extends BatchLike>({
   protocol: makeTransport,
-  host = 'localhost',
-  port = 7999,
+  url,
   makeBatch,
   enqueueCall,
   finalizeBatch,
@@ -40,8 +37,7 @@ export function makeAgent<RefHandle, Batch extends BatchLike>({
   let replyQueue: ReplyQueue = new Map()
 
   const transport = makeTransport({
-    host,
-    port,
+    url,
     onConnect() {
       onSignal('@connect', [nextBatch])
       if (status == PENDING) {
@@ -118,8 +114,6 @@ export function makeAgent<RefHandle, Batch extends BatchLike>({
   }
 
   return {
-    host,
-    port,
     call(method, args) {
       if (status < FLUSHING) {
         status = FLUSHING

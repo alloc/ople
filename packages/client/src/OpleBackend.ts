@@ -27,12 +27,10 @@ import {
   toRef,
 } from './OpleRef'
 
-export { ws, http } from '@ople/agent'
-
 export interface OpleBackend<
-  Collections extends Record<string, OpleCollection> = any,
-  Functions extends Record<string, AnyFn> = any,
-  Signals extends Record<string, AnyFn> = any
+  Collections extends object = Record<string, OpleCollection>,
+  Functions extends object = any,
+  Signals extends object = any
 > {
   readonly cache: {
     /** Get a remote object by its ref. */
@@ -49,9 +47,9 @@ export interface OpleBackend<
 }
 
 export function defineBackend<
-  Collections extends Record<string, OpleCollection> = any,
-  Functions extends Record<string, AnyFn> = any,
-  Signals extends Record<string, AnyFn> = any
+  Collections extends object,
+  Functions extends object,
+  Signals extends object
 >(config: AgentConfig) {
   const handleCache = new PutCache<OpleRefHandle>()
 

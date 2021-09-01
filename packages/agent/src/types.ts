@@ -10,10 +10,8 @@ export type Collection = {
 export interface AgentConfig {
   /** The transport strategy. Pass the `ws` or `http` export, or provide your own. */
   protocol: Protocol
-  /** Defaults to `"localhost"` */
-  host?: string
-  /** Defaults to `7999` */
-  port?: number
+  /** Where the Ople server is located. */
+  url: string
 }
 
 /** A transport strategy used by `@ople/agent` */
@@ -23,8 +21,7 @@ export interface Protocol {
 
 /** @internal */
 export type TransportConfig = {
-  readonly host: string
-  readonly port: number
+  readonly url: string
   readonly onReply: (data: Uint8Array) => void
   readonly onConnect: () => void
   readonly onDisconnect: () => void

@@ -1,6 +1,6 @@
 export * from './agent'
 
 // Official transport strategies
-export { ws } from './transport/ws'
-export { http } from './transport/http'
+export * as OpleProtocol from './transport'
+
 export type { Protocol, ReplyHandler } from './types'

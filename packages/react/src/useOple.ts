@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { Ople } from './Ople'
+import { Ople } from '@ople/client'
 
 export function useOple<Args extends any[], Result>(
   init: (...args: Args) => Result,

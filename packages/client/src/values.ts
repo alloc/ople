@@ -27,7 +27,7 @@ export class OpleRef<T extends Data = any> {
 }
 
 export class OpleCollection<T extends Data = any> extends OpleRef {
-  constructor(id: string, backend: OpleBackend) {
+  constructor(id: string, backend: OpleBackend<any>) {
     super(id, backend)
   }
 

@@ -18,7 +18,7 @@ const resolvePlugin = nodeResolve({
   extensions: ['.ts', '.js'],
 })
 
-const enabledPackages = /codegen|dev/
+const enabledPackages = /agent|backend|client|codegen|dev/
 //  /agent|backend|client|dev|init|pushpin|transform|tnetstring/
 
 crawl('.', {
@@ -39,15 +39,19 @@ crawl('.', {
   const pkgRoot = dirname(pkgPath)
 
   let input = `${pkgRoot}/${pkg.source || 'src/index.ts'}`
-  let output = {
-    file: `${pkgRoot}/${pkg.main}`,
-    format: 'cjs',
-    exports: 'auto',
-    sourcemap: true,
-    externalLiveBindings: false,
+  let output = []
+
+  if (pkg.main) {
+    output.push({
+      file: `${pkgRoot}/${pkg.main}`,
+      format: 'cjs',
+      exports: 'auto',
+      sourcemap: true,
+      externalLiveBindings: false,
+    })
   }
+
   if (pkg.module) {
-    output = [output]
     output.push({
       file: `${pkgRoot}/${pkg.module}`,
       format: 'es',
@@ -65,7 +69,7 @@ crawl('.', {
   configs.push({
     input,
     output: {
-      file: `${pkgRoot}/${pkg.main.replace(/.js$/, '.d.ts')}`,
+      file: `${pkgRoot}/${(pkg.main || pkg.module).replace(/.js$/, '.d.ts')}`,
       format: 'es',
     },
     plugins: [dtsPlugin],
@@ -74,11 +78,16 @@ crawl('.', {
 
   if (pkg.name === '@ople/dev') {
     configs.push({
-      input: `${pkgRoot}/src/cli/main.ts`,
+      input: crawl(`${pkgRoot}/src/cli`, {
+        only: ['*.ts'],
+        skip: ['app.ts'],
+        absolute: true,
+      }),
       output: {
-        file: `${pkgRoot}/dist/cli.js`,
+        dir: `${pkgRoot}/dist/cli`,
         format: 'cjs',
         sourcemap: true,
+        exports: 'named',
       },
       plugins: [esPlugin],
       external,
