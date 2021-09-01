@@ -215,6 +215,10 @@ export function defineBackend<
       calls = calls.concat(batch.calls)
       return [encodeBatch(batch.id, calls), calls]
     },
+    mergeBatches(batch, nextBatch) {
+      mergeSets(nextBatch.queues, batch.queues, '@get')
+      mergeSets(nextBatch.queues, batch.queues, '@pull')
+    },
     decodeReply: makeReplyDecoder(coding),
     onSignal(name, args = []) {
       // Resubscribe to all watched records.
@@ -293,4 +297,10 @@ function makeFunctionMap<T, P extends string & keyof T>(
   return new Proxy(get, {
     get: (_, key: string) => get(key as P),
   }) as any
+}
+
+type Keys<T, U> = { [P in keyof T]: T[P] extends U ? P : never }[keyof T]
+
+function mergeSets<T, P extends Keys<T, Set<any>>>(dest: T, src: T, key: P) {
+  dest[key] = new Set([...dest[key], ...src[key]]) as any
 }

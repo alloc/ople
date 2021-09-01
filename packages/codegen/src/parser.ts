@@ -8,6 +8,7 @@ import { OpleCollection, parseCollections } from './parsers/database'
 import { OpleFunction, parseFunctions } from './parsers/functions'
 import { OpleSignal, parseSignals } from './parsers/signals'
 import { resolveTypeImport } from './common'
+import { warn } from './warnings'
 
 export async function createParser(root: string) {
   const parser = new OpleParser(root)
@@ -23,6 +24,7 @@ type DependencyInfo = {
 
 export class OpleParser extends EventEmitter {
   signals: Record<string, OpleSignal> = {}
+  functions: Record<string, OpleFunction> = {}
   collections: Record<string, OpleCollection> = {}
   readonly functionsByFile = new Map<SourceFile, OpleFunction[]>()
   readonly projectDependencies = new Map<string, DependencyInfo>()
@@ -33,20 +35,6 @@ export class OpleParser extends EventEmitter {
     },
   })
 
-  get functions() {
-    const functionMap: Record<string, OpleFunction> = {}
-    this.functionsByFile.forEach(functions => {
-      for (const fun of functions) {
-        if (fun.name in functionMap) {
-          // TODO: warn about naming conflict
-        } else {
-          functionMap[fun.name] = fun
-        }
-      }
-    })
-    return Object.values(functionMap)
-  }
-
   constructor(readonly root: string) {
     super()
 
@@ -56,7 +44,10 @@ export class OpleParser extends EventEmitter {
       this.collections = {}
       for (const coll of parseCollections(initFile)) {
         if (coll.name in this.collections) {
-          // TODO: warn about naming conflict
+          warn(
+            coll.node,
+            `Collection skipped. Name already taken: "${coll.name}"`
+          )
         } else {
           this.collections[coll.name] = coll
         }
@@ -67,11 +58,31 @@ export class OpleParser extends EventEmitter {
       this.signals = {}
       for (const signal of parseSignals(initFile)) {
         if (signal.name in this.signals) {
-          // TODO: warn about naming conflict
+          warn(
+            signal.node,
+            `Signal skipped. Name already taken: "${signal.name}"`
+          )
         } else {
           this.signals[signal.name] = signal
         }
       }
+    }
+
+    const updateFunctions = () => {
+      const functionMap: Record<string, OpleFunction> = {}
+      this.functionsByFile.forEach(functions => {
+        for (const fun of functions) {
+          if (fun.name in functionMap) {
+            warn(
+              fun.node,
+              `Function skipped. Name already taken: "${fun.name}"`
+            )
+          } else {
+            functionMap[fun.name] = fun
+          }
+        }
+      })
+      this.functions = functionMap
     }
 
     // Only project files are keys to this.
@@ -106,7 +117,7 @@ export class OpleParser extends EventEmitter {
           const depFile = project.addSourceFileAtPath(depPath)
           collectDependencies(depFile, deps, rootFile)
         } catch {
-          // TODO: warn about missing types
+          warn(decl, `Imported module "${id}" has no type definitions`)
         }
       }
       if (file == rootFile) {
@@ -177,8 +188,12 @@ export class OpleParser extends EventEmitter {
       })
       .on('ready', () => {
         if (!closed) {
+          updateFunctions()
           this.emit('ready')
-          emitUpdate = debounce(() => this.emit('update'), 200)
+          emitUpdate = debounce(() => {
+            updateFunctions()
+            this.emit('update')
+          }, 200)
         }
       })
       .on('error', err => {
@@ -198,7 +213,6 @@ export class OpleParser extends EventEmitter {
 }
 
 export interface OpleParser {
-  functions: OpleFunction[]
   on(name: 'ready', handler: () => void): this
   /** The project is updating. */
   on(name: 'update', handler: () => void): this

@@ -27,16 +27,19 @@ export function generateModules(
 
   function printWarnings() {
     for (const [file, warnings] of warningsByFile) {
-      // log.gray(relativeToCwd(file.getFilePath(), root))
+      const fileName = relativeToCwd(file.getFilePath(), root)
       const code = file.getFullText()
       for (const warning of warnings) {
+        log('')
+        log('  ' + log.gray(fileName + ':' + warning.location.start.line))
         log(
           codeFrameColumns(code, warning.location, {
             message: warning.message,
             highlightCode: true,
-          }) + '\n'
+          })
         )
       }
+      log('')
     }
     warningsByFile.clear()
   }

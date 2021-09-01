@@ -4,7 +4,7 @@ import stringType from 'nason/src/types/string'
 import { PackedCall } from './types'
 
 const { concat, pack, unpack } = utils
-const nothing = new Uint8Array()
+const nothing = new Uint8Array([0])
 
 export const makeBatchEncoder = (nason: WrappedEncoder) => (
   id: string,
@@ -15,9 +15,9 @@ export const makeBatchEncoder = (nason: WrappedEncoder) => (
     const [method, args, replyId] = calls[index]
     chunks.push(
       pack(stringType.encode(method)),
-      pack(
-        args && args.length ? arrayType.encode(args, nason.serialize) : nothing
-      ),
+      args && args.length
+        ? pack(arrayType.encode(args, nason.serialize))
+        : nothing,
       pack(stringType.encode(replyId))
     )
   }

@@ -1,7 +1,9 @@
 lockfileVersion: 5.3
 
 specifiers:
+  '@ampproject/remapping': ^1.0.1
   '@babel/code-frame': ^7.14.5
+  '@babel/plugin-syntax-typescript': ^7.14.5
   '@cush/exec': ^1.6.4
   '@ople/backend': link:../backend
   '@ople/codegen': link:../codegen
@@ -10,35 +12,39 @@ specifiers:
   '@rollup/plugin-babel': ^5.3.0
   '@rollup/plugin-node-resolve': ^13.0.4
   '@types/babel__code-frame': ^7.0.3
+  '@types/convert-source-map': ^1.5.2
   '@types/debounce': ^1.2.0
   '@types/dedent': ^0.7.0
   '@types/node': ^14.14.25
   '@types/prettier': ^2.0.2
-  '@types/sandboxed-module': ^2.0.30
   '@types/source-map-support': ^0.5.2
   ansi-italic: ^0.1.1
   cac: ^6.0.0
+  convert-source-map: ^1.8.0
   debounce: ^1.2.0
   esbuild: ^0.12.22
   filespy: ^1.2.4
   is: npm:@alloc/is@^2.1.1
   lodge: ^0.1.7
+  magic-string: ^0.25.7
   misty: ^1.4.0
   ople-db: link:../../vendor/ople-db
   pushpin-mock: link:../pushpin-mock
   redent: ^3.0.0
   rollup: ^2.56.3
   rollup-plugin-esbuild: ^4.5.0
-  sandboxed-module: ^2.0.4
   saxon: ^0.2.10
   smart-restart: ^2.4.0
+  source-map: ^0.6.0
   source-map-support: ^0.5.19
   sucrase: ^3.15.0
   ts-morph: ^7.1.2
   uid: ^1.0.0
 
 dependencies:
+  '@ampproject/remapping': 1.0.1
   '@babel/code-frame': 7.14.5
+  '@babel/plugin-syntax-typescript': 7.14.5
   '@cush/exec': 1.6.4
   '@ople/backend': link:../backend
   '@ople/codegen': link:../codegen
@@ -48,20 +54,22 @@ dependencies:
   '@rollup/plugin-node-resolve': 13.0.4_rollup@2.56.3
   ansi-italic: 0.1.1
   cac: 6.7.1
+  convert-source-map: 1.8.0
   debounce: 1.2.0
   esbuild: 0.12.22
   filespy: 1.2.4
   is: /@alloc/is/2.1.2
   lodge: 0.1.7
+  magic-string: 0.25.7
   misty: 1.4.0
   ople-db: link:../../vendor/ople-db
   pushpin-mock: link:../pushpin-mock
   redent: 3.0.0
   rollup: 2.56.3
   rollup-plugin-esbuild: 4.5.0_esbuild@0.12.22+rollup@2.56.3
-  sandboxed-module: 2.0.4
   saxon: 0.2.10
   smart-restart: 2.5.0
+  source-map: 0.6.1
   source-map-support: 0.5.19
   sucrase: 3.17.1
   ts-morph: 7.3.0
@@ -69,17 +77,25 @@ dependencies:
 
 devDependencies:
   '@types/babel__code-frame': 7.0.3
+  '@types/convert-source-map': 1.5.2
   '@types/debounce': 1.2.0
   '@types/dedent': 0.7.0
   '@types/node': 14.14.27
   '@types/prettier': 2.2.0
-  '@types/sandboxed-module': 2.0.30
   '@types/source-map-support': 0.5.3
 
 packages:
 
   /@alloc/is/2.1.2:
     resolution: {integrity: sha512-/qJui7XCIMEDOzpMPZUXYTy4hHdBKsx6sQnSDIOw8cFW/BL4AqZSt0B/DkB+eW9PDa0zD27zp7jyziQfeaYycQ==}
+    dev: false
+
+  /@ampproject/remapping/1.0.1:
+    resolution: {integrity: sha512-Ta9bMA3EtUHDaZJXqUoT5cn/EecwOp+SXpKJqxDbDuMbLvEMu6YTyDDuvTWeStODfdmXyfMo7LymQyPkN3BicA==}
+    engines: {node: '>=6.0.0'}
+    dependencies:
+      '@jridgewell/resolve-uri': 1.0.0
+      sourcemap-codec: 1.4.8
     dev: false
 
   /@babel/code-frame/7.14.5:
@@ -96,6 +112,11 @@ packages:
       '@babel/types': 7.15.0
     dev: false
 
+  /@babel/helper-plugin-utils/7.14.5:
+    resolution: {integrity: sha512-/37qQCE3K0vvZKwoK4XU/irIJQdIfCJuhU5eKnNxpFDsOkgFaUAwbv+RYw6eYgsC0E4hS7r5KqGULUogqui0fQ==}
+    engines: {node: '>=6.9.0'}
+    dev: false
+
   /@babel/helper-validator-identifier/7.14.9:
     resolution: {integrity: sha512-pQYxPY0UP6IHISRitNe8bsijHex4TWZXi2HwKVsjPiltzlhse2znVcm9Ace510VT1kxIHjGJCZZQBX2gJDbo0g==}
     engines: {node: '>=6.9.0'}
@@ -108,6 +129,15 @@ packages:
       '@babel/helper-validator-identifier': 7.14.9
       chalk: 2.4.2
       js-tokens: 4.0.0
+    dev: false
+
+  /@babel/plugin-syntax-typescript/7.14.5:
+    resolution: {integrity: sha512-u6OXzDaIXjEstBRRoBCQ/uKQKlbuaeE5in0RvWdA4pN6AhqxTIwUsnHPU1CFZA/amYObMsuWhYfRl3Ch90HD0Q==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+    dependencies:
+      '@babel/helper-plugin-utils': 7.14.5
     dev: false
 
   /@babel/types/7.15.0:
@@ -131,6 +161,11 @@ packages:
     dependencies:
       is-absolute: 1.0.0
       is-negated-glob: 1.0.0
+    dev: false
+
+  /@jridgewell/resolve-uri/1.0.0:
+    resolution: {integrity: sha512-9oLAnygRMi8Q5QkYEU4XWK04B+nuoXoxjRvRxgjuChkLZFBja0YPSgdZ7dZtwhncLBcQe/I/E+fLuk5qxcYVJA==}
+    engines: {node: '>=6.0.0'}
     dev: false
 
   /@nodelib/fs.scandir/2.1.4:
@@ -229,6 +264,10 @@ packages:
     resolution: {integrity: sha512-2TN6oiwtNjOezilFVl77zwdNPwQWaDBBCCWWxyo1ctiO3vAtd7H/aB/CBJdw9+kqq3+latD0SXoedIuHySSZWw==}
     dev: true
 
+  /@types/convert-source-map/1.5.2:
+    resolution: {integrity: sha512-tHs++ZeXer40kCF2JpE51Hg7t4HPa18B1b1Dzy96S0eCw8QKECNMYMfwa1edK/x8yCN0r4e6ewvLcc5CsVGkdg==}
+    dev: true
+
   /@types/debounce/1.2.0:
     resolution: {integrity: sha512-bWG5wapaWgbss9E238T0R6bfo5Fh3OkeoSt245CM7JJwVwpw6MEBCbIxLq5z8KzsE3uJhzcIuQkyiZmzV3M/Dw==}
     dev: true
@@ -262,10 +301,6 @@ packages:
     dependencies:
       '@types/node': 14.17.13
     dev: false
-
-  /@types/sandboxed-module/2.0.30:
-    resolution: {integrity: sha512-ofseBrsnxd7ZKlSSDPoTE7AhYqj+Kz3wgc30u8Qg0eNWLn2FXvhUANfkXY9wr3PcUAzyG2CDCVAzhs080O01xw==}
-    dev: true
 
   /@types/source-map-support/0.5.3:
     resolution: {integrity: sha512-fvjMjVH8Rmokw2dWh1dkj90iX5R8FPjeZzjNH+6eFXReh0QnHFf1YBl3B0CF0RohIAA3SDRJsGeeUWKl6d7HqA==}
@@ -531,6 +566,12 @@ packages:
 
   /concat-map/0.0.1:
     resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    dev: false
+
+  /convert-source-map/1.8.0:
+    resolution: {integrity: sha512-+OQdjP49zViI/6i7nIJpA8rAl4sV/JdPfU9nZs3VqOwGIgizICvuN2ru6fMd+4llL0tar18UYJXfZ/TWtmhUjA==}
+    dependencies:
+      safe-buffer: 5.1.2
     dev: false
 
   /copy-descriptor/0.1.1:
@@ -1086,6 +1127,12 @@ packages:
       has-flag: 3.0.0
     dev: false
 
+  /magic-string/0.25.7:
+    resolution: {integrity: sha512-4CrMT5DOHTDk4HYDlzmwu4FVCcIYI8gauveasrdCu2IKIFOJ3f0v/8MDGJCDL9oD2ppz/Av1b0Nj345H9M+XIA==}
+    dependencies:
+      sourcemap-codec: 1.4.8
+    dev: false
+
   /map-cache/0.2.2:
     resolution: {integrity: sha1-wyq9C9ZSXZsFFkW7TyasXcmKDb8=}
     engines: {node: '>=0.10.0'}
@@ -1366,10 +1413,6 @@ packages:
     engines: {node: '>=0.10'}
     dev: false
 
-  /require-like/0.1.2:
-    resolution: {integrity: sha1-rW8wwTvs15cBDEaK+ndcDAprR/o=}
-    dev: false
-
   /resolve-url/0.2.1:
     resolution: {integrity: sha1-LGN/53yJOv0qZj/iGqkIAGjiBSo=}
     deprecated: https://github.com/lydell/resolve-url#deprecated
@@ -1428,13 +1471,6 @@ packages:
     resolution: {integrity: sha1-QKNmnzsHfR6UPURinhV91IAjvy4=}
     dependencies:
       ret: 0.1.15
-    dev: false
-
-  /sandboxed-module/2.0.4:
-    resolution: {integrity: sha512-AwEPOdO8mg/wJjr876yCHP2DHqVN0MaggEXhp6IIf3bcI5cYoQl9QrrCHSrvToHjvdEiS5x4TVZRgjD2bEmNTA==}
-    dependencies:
-      require-like: 0.1.2
-      stack-trace: 0.0.9
     dev: false
 
   /saxon/0.2.10:
@@ -1541,15 +1577,15 @@ packages:
     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
 
+  /sourcemap-codec/1.4.8:
+    resolution: {integrity: sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==}
+    dev: false
+
   /split-string/3.1.0:
     resolution: {integrity: sha512-NzNVhJDYpwceVVii8/Hu6DKfD2G+NrQHlS/V/qgv763EYudVwEcMQNxd2lh+0VrUByXN/oJkl5grOhYWvQUYiw==}
     engines: {node: '>=0.10.0'}
     dependencies:
       extend-shallow: 3.0.2
-    dev: false
-
-  /stack-trace/0.0.9:
-    resolution: {integrity: sha1-qPbq7KkGdMMz58Q5U/J1tFFRBpU=}
     dev: false
 
   /static-extend/0.1.2:

@@ -8,30 +8,28 @@ import { processBatch } from './batch'
 import { decodeBatch } from './nason'
 import * as grip from './grip'
 
-const gripSig = process.env.GRIP_SIG
-
-function validateGripSig(req: IncomingMessage) {
+function validateGripSig(req: IncomingMessage, gripSecret: string) {
   const gripSigHeader = req.headers['grip-sig']
-  return is.string(gripSigHeader) && grip.validateSig(gripSigHeader, gripSig)
+  return is.string(gripSigHeader) && grip.validateSig(gripSigHeader, gripSecret)
 }
 
 export interface MiddlewareConfig {
-  path?: string
   context: ServerContext
+  gripSecret: string
   /** Called when a backend function fails unexpectedly. */
   onError?: (error: Error, call: PackedCall) => void
 }
 
 export const createMiddleware = ({
-  path,
   context,
+  gripSecret,
   onError,
 }: MiddlewareConfig) =>
   async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     let status = 200
     let output: any
 
-    if (validateGripSig(req)) {
+    if (validateGripSig(req, gripSecret)) {
       let input: Buffer | undefined
       try {
         input = await readBody(req, {
@@ -50,20 +48,16 @@ export const createMiddleware = ({
           res.setHeader('Content-Type', 'application/websocket-events')
 
           const cid = req.headers['connection-id'] as string
-          const meta: CallerMeta = {}
-          for (let [name, value] of Object.entries<any>(req.headers)) {
-            if (/^meta-/i.test(name)) {
-              name = fromHeaderCase(name.slice(5))
-              meta[name] = JSON.parse(value)
-            }
-          }
+          const meta = parseCallerMeta(req.headers)
+          meta.user ??= ''
 
           for (const { type, content } of clientEvents) {
             // Handle client-sent messages.
-            if (type == grip.TEXT && content) {
+            if (type == grip.BINARY && content) {
               try {
                 var [batchId, batch] = decodeBatch(content as Uint8Array)
-              } catch {
+              } catch (err) {
+                console.error(err)
                 status = 400
                 output = 'Malformed batch'
                 break
@@ -152,3 +146,12 @@ const toHeaderCase = (input: string) =>
   input.replace(/(^[a-z]|[A-Z])/g, ch =>
     ch <= 'Z' ? '-' + ch : ch.toUpperCase()
   )
+
+const parseCallerMeta = (headers: Record<string, any>) =>
+  Object.entries(headers).reduce((meta: CallerMeta, [name, value]) => {
+    if (/^meta-/i.test(name)) {
+      name = fromHeaderCase(name.slice(5))
+      meta[name] = JSON.parse(value)
+    }
+    return meta
+  }, {})

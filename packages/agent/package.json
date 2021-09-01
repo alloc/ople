@@ -6,8 +6,6 @@
   "typings": "dist/agent.d.ts",
   "dependencies": {
     "@ople/nason": "link:../nason",
-    "queue-microtask": "npm:@alloc/queue-microtask@^1.1.4",
-    "ts-deferred": "^1.0.4",
-    "uid": "^2.0.0"
+    "queue-microtask": "npm:@alloc/queue-microtask@^1.1.4"
   }
 }

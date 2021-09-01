@@ -3,6 +3,7 @@ export * from '@fanoutio/grip'
 
 export const OPEN = 'OPEN'
 export const CLOSE = 'CLOSE'
+export const BINARY = 'BINARY'
 export const TEXT = 'TEXT'
 
 export const makeTextEvent = (data: string) =>

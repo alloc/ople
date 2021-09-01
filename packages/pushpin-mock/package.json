@@ -6,14 +6,16 @@
   "typings": "dist/pushpin-mock.d.ts",
   "devDependencies": {
     "@types/jsonwebtoken": "^8.5.4",
-    "@types/node": "^16.3.3",
+    "@types/node": "^16.7.10",
+    "@types/node-fetch": "^2.5.12",
     "@types/ws": "^7.4.7"
   },
   "dependencies": {
     "@fanoutio/grip": "^3.0.5",
-    "interlocutor": "npm:@alloc/interlocutor@^1.0.7",
+    "got": "^11.8.2",
     "jsonwebtoken": "^8.5.1",
     "misty": "^1.4.0",
+    "node-fetch": "^2.0.0",
     "raw-body": "^2.4.1",
     "uid": "^2.0.0",
     "ws": "^7.5.3"

@@ -1,10 +1,10 @@
-import type { ViteDevServer } from 'vite'
+import * as http from 'http'
+import fetch, { Headers } from 'node-fetch'
 import jwt from 'jsonwebtoken'
+import rawBody from 'raw-body'
 import { uid } from 'uid'
 import { warnOnce } from 'misty'
 import WebSocket from 'ws'
-import readBody from 'raw-body'
-import Interlocutor from 'interlocutor'
 import {
   decodeWebSocketEvents,
   encodeWebSocketEvents,
@@ -14,7 +14,7 @@ import {
 export interface ServerOptions extends Omit<WebSocket.ServerOptions, 'server'> {
   gripSecret: string
   originUrl: string
-  server: ViteDevServer
+  server: http.Server
 }
 
 export interface Pushpin extends WebSocket.Server {
@@ -31,38 +31,26 @@ export interface Pushpin extends WebSocket.Server {
 export function createPushpin({
   gripSecret,
   originUrl,
-  server,
   ...options
 }: ServerOptions) {
-  if (!server.httpServer) {
-    throw Error('Incompatible with middleware mode')
-  }
-
-  const wss = new WebSocket.Server({
-    ...options,
-    server: server.httpServer,
-  })
+  const wss = new WebSocket.Server(options)
 
   const state: GripState = {
     connections: {},
     channels: {},
   }
 
-  const gateway = createGateway(
-    gripSecret,
-    originUrl,
-    state,
-    server.middlewares
-  )
+  const gateway = createGateway(gripSecret, originUrl, state)
   wss.on('connection', socket => {
-    let connectionId: string
-    const connection: GripConnection = { meta: {}, channels: new Set(), socket }
+    const connectionId = newConnectionId(state.connections)
+    const connection: GripConnection = {
+      meta: {},
+      channels: new Set(),
+      socket,
+    }
 
-    socket.on('open', () => {
-      connectionId = newConnectionId(state.connections)
-      state.connections[connectionId] = connection
-      gateway.forward(connectionId, [new WebSocketEvent('OPEN')])
-    })
+    state.connections[connectionId] = connection
+    gateway.forward(connectionId, [new WebSocketEvent('OPEN')])
 
     socket.on('close', () => {
       gateway.forward(connectionId, [new WebSocketEvent('CLOSE')])
@@ -124,66 +112,61 @@ const todoHeaders = [
 function createGateway(
   gripSecret: string,
   originUrl: string,
-  state: GripState,
-  handler: (req: any, res: any) => void
+  state: GripState
 ) {
-  const agent = new Interlocutor(handler)
   return {
-    forward(connectionId: string, events: WebSocketEvent[]) {
+    async forward(connectionId: string, events: WebSocketEvent[]) {
       const connection = state.connections[connectionId]
       const payload = encodeWebSocketEvents(events)
-      const req = agent.request({
-        path: originUrl,
+      const resp = await fetch(originUrl, {
         method: 'POST',
-        headers: {
-          'content-length': '' + Buffer.byteLength(payload),
+        body: payload,
+        headers: new Headers({
           'connection-id': connectionId,
           'grip-sig': generateGripSig(gripSecret),
           ...connection.meta,
-        },
+        }),
       })
-      req.on('response', async res => {
-        for (const name in res.headers) {
-          // Set connection metadata
-          if (name.startsWith('Set-Meta-')) {
-            const key = name.slice(4)
-            connection.meta[key] = res.headers[name]
-          }
-          // Unsupported header
-          else if (todoHeaders.includes(name)) {
-            warnOnce(`[pushpin] "${name}" header is not implemented`)
-          }
+      const body = await rawBody(resp.body as any)
+      if (!resp.ok) {
+        return console.error(body.toString('utf8'), events)
+      }
+      resp.headers.forEach((value, name) => {
+        // Set connection metadata
+        if (/set-meta-/i.test(name)) {
+          const key = name.slice(4)
+          connection.meta[key] = value
         }
-        const body = await readBody(res as any)
-        const events = decodeWebSocketEvents(body)
-        for (const event of events) {
-          if (event.type === 'TEXT') {
-            const text = event.content as string
-            if (text.startsWith('c:')) {
-              const { type, channel } = JSON.parse(text.slice(2))
+        // Unsupported header
+        else if (todoHeaders.includes(name)) {
+          warnOnce(`[pushpin] "${name}" header is not implemented`)
+        }
+      })
+      for (const event of decodeWebSocketEvents(body)) {
+        if (event.type === 'TEXT') {
+          const text = event.content!.toString('utf8')
+          if (text.startsWith('c:')) {
+            const { type, channel } = JSON.parse(text.slice(2))
 
-              // Subscribe
-              if (type === 'subscribe') {
-                subscribe(state, connectionId, channel)
-              }
-              // Unsubscribe
-              else if (type === 'unsubscribe') {
-                unsubscribe(state, connectionId, channel)
-              }
-              // Invalid
-              else {
-                warnOnce(`[pushpin] "${type}" is an invalid control event`)
-              }
+            // Subscribe
+            if (type === 'subscribe') {
+              subscribe(state, connectionId, channel)
             }
-            // Message
+            // Unsubscribe
+            else if (type === 'unsubscribe') {
+              unsubscribe(state, connectionId, channel)
+            }
+            // Invalid
             else {
-              connection.socket.send(text)
+              warnOnce(`[pushpin] "${type}" is an invalid control event`)
             }
           }
+          // Message
+          else {
+            connection.socket.send(text)
+          }
         }
-      })
-      req.write(payload)
-      req.end()
+      }
     },
   }
 }

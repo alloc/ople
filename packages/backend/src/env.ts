@@ -2,9 +2,12 @@ import { is } from '@alloc/is'
 import { OpleRef } from 'ople-db'
 import { callees, Callee, Caller } from './callees'
 
+export { db, read, write } from 'ople-db'
+
 export function exposeFunction(callee: Callee) {
   if (!callee.name) {
-    throw Error('"exposeFunction" requires a named function')
+    // Return a stub to prevent crashing.
+    return { authorize() {} }
   }
   callees[callee.name] = callee
   return {

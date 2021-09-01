@@ -56,6 +56,9 @@ export function processBatch(
           callIndex = i
           callPromise = invokeFunction(caller, calleeId, args).then(result => {
             if (replyId) {
+              if (is.undefined(result)) {
+                result = null
+              }
               resolve(callerId, replyId, result)
             }
           })

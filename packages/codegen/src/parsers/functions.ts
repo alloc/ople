@@ -1,5 +1,4 @@
 import {
-  ts,
   FunctionExpression,
   Identifier,
   MethodDeclaration,
@@ -8,28 +7,32 @@ import {
   ShorthandPropertyAssignment,
   Signature,
   SourceFile,
-  Type,
 } from 'ts-morph'
 import { findReferencedTypes } from '../common'
+import { warn } from '../warnings'
 
 export type OpleFunction = {
   name: string
-  signature: string[]
+  signatures: Signature[]
   referencedTypes: Set<Node>
+  node: Node
   file: SourceFile
 }
 
 export function parseFunctions(file: SourceFile) {
-  const nodes = findExposedFunctions(file)
-  const signs = extractSignatures(nodes)
-  return Object.keys(signs).map(
-    (name): OpleFunction => ({
-      name,
-      signature: signs[name].map(sign => printSignature(sign, name)),
-      referencedTypes: getReferencedTypes(signs[name]),
-      file,
-    })
-  )
+  const functions: OpleFunction[] = []
+  for (const node of findExposedFunctions(file)) {
+    const [name, signatures] = extractSignatures(node)
+    if (name)
+      functions.push({
+        name,
+        signatures,
+        referencedTypes: getReferencedTypes(signatures),
+        node,
+        file,
+      })
+  }
+  return functions
 }
 
 function getReferencedTypes(signs: Signature[]) {
@@ -69,10 +72,10 @@ export function findExposedFunctions(source: SourceFile) {
           if (nameNode) {
             exposedFunctions.push(arg)
           } else {
-            // TODO: warn with node location
+            warn(arg, `Exposed function must be named`)
           }
         } else {
-          // TODO: warn with node location
+          warn(arg, `Unsupported node type: ${arg.getKindName()}`)
         }
       } else if (callee == 'exposeFunctions') {
         const [arg] = callNode.getArguments()
@@ -85,11 +88,11 @@ export function findExposedFunctions(source: SourceFile) {
             ) {
               exposedFunctions.push(prop)
             } else {
-              // TODO: warn with node location
+              warn(prop, `Unsupported node type: ${prop.getKindName()}`)
             }
           }
         } else {
-          // TODO: warn with node location
+          warn(arg, `Unsupported node type: ${arg.getKindName()}`)
         }
       }
     }
@@ -99,40 +102,37 @@ export function findExposedFunctions(source: SourceFile) {
 
 export type SignatureMap = Record<string, Signature[]>
 
-export function extractSignatures(nodes: ExposedFunction[]) {
-  const signatureMap: SignatureMap = {}
-  for (const node of nodes) {
-    let name: string | undefined
-    let signatures: Signature[] | undefined
-    if (Node.isIdentifier(node)) {
-      name = node.getText()
-      signatures = findSignatures(node)
-    } else if (
-      Node.isNamedNode(node) ||
-      Node.isNameableNode(node) ||
-      Node.isPropertyNamedNode(node)
-    ) {
-      name = node.getName()
-      if (Node.isFunctionExpression(node)) {
-        signatures = [node.getSignature()]
-      } else if (Node.isShorthandPropertyAssignment(node)) {
-        signatures = findSignatures(node.getNameNode())
-      } else if (Node.isMethodDeclaration(node)) {
-        signatures = [node.getSignature()]
-      } else if (Node.isPropertyAssignment(node)) {
-        const init = node.getInitializer()
-        if (Node.isSignaturedDeclaration(init)) {
-          signatures = [init.getSignature()]
-        } else if (Node.isIdentifier(init)) {
-          signatures = findSignatures(init)
-        }
+export function extractSignatures(node: ExposedFunction) {
+  let name: string | undefined
+  let signatures: Signature[] | undefined
+  if (Node.isIdentifier(node)) {
+    name = node.getText()
+    signatures = findSignatures(node)
+  } else if (
+    Node.isNamedNode(node) ||
+    Node.isNameableNode(node) ||
+    Node.isPropertyNamedNode(node)
+  ) {
+    name = node.getName()
+    if (Node.isFunctionExpression(node)) {
+      signatures = [node.getSignature()]
+    } else if (Node.isShorthandPropertyAssignment(node)) {
+      signatures = findSignatures(node.getNameNode())
+    } else if (Node.isMethodDeclaration(node)) {
+      signatures = [node.getSignature()]
+    } else if (Node.isPropertyAssignment(node)) {
+      const init = node.getInitializer()
+      if (Node.isSignaturedDeclaration(init)) {
+        signatures = [init.getSignature()]
+      } else if (Node.isIdentifier(init)) {
+        signatures = findSignatures(init)
       }
     }
-    if (name && signatures?.length) {
-      signatureMap[name] = signatures
-    }
   }
-  return signatureMap
+  if (name && signatures?.length) {
+    return [name, signatures] as const
+  }
+  return []
 }
 
 function findSignatures(ident: Identifier) {
@@ -144,29 +144,4 @@ function findSignatures(ident: Identifier) {
   return overloads.length
     ? overloads.map(overload => overload.getSignature())
     : [node.getSignature()]
-}
-
-function printSignature(sign: Signature, name = '') {
-  const decl = sign.getDeclaration()
-  if (!Node.isParameteredNode(decl)) {
-    throw Error('Signature must be from a parametered node')
-  }
-
-  const getText = (node: Node | Type) =>
-    node instanceof Type
-      ? node.getText(decl, ts.TypeFormatFlags.UseFullyQualifiedType)
-      : node.getText()
-
-  const params = decl.getParameters().map(getText).join(', ')
-  const returnType = getText(decl.getReturnType())
-  const typeParams = sign.getTypeParameters().map(getText).join(', ')
-
-  const [docs] = sign.getDocumentationComments()
-
-  return (
-    (docs ? `/**${docs.getText().replace(/(^|\n)/g, `\n * `)}\n */\n` : ``) +
-    name +
-    (typeParams.length ? `<${typeParams}>` : ``) +
-    `(${params}): ${returnType}`
-  )
 }

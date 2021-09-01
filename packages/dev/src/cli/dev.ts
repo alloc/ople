@@ -8,14 +8,15 @@ import * as net from 'net'
 import * as http from 'http'
 import * as vite from 'vite'
 import * as rollup from 'rollup'
+import convertSourceMap from 'convert-source-map'
+import { startTask } from 'misty/task'
 import { createPushpin } from 'pushpin-mock'
 import { generateServer } from '@ople/codegen'
-import { babelOpleClient } from '@ople/transform'
+import { babelOpleFunctions } from '@ople/transform'
 import { generateModules } from '../dev/watch'
 import { init } from '../dev/init'
 import { relativeToCwd } from '../common'
 import { createSandbox } from '../dev/sandbox'
-import { startTask } from 'misty/task'
 
 export default async function () {
   const [opleConfig, opleEnv] = await init()
@@ -30,23 +31,19 @@ export default async function () {
   let opleServer: Promise<http.Server | null> = Promise.resolve(null)
 
   const viteServer = await vite.createServer({
-    plugins: [
-      babel({
-        plugins: [babelOpleClient],
-        babelHelpers: 'bundled',
-      }),
-    ],
+    root: projectRoot,
   })
 
   await viteServer.listen()
-  const viteAddress = viteServer.httpServer!.address() as net.AddressInfo
+  const viteHttpServer = viteServer.httpServer!
+  const viteAddress = viteHttpServer.address() as net.AddressInfo
 
   const pushpinPath = '/@ople-dev'
 
   log('')
   const codegen = await generateModules(
     projectRoot,
-    opleConfig.clients.backend.outPath,
+    path.resolve(projectRoot, opleConfig.clients.backend.outPath),
     `ws://localhost:${viteAddress.port}${pushpinPath}`
   )
 
@@ -54,7 +51,7 @@ export default async function () {
     path: pushpinPath,
     gripSecret: opleEnv.gripSecret,
     originUrl: `http://localhost:${backendPort}`,
-    server: viteServer,
+    server: viteHttpServer,
   })
 
   const entryId = 'ople-entry.js'
@@ -72,6 +69,7 @@ export default async function () {
         return generateServer({
           dev: true,
           port: backendPort,
+          gripSecret: opleEnv.gripSecret,
           imports: Array.from(codegen.functionsByFile.keys(), file =>
             relativeToCwd(file.getFilePath().replace(/\.ts$/, ''), backendRoot)
           ),
@@ -80,9 +78,28 @@ export default async function () {
     },
   }
 
+  const getOpleFunction = (name: string) => codegen.functions[name]
+
   const watcher = rollup.watch({
     input: entryId,
-    plugins: [entryPlugin, nodeResolve(), esbuild({ target: 'node16' })],
+    plugins: [
+      babel({
+        extensions: ['.js', '.mjs', '.ts'],
+        exclude: 'node_modules/**',
+        plugins: [
+          '@babel/plugin-syntax-typescript',
+          [babelOpleFunctions, { getOpleFunction }],
+        ],
+        skipPreflightCheck: true,
+        babelHelpers: 'bundled',
+        sourceMaps: true,
+      }),
+      entryPlugin,
+      nodeResolve(),
+      esbuild({
+        target: 'node16',
+      }),
+    ],
     external: id => !/^[./]/.test(id),
     watch: {
       skipWrite: true,
@@ -94,13 +111,21 @@ export default async function () {
     if (event.code == 'BUNDLE_END') {
       const bundle = event.result
       const bundled = await bundle.generate({
+        dir: backendRoot,
         format: 'cjs',
         exports: 'auto',
         externalLiveBindings: false,
         sourcemap: 'inline',
-        sourcemapExcludeSources: true,
       })
-      const code = bundled.output[0].code
+
+      log(log.green(bundled.output[0].code))
+
+      const map: any = bundled.output[0].map
+      map.sourceRoot = backendRoot
+
+      const code =
+        bundled.output[0].code + convertSourceMap.fromObject(map).toComment()
+
       opleServer = runOpleServer(code).catch(err => {
         log.error(err)
         return null

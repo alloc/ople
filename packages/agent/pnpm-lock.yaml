@@ -3,33 +3,13 @@ lockfileVersion: 5.3
 specifiers:
   '@ople/nason': link:../nason
   queue-microtask: npm:@alloc/queue-microtask@^1.1.4
-  ts-deferred: ^1.0.4
-  uid: ^2.0.0
 
 dependencies:
   '@ople/nason': link:../nason
-  queue-microtask: /@alloc/queue-microtask/1.1.4
-  ts-deferred: 1.0.4
-  uid: 2.0.0
+  queue-microtask: /@alloc/queue-microtask/1.1.5
 
 packages:
 
-  /@alloc/queue-microtask/1.1.4:
-    resolution: {integrity: sha512-RQ73vSCZyYWoCORvA5rT/Xg99Zt+MyRhoVhYY2Xm/lXAyx5nsWCPB3xDiS+3fmll3iZ3tDHmtOdiCBX8n2RdVg==}
-    dev: false
-
-  /@lukeed/csprng/1.0.0:
-    resolution: {integrity: sha512-ruuGHsnabmObBdeMg3vKdGRmh06Oog3eFpf/Tk6X0kDSJDpJTDCj2dqdp1+0VjzIUgHlFF9GBm7uFqfYhhdX9g==}
-    engines: {node: '>=8'}
-    dev: false
-
-  /ts-deferred/1.0.4:
-    resolution: {integrity: sha1-WBReuu71uPKikLjOw9Bgg5+Uicc=}
-    dev: false
-
-  /uid/2.0.0:
-    resolution: {integrity: sha512-hFw+zKBA1szYdbZWj6FjTxZzJnKNf+wTDcsxlJaXS64MCy9LQEmJUVieGYHCKek/WRyFIcs0cEXtGIQmfvHe2A==}
-    engines: {node: '>=8'}
-    dependencies:
-      '@lukeed/csprng': 1.0.0
+  /@alloc/queue-microtask/1.1.5:
+    resolution: {integrity: sha512-+11mLrN7Xu9a9uU0fdsZICVDi8vhxtqxaqX+nPyPXmrDJBPUqKc34aJak8KEdjkhhGFTuqs8ZiiuwP423Do14w==}
     dev: false

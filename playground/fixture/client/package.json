@@ -1,6 +1,12 @@
 {
   "name": "client",
   "dependencies": {
-    "@ople/client": "link:../../../packages/client"
+    "@ople/client": "link:../../../packages/client",
+    "source-map-support": "^0.5.19",
+    "ws": "^8.2.1"
+  },
+  "devDependencies": {
+    "@types/source-map-support": "^0.5.4",
+    "@types/ws": "^7.4.7"
   }
 }

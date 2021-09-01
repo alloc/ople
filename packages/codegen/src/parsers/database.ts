@@ -6,6 +6,7 @@ const reservedCollectionNames = ['events', 'set', 'self', 'documents', '_']
 export type OpleCollection = {
   name: string
   type: TypeNode | null
+  node: Node
 }
 
 export function parseCollections(source: SourceFile) {
@@ -20,19 +21,17 @@ export function parseCollections(source: SourceFile) {
     if (callee === 'openCollection') {
       const [nameNode] = call.getArguments()
       if (!Node.isStringLiteral(nameNode)) {
-        return warn(
-          call,
-          'Expected a string literal as the 1st argument of `openCollection`'
-        )
+        return warn(call, `Collection name must be a string literal`)
       }
       const name = nameNode.getLiteralValue()
       if (reservedCollectionNames.includes(name)) {
-        return // TODO: warn about reserved name
+        return warn(nameNode, `Collection name is reserved: "${name}"`)
       }
       const [documentType] = call.getTypeArguments()
       collections.push({
         name,
         type: documentType || null,
+        node: call,
       })
     }
   })

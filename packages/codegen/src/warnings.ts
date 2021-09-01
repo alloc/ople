@@ -22,7 +22,7 @@ export function warn(node: Node, message: string) {
       line: startLine,
       column:
         startLine === endLine
-          ? node.getStart() - node.getStartLinePos()
+          ? 1 + (node.getStart() - node.getStartLinePos())
           : undefined,
     },
     end: startLine !== endLine ? { line: endLine } : undefined,

@@ -4,12 +4,18 @@ export function generateServer({
   dev,
   port,
   imports,
+  gripSecret,
 }: {
   dev: boolean
   port: number
   imports: string[]
+  gripSecret: string
 }) {
   const makeContext = dev ? `makeOriginContext` : `makePushpinContext`
+  const serveOptions = endent`
+    port: ${port},
+    gripSecret: "${gripSecret}",
+  `
   return endent`
     import { serve, ${makeContext} } from "@ople/backend"
     import "@ople/backend/global"
@@ -21,13 +27,13 @@ export function generateServer({
         ? endent`
           export default (config) =>
             serve({
-              port: ${port},
               context: ${makeContext}(config),
+              ${serveOptions}
             })`
         : endent`
           serve({
-            port: ${port},
             context: ${makeContext}(),
+            ${serveOptions}
           })`
     }
   `

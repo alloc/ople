@@ -1,6 +1,8 @@
+// @ts-check
 import { dirname } from 'path'
 import { crawl } from 'recrawl-sync'
 import nodeResolve from '@rollup/plugin-node-resolve'
+import sucrase from '@rollup/plugin-sucrase'
 import esbuild from 'rollup-plugin-esbuild'
 import dts from 'rollup-plugin-dts'
 
@@ -11,14 +13,18 @@ export default configs
 const dtsPlugin = dts({
   respectExternal: true,
 })
-const esPlugin = esbuild({
-  target: 'es2018',
+// const esPlugin = esbuild({
+//   target: 'es2018',
+//   sourceMap: true,
+// })
+const esPlugin = sucrase({
+  transforms: ['typescript'],
 })
 const resolvePlugin = nodeResolve({
   extensions: ['.ts', '.js'],
 })
 
-const enabledPackages = /agent|backend|client|codegen|dev/
+const enabledPackages = /backend|codegen|dev|transform/
 //  /agent|backend|client|dev|init|pushpin|transform|tnetstring/
 
 crawl('.', {
@@ -38,7 +44,9 @@ crawl('.', {
   const pkg = require('./' + pkgPath)
   const pkgRoot = dirname(pkgPath)
 
-  let input = `${pkgRoot}/${pkg.source || 'src/index.ts'}`
+  const input = `${pkgRoot}/${pkg.source || 'src/index.ts'}`
+
+  /** @type any[] */
   let output = []
 
   if (pkg.main) {
@@ -47,6 +55,7 @@ crawl('.', {
       format: 'cjs',
       exports: 'auto',
       sourcemap: true,
+      sourcemapExcludeSources: true,
       externalLiveBindings: false,
     })
   }
@@ -56,6 +65,7 @@ crawl('.', {
       file: `${pkgRoot}/${pkg.module}`,
       format: 'es',
       sourcemap: true,
+      sourcemapExcludeSources: true,
     })
   }
 
@@ -87,6 +97,7 @@ crawl('.', {
         dir: `${pkgRoot}/dist/cli`,
         format: 'cjs',
         sourcemap: true,
+        sourcemapExcludeSources: true,
         exports: 'named',
       },
       plugins: [esPlugin],

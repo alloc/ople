@@ -1,12 +1,3 @@
-export type Ref = string & {
-  readonly id: string
-  readonly collection: Collection
-}
-
-export type Collection = {
-  readonly id: string
-}
-
 export interface AgentConfig {
   /** The transport strategy. Pass the `ws` or `http` export, or provide your own. */
   protocol: Protocol
@@ -37,10 +28,6 @@ export type ReplyHandler = (error: string | null, result?: any) => void
 export type ReplyQueue = Map<string, ReplyHandler>
 
 export type PackedCall = [method: string, args: any[] | null, replyId: string]
-
-export type RefMap<T> = { [ref: string]: T }
-
-export type Patch = { [key: string]: any }
 
 export type Deferred = {
   promise: Promise<void>

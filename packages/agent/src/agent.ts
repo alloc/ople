@@ -1,15 +1,10 @@
 import queueMicrotask from 'queue-microtask'
-import { uid as makeId } from 'uid'
 import { errors } from './errors'
 import {
   AgentConfig,
   PackedCall,
-  Patch,
-  RefMap,
   ReplyQueue,
-  Ref,
   ReplyHandler,
-  Collection,
   BatchLike,
 } from './types'
 
@@ -31,6 +26,7 @@ export function makeAgent<RefHandle, Batch extends BatchLike>({
   makeBatch,
   enqueueCall,
   finalizeBatch,
+  mergeBatches,
   decodeReply,
   onSignal,
 }: PrivateConfig<RefHandle, Batch>): Agent {
@@ -88,8 +84,7 @@ export function makeAgent<RefHandle, Batch extends BatchLike>({
     replyQueue.set(batch.id, error => {
       if (error) {
         if (error == errors.disconnect) {
-          mergeSets(nextBatch, batch, '@get')
-          mergeSets(nextBatch, batch, '@pull')
+          mergeBatches(batch, nextBatch)
           // TODO: check whether the server received the batch at all
           // TODO: have another promise for push/create/delete?
           return batch.resolve(nextBatch.promise)
@@ -138,12 +133,10 @@ interface PrivateConfig<RefHandle, Batch> extends AgentConfig {
   ) => PromiseLike<any>
   /** Finalize the batch and return an encoded request. */
   finalizeBatch: (batch: Batch) => [payload: Uint8Array, calls: PackedCall[]]
+  /** Merge the first batch into the second batch. */
+  mergeBatches: (batch: Batch, nextBatch: Batch) => void
   /** Decode a reply. */
   decodeReply: (bytes: Uint8Array) => [string, any, string?]
   /** Receive signals from the backend. */
   onSignal: (name: string, args?: any[]) => void
-}
-
-function mergeSets(dest: any, src: any, key: string) {
-  dest[key] = new Set([...dest[key], ...src[key]])
 }

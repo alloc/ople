@@ -1,8 +1,9 @@
 import endent from 'endent'
 import redent from 'redent'
-import { Node } from 'ts-morph'
+import { ts, Node, Signature, Type } from 'ts-morph'
 import { OpleParser } from './parser'
-import { findReferencedTypes, getDefinitions } from './common'
+import { findReferencedTypes } from './common'
+import { warn } from './warnings'
 
 const mergeIntoSet = <T>(
   into: Set<T>,
@@ -14,7 +15,7 @@ const mergeIntoSet = <T>(
  * on the frontend.
  */
 export function printClientModule(parser: OpleParser, backendUrl: string) {
-  const { functions, collections } = parser
+  const { collections } = parser
   const referencedTypes = new Set<Node>()
 
   const collectionTypes = Object.values(collections).map(coll => {
@@ -26,9 +27,10 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
     return type
   })
 
+  const functions = Object.values(parser.functions)
   const functionTypes = functions.map(fun => {
     mergeIntoSet(referencedTypes, fun.referencedTypes)
-    return fun.signature
+    return fun.signatures.map(sig => printSignature(sig, fun.name))
   })
 
   const signals = Object.values(parser.signals)
@@ -65,13 +67,13 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
       const vars = (imports[moduleInfo.id] ??= [])
       if (!vars.includes(name)) {
         if (typeNames.has(name)) {
-          // TODO: warn about naming conflict
+          warn(type, `Type skipped. Name already taken: "${name}"`)
         } else {
           vars.push(name)
         }
       }
     } else if (typeNames.has(name)) {
-      // TODO: warn about naming conflict
+      warn(type, `Type skipped. Name already taken: "${name}"`)
     } else {
       typeNames.add(name)
       printedTypes.push(redent(type.getFullText(), 0).trim())
@@ -118,4 +120,29 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
 
     ${printedTypes.join('\n\n')}
   `
+}
+
+function printSignature(sign: Signature, name: string) {
+  const decl = sign.getDeclaration()
+  if (!Node.isParameteredNode(decl)) {
+    throw Error('Signature must be from a parametered node')
+  }
+
+  const getText = (node: Node | Type) =>
+    node instanceof Type
+      ? node.getText(decl, ts.TypeFormatFlags.UseFullyQualifiedType)
+      : node.getText()
+
+  const params = decl.getParameters().map(getText).join(', ')
+  const returnType = getText(decl.getReturnType())
+  const typeParams = sign.getTypeParameters().map(getText).join(', ')
+
+  const [docs] = sign.getDocumentationComments()
+
+  return (
+    (docs ? `/**${docs.getText().replace(/(^|\n)/g, `\n * `)}\n */\n` : ``) +
+    name +
+    (typeParams.length ? `<${typeParams}>` : ``) +
+    `(${params}): ${returnType}`
+  )
 }

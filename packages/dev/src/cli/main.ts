@@ -1,3 +1,4 @@
+import 'source-map-support/register'
 import { events } from '../events'
 import { fatal } from 'misty'
 import log from 'lodge'
