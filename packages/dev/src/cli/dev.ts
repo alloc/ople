@@ -43,7 +43,8 @@ export default async function () {
   log('')
   const codegen = await generateModules(
     projectRoot,
-    path.resolve(projectRoot, opleConfig.clients.backend.outPath),
+    opleConfig.clients.backend.outPath,
+    opleConfig.clients.database.outPath,
     `ws://localhost:${viteAddress.port}${pushpinPath}`
   )
 
@@ -117,8 +118,6 @@ export default async function () {
         externalLiveBindings: false,
         sourcemap: 'inline',
       })
-
-      log(log.green(bundled.output[0].code))
 
       const map: any = bundled.output[0].map
       map.sourceRoot = backendRoot

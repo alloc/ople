@@ -1,22 +1,33 @@
 import fs from 'saxon/sync'
 import log from 'lodge'
+import path from 'path'
 import { clear } from 'misty'
 import { startTask } from 'misty/task'
 import { codeFrameColumns } from '@babel/code-frame'
-import { OpleParser, printClientModule, warningsByFile } from '@ople/codegen'
+import {
+  OpleParser,
+  printClientModule,
+  printBackendModule,
+  warningsByFile,
+} from '@ople/codegen'
 import { relativeToCwd } from '../common'
 
 export function generateModules(
   root: string,
   clientModulePath: string,
+  backendModulePath: string,
   backendUrl: string
 ) {
   const parser = new OpleParser(root)
+
+  clientModulePath = path.resolve(root, clientModulePath)
+  backendModulePath = path.resolve(root, backendModulePath)
 
   function generate() {
     const task = startTask('Generating modules...')
     try {
       fs.write(clientModulePath, printClientModule(parser, backendUrl))
+      fs.write(backendModulePath, printBackendModule(parser))
       task.finish('Modules generated')
       printWarnings()
     } catch (err) {

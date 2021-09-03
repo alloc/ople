@@ -1,34 +1,70 @@
-import { Node } from 'ts-morph'
+import {
+  JSDocableNode,
+  NameableNode,
+  NamedNode,
+  Node,
+  PropertyNamedNode,
+  TypeReferenceNode,
+} from 'ts-morph'
 import path from 'path'
 import fs from 'fs'
 
-export function findReferencedTypes(node: Node, referencedTypes: Set<Node>) {
-  node.forEachDescendant(node => {
-    if (Node.isTypeReferenceNode(node)) {
-      for (const def of getDefinitions(node.getTypeName())) {
-        const decl = def.getDeclarationNode()
-        if (decl) {
-          referencedTypes.add(decl)
-        }
+export const mergeIntoSet = <T>(
+  into: Set<T>,
+  from: { forEach(cb: (value: T) => void): void }
+) => from.forEach(value => into.add(value))
+
+export const printImport = ([source, vars]: [string, string[]]) =>
+  `import ` +
+  (vars.length ? `{ ${vars.join(', ')} } from ` : ``) +
+  `"${source}"`
+
+export function printJSDocs(node: JSDocableNode) {
+  const [docs] = node.getJsDocs()
+  return docs
+    ? `/**${docs.getInnerText().replace(/(^|\n)/g, '\n * ')}\n */\n`
+    : ``
+}
+
+export function findReferencedTypes(node: Node, types: Set<Node>) {
+  if (Node.isTypeReferenceNode(node)) {
+    resolveTypeReference(node, types)
+  } else {
+    node.forEachDescendant(node => {
+      if (Node.isTypeReferenceNode(node)) {
+        resolveTypeReference(node, types)
       }
+    })
+    // Implicit return type
+    if (Node.isReturnTypedNode(node) && !node.getReturnTypeNode()) {
+      node.getReturnType()
     }
-  })
+  }
+}
+
+function resolveTypeReference(node: TypeReferenceNode, types: Set<Node>) {
+  for (const def of getDefinitions(node.getTypeName())) {
+    const decl = def.getDeclarationNode()
+    if (decl) {
+      types.add(decl)
+    }
+  }
 }
 
 export function getDefinitions(node: Node) {
   return node.getProject().getLanguageService().getDefinitions(node)
 }
 
-export function resolveTypeImport(id: string, resolve: (id: string) => string) {
-  let resolved = resolve(id)
-  if (resolved.endsWith('.ts')) {
-    return resolved
-  }
-  resolved = resolved.replace(/\.js$/, '.d.ts')
-  if (fs.existsSync(resolved)) {
-    return resolved
-  }
-  resolved = resolve(`@types/${id}/package.json`)
-  const pkg = require(resolved)
-  return path.resolve(resolved, '..', pkg.types || pkg.typings || 'index.d.ts')
+export function isNamedNode(
+  node: Node
+): node is Node & (NamedNode | NameableNode | PropertyNamedNode) {
+  return (
+    Node.isNameableNode(node) ||
+    Node.isNamedNode(node) ||
+    Node.isPropertyNamedNode(node)
+  )
+}
+
+export function getNameNode(node: Node) {
+  return isNamedNode(node) ? node.getNameNode() : undefined
 }

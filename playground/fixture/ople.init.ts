@@ -4,20 +4,14 @@ setEnv({
   gripSecret: 'secret',
 })
 
-interface Bar {}
-
-interface Foo {
-  bar: Bar
-}
-
 export interface User {
+  /** The user's display name */
   name: string
+  /** The user's password */
+  _password: string
 }
 
 openCollection<User>('users')
 
-export interface Signals {
-  /** A user logged in. */
-  onLogin(user: OpleRef<User>): void
-  onFoo(foo: Foo): void
-}
+// Server-sent messages
+export interface Signals {}

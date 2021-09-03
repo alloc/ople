@@ -37,12 +37,12 @@ export function emit(caller: Caller, target: any) {
 
   const channel = is.string(target)
     ? target
-    : target === global
+    : target == global
     ? '*'
-    : target === caller
+    : target == caller
     ? 'c:' + caller.id
-    : target instanceof OpleRef
-    ? target.collection?.id === 'users'
+    : target.constructor == OpleRef
+    ? target.collection?.id == 'users'
       ? 'u:' + caller.uid
       : 'r:' + target.toString()
     : ''

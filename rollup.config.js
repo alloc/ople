@@ -3,7 +3,7 @@ import { dirname } from 'path'
 import { crawl } from 'recrawl-sync'
 import nodeResolve from '@rollup/plugin-node-resolve'
 import sucrase from '@rollup/plugin-sucrase'
-import esbuild from 'rollup-plugin-esbuild'
+// import esbuild from 'rollup-plugin-esbuild'
 import dts from 'rollup-plugin-dts'
 
 /** @type import('rollup').RollupOptions[] */
@@ -24,7 +24,7 @@ const resolvePlugin = nodeResolve({
   extensions: ['.ts', '.js'],
 })
 
-const enabledPackages = /backend|codegen|dev|transform/
+const enabledPackages = /init|backend|codegen|dev/
 //  /agent|backend|client|dev|init|pushpin|transform|tnetstring/
 
 crawl('.', {

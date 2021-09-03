@@ -1,18 +1,13 @@
 import type { OpleRef } from 'ople-db'
-import type { Caller, UserRef } from './callees'
-
-interface ExposedFunctions {
-  /**
-   * Run a test before every call of any of the associated functions,
-   * and pretend like the function doesn't exist if the test fails.
-   *
-   * Most of the time, you'll be checking `caller.meta` or reading
-   * something from the database to verify the caller.
-   */
-  authorize(test: () => boolean | Promise<boolean>): void
-}
+import type { RefSignals, Signals, UserRef } from './types'
+import type { Caller } from './callees'
 
 declare global {
+  type OpleRef<T extends object = any> = import('ople-db').OpleRef<T>
+  type OpleDocument<T extends object = any> = import('ople-db').OpleDocument<T>
+  type OpleTime = import('ople-db').OpleTime
+  type OpleDate = import('ople-db').OpleDate
+
   /**
    * Expose a backend function to the client.
    */
@@ -29,29 +24,9 @@ declare global {
   const caller: Caller
 
   /**
-   * Send a signal to every connection.
+   * Send a signal to one or more connections.
    */
-  function emit(global: NodeJS.Global): Record<string, Function>
-
-  /**
-   * Send a signal to the caller.
-   */
-  function emit(caller: Caller): Record<string, Function>
-
-  /**
-   * Send a signal to every connection of the given user.
-   */
-  function emit(user: UserRef): Record<string, Function>
-
-  /**
-   * Send a signal to every subscriber of the given ref.
-   */
-  function emit(ref: OpleRef): Record<string, Function>
-
-  /**
-   * Send a signal to a private channel.
-   */
-  function emit(channel: string): Record<string, Function>
+  const emit: EmitFunction
 
   /**
    * Subscribe the caller to a private channel.
@@ -88,4 +63,42 @@ declare global {
    * the callback before they can ever be accessed.
    */
   const write: typeof import('ople-db').write
+}
+
+interface ExposedFunctions {
+  /**
+   * Run a test before every call of any of the associated functions,
+   * and pretend like the function doesn't exist if the test fails.
+   *
+   * Most of the time, you'll be checking `caller.meta` or reading
+   * something from the database to verify the caller.
+   */
+  authorize(test: () => boolean | Promise<boolean>): void
+}
+
+interface EmitFunction {
+  /**
+   * Send a signal to every connection.
+   */
+  (global: NodeJS.Global | '*'): Signals
+
+  /**
+   * Send a signal to the caller.
+   */
+  (caller: Caller): Signals
+
+  /**
+   * Send a signal to every connection of the given user.
+   */
+  (user: UserRef): Signals
+
+  /**
+   * Send a signal to every subscriber of the given ref.
+   */
+  <T extends object>(ref: OpleRef<T>): RefSignals<T>
+
+  /**
+   * Send a signal to a private channel.
+   */
+  (channel: string): Signals
 }

@@ -34,8 +34,10 @@ const api = {
 }
 
 declare global {
-  // Placeholder type for Signals interface
+  // Placeholder types
   interface OpleRef<T> {}
+  interface OpleTime {}
+  interface OpleDate {}
 
   const setEnv: typeof api.setEnv
   const openCollection: typeof api.openCollection

@@ -1,8 +1,12 @@
 import './global'
 
+export * from './serve'
 export * from './middleware'
 export * from './context'
-export * from './serve'
+
+// Types
+export * from './types'
+export { Caller } from './callees'
 
 // Global functions
 import * as env from './env'

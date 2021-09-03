@@ -4,6 +4,6 @@
     "moduleResolution": "node",
     "strict": true,
     "target": "esnext",
-    "types": ["@ople/backend"]
+    "typeRoots": ["node_modules/@types"]
   }
 }

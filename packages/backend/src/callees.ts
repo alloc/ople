@@ -1,5 +1,6 @@
 import { OpleRef } from 'ople-db'
 import { ServerContext } from './context'
+import { User } from './types'
 
 export interface Callee {
   (caller: Caller, ...args: any[]): any
@@ -9,16 +10,10 @@ export interface Callee {
 /** Backend callees which are called by the client. */
 export const callees: Record<string, Callee> = {}
 
-/** The ref to the current user */
-export class UserRef extends OpleRef {
-  // @ts-ignore
-  private _isUserRef: true
-}
-
 export type CallerMeta = Record<string, string | number | boolean>
 
 export class Caller {
-  private _user?: UserRef
+  private _user?: OpleRef<User>
   /** The caller identity. */
   readonly id: string
   /** Caller metadata set by past calls. */
@@ -46,6 +41,6 @@ export class Caller {
       : (this._user = new OpleRef(
           this.uid,
           new OpleRef('users', OpleRef.Native.collections)
-        ) as UserRef)
+        ))
   }
 }

@@ -8,7 +8,7 @@ import {
   Signature,
   SourceFile,
 } from 'ts-morph'
-import { findReferencedTypes } from '../common'
+import { findReferencedTypes, isNamedNode } from '../common'
 import { warn } from '../warnings'
 
 export type OpleFunction = {
@@ -108,11 +108,7 @@ export function extractSignatures(node: ExposedFunction) {
   if (Node.isIdentifier(node)) {
     name = node.getText()
     signatures = findSignatures(node)
-  } else if (
-    Node.isNamedNode(node) ||
-    Node.isNameableNode(node) ||
-    Node.isPropertyNamedNode(node)
-  ) {
+  } else if (isNamedNode(node)) {
     name = node.getName()
     if (Node.isFunctionExpression(node)) {
       signatures = [node.getSignature()]

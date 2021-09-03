@@ -1,4 +1,5 @@
 import WebSocket from 'ws'
-import 'source-map-support/register'
+import { install } from 'source-map-support'
 
 Object.assign(global, { WebSocket })
+install({ hookRequire: true })

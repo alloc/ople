@@ -1,13 +1,12 @@
-import endent from 'endent'
-import { Node, SourceFile } from 'ts-morph'
-import { findReferencedTypes } from '../common'
+import { MethodSignature, Node, SourceFile } from 'ts-morph'
+import { findReferencedTypes, printJSDocs } from '../common'
 import { warn } from '../warnings'
 
 export type OpleSignal = {
   name: string
   signature: string
   referencedTypes: Set<Node>
-  node: Node
+  node: MethodSignature
 }
 
 export function parseSignals(source: SourceFile) {
@@ -37,15 +36,10 @@ export function parseSignals(source: SourceFile) {
         firstParamType &&
         firstParamType.getText().match(/^OpleRef(?:|<(.+?)>)$/)?.[1]
 
-      const [docs] = member.getJsDocs()
-      const description = docs
-        ? `/**${docs.getInnerText().replace(/(^|\n)/g, '\n * ')}\n */\n`
-        : ``
-
       signals.push({
         name,
         signature:
-          description +
+          printJSDocs(member) +
           name +
           `(handler: (${paramsText.join(
             ', '
