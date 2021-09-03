@@ -1,5 +1,6 @@
 import bindings from 'bindings'
 import path from 'path'
+import { OpleDocument, OpleRef } from '../values'
 
 const pwd = process.cwd()
 process.chdir(process.env.HOME + '/.nimble/pkgs/nimdbx-0.4.1/libmdbx-dist')
@@ -25,6 +26,13 @@ export interface DatabaseHandle {
   beginSnapshot(): Snapshot
   /** Start an isolated write transaction */
   beginTransaction(): Transaction
+  /**
+   * Find a document by iterating a collection.
+   *
+   * The `filter` function receives a document in JSON format.
+   * The result is the first document for which `filter` returns true.
+   */
+  findDocument(collection: string, filter: (doc: string) => boolean): string
 }
 
 export interface Snapshot {

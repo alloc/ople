@@ -7,6 +7,7 @@ const { filter, forEach, map, reduce, slice } = getArrayFunctions(
 )
 
 export class OpleArray<T> {
+  readonly length!: number
   constructor(data: readonly T[]) {
     Object.setPrototypeOf(data, OpleArray.prototype)
     return new Proxy(data, OpleArray.traps) as any
@@ -40,7 +41,6 @@ export class OpleArray<T> {
 
 export interface OpleArray<T = any> extends OpleArrayLike<T> {
   readonly [index: number]: T
-  length: number
   append<U>(value: U | U[]): OpleArray<T | U>
   difference(...groups: (any[] | OpleArray)[]): OpleArray<T>
   distinct(): OpleArray<T>

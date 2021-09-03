@@ -17,6 +17,30 @@ proc makeCursor(query: OpleQuery, col: Collection not nil, params: OpleObject): 
   elif params.hasKey("after"):
     result.minKey = params["after"].ref.id
 
+# Find the first match in a given OpleSet.
+proc find*(query: OpleQuery, s: OpleSet, isFound: proc (item: OpleData): bool): OpleData =
+  result = \nil
+  let call = s.expr
+  query.debugPath.add call.callee
+  case call.callee
+    of qDocuments, qGetDocuments:
+      let shouldGetDocs = call.callee == qGetDocuments
+      let colRef = call.arguments[0].ref
+      let col = query.getCollection colRef.id
+      var cur = query.makeCursor(col, emptyOpleObject)
+      while cur.next():
+        let docRef = OpleRef(id: $cur.key, collection: colRef.id)
+        var doc: OpleDocument
+        if shouldGetDocs:
+          let props = parseDocument($cur.value)
+          doc = docRef.toDocument(props["data"].object, props["ts"].float)
+        let match =
+          if shouldGetDocs: newOpleRef(docRef)
+          else: newOpleDocument(doc)
+        if isFound(match):
+          discard query.debugPath.pop()
+          return match
+
 proc paginate*(s: OpleSet) {.query.} =
   let call = s.expr
   query.debugPath.add call.callee
@@ -36,13 +60,13 @@ proc paginate*(s: OpleSet) {.query.} =
       var cur = query.makeCursor(col, params)
       while matches.len < limit and cur.next():
         let docRef = OpleRef(id: $cur.key, collection: colRef.id)
-        var doc: OpleDocument
+        var doc: Option[OpleDocument]
         if shouldGetDocs:
           let props = parseDocument($cur.value)
-          doc = docRef.toDocument(props["data"].object, props["ts"].float)
+          doc = some docRef.toDocument(props["data"].object, props["ts"].float)
         let match =
           if shouldGetDocs: newOpleRef(docRef)
-          else: newOpleDocument(doc)
+          else: newOpleDocument(get(doc))
         matches.add match
 
   discard query.debugPath.pop()

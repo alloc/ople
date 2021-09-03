@@ -1,6 +1,6 @@
-import { ToQuery } from '../query'
+import { ToQuery } from '../convert'
 import { queriesByType } from '../queryMap'
-import { OpleRef, OpleTime } from '../values'
+import { OpleTime } from '../values'
 import type { OpleArrayLike } from './array'
 import { OpleCursor, OplePage } from './page'
 import { execSync, q } from './transaction'

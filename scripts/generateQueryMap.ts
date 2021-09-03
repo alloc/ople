@@ -21,13 +21,15 @@ const OpleQueries = stmts.find(
 
 stmts = arrayModule.getStatements()
 const OpleArray = stmts.find(
-  stmt => Node.isClassDeclaration(stmt) && 'OpleArray' === stmt.getName(),
-) as ClassDeclaration
+  stmt => Node.isInterfaceDeclaration(stmt) && 'OpleArray' === stmt.getName(),
+) as InterfaceDeclaration
 
-const queries = [OpleQueries, OpleArray].reduce(
-  (queries, node) => queries.concat(node.getType().getProperties()),
-  [] as Symbol[],
-)
+const queries = OpleQueries.getType().getProperties()
+forEachMethod(OpleArray, prop => {
+  queries.push(prop.getSymbolOrThrow())
+})
+const compareStr = (a: string, b: string) => (a > b ? 1 : b > a ? -1 : 0)
+queries.sort((a, b) => compareStr(a.getName(), b.getName()))
 
 const snakeCaseExceptions = [
   'containsStr',
@@ -66,12 +68,17 @@ for (const query of queries) {
     continue
   }
   const props: string[] = []
+  console.log(name)
   props.push(fixCasing(name))
-  const [method] = query.getDeclarations() as [MethodSignature]
-  for (const param of method.getParameters().slice(1)) {
-    props.push(fixCasing(param.getName()))
+  try {
+    const [method] = query.getDeclarations() as [MethodSignature]
+    for (const param of method.getParameters().slice(1)) {
+      props.push(fixCasing(param.getName()))
+    }
+    generatedLines.push(`  ${name}: ${JSON.stringify(props)},`)
+  } catch (err: any) {
+    console.error(`Failed to parse query "${name}". ${err.stack}`)
   }
-  generatedLines.push(`  ${name}: ${JSON.stringify(props)},`)
 }
 
 generatedLines.push(`}\n`)
@@ -122,4 +129,20 @@ function fixCasing(name: string) {
     name = name.replace(/([A-Z])/g, '_$1')
   }
   return name.toLowerCase()
+}
+
+function forEachMethod(
+  type: InterfaceDeclaration,
+  each: (method: MethodSignature) => void,
+) {
+  type
+    .getMembers()
+    .forEach(member => Node.isMethodSignature(member) && each(member))
+  type
+    .getExtends()
+    .forEach(
+      superType =>
+        Node.isInterfaceDeclaration(superType) &&
+        forEachMethod(superType, each),
+    )
 }

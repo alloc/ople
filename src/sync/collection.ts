@@ -1,8 +1,13 @@
 import { notImplemented } from '../errors'
-import { OpleDocument, OpleDocumentOptions } from './document'
+import {
+  OpleFrozenDocument as OpleDocument,
+  OpleDocumentOptions,
+} from './document'
 import { OpleRef } from '../values'
-import { execSync, q } from './transaction'
 import { OpleSet } from './set'
+import { q } from './transaction'
+import { db } from '../internal/db'
+import { jsonReviver } from '../json/reviver'
 
 function coerceToRef<T extends object | null = any>(
   ref: string | OpleRef<T>,
@@ -21,7 +26,7 @@ export class OpleCollection<
   T extends object | null = any,
   Meta extends object | null = any,
 > {
-  private ref: OpleRef
+  private _ref: OpleRef
 
   /**
    * Equivalent to `Collection` in FaunaDB
@@ -29,7 +34,7 @@ export class OpleCollection<
    * @see https://docs.fauna.com/fauna/current/api/fql/functions/collection
    */
   constructor(readonly name: string) {
-    this.ref = new OpleRef(name, OpleRef.Native.collections)
+    this._ref = new OpleRef(name, OpleRef.Native.collections)
   }
 
   /** Get the mutable metadata of this collection */
@@ -39,32 +44,50 @@ export class OpleCollection<
 
   /** Check if this collection exists */
   get exists() {
-    return q.exists(this.ref)
+    return q.exists(this._ref)
   }
 
   /** Get the document refs in this collection */
   get refs() {
-    return new OpleSet<OpleRef<T>>({ documents: this.ref })
+    return new OpleSet<OpleRef<T>>({ documents: this._ref })
   }
 
   /** Read the documents in this collection */
   get documents() {
-    return new OpleSet<OpleDocument<T>>({ get_documents: this.ref })
+    return new OpleSet<OpleDocument<T>>({ get_documents: this._ref })
+  }
+
+  /** Create a document ref, whose document may or may not exist */
+  ref(id: string) {
+    return new OpleRef<T>(id, this._ref)
   }
 
   /** Read a document in this collection */
   get(id: string) {
-    return q.get(new OpleRef<T>(id, this.ref))
+    return q.get(new OpleRef<T>(id, this._ref))
+  }
+
+  /**
+   * Find a document by iterating over the entire collection.
+   *
+   * ⚠️ This is very inefficient on large collections, compared
+   * to an indexed search.
+   */
+  find(filter: (doc: OpleDocument<T>) => boolean) {
+    return db.findDocument(this._ref.id, docStr => {
+      const doc = JSON.parse(docStr, jsonReviver)
+      return filter(doc)
+    })
   }
 
   /** Create a document in this collection */
   create(data: T, options?: OpleDocumentOptions): OpleDocument<T> {
-    return q.create(this.ref, { ...options, data })
+    return q.create(this._ref, { ...options, data })
   }
 
   /** Replace a document's data */
   replace(ref: string | OpleRef<T>, data: T): OpleDocument<T> {
-    return q.replace(coerceToRef(ref, this.ref), { data })
+    return q.replace(coerceToRef(ref, this._ref), { data })
   }
 
   /** Merge new data into a document */
@@ -72,7 +95,7 @@ export class OpleCollection<
     ref: string | OpleRef<T>,
     options: { data?: Partial<T> } & OpleDocumentOptions,
   ): OpleDocument<T> {
-    return q.update(coerceToRef(ref, this.ref), options)
+    return q.update(coerceToRef(ref, this._ref), options)
   }
 }
 

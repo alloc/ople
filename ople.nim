@@ -1,7 +1,8 @@
 import napibindings
 import streams
 import times
-import ./oplepkg/data/[from_json,to_json]
+import ./oplepkg/query/set
+import ./oplepkg/data/[from_json,to_json,types]
 import ./oplepkg/database
 import ./oplepkg/eval
 
@@ -23,6 +24,9 @@ proc now(): ref Time =
   new(result)
   result[] = getTime()
 
+proc napiCreate(data: OpleData): napi_value =
+  napiCreate data.stringify()
+
 init proc(exports: Module) =
 
   fn(1, execSync):
@@ -30,8 +34,7 @@ init proc(exports: Module) =
     let queryExpr = parseOpleData newStringStream(queryExprStr)
     let query = newQuery(queryExpr, db, this.snapshot, this.now)
     let queryResult = query.eval()
-    let queryResultStr = queryResult.stringify()
-    return napiCreate queryResultStr
+    return napiCreate queryResult
 
   fn(0, finishSnapshot):
     this.snapshot.finish()
@@ -56,7 +59,6 @@ init proc(exports: Module) =
 
   exports.registerFn(1, "open"):
     let dbPath = args[0].getStr
-    echo "dbPath: " & dbPath
     db = initDatabase dbPath
     return nil
 
@@ -73,3 +75,18 @@ init proc(exports: Module) =
       "handle": createExternalRef(transaction),
       "ts": createExternalRef(now()),
     })
+
+  # Iterating over an OpleSet using JavaScript is not really
+  # possible if we don't integrate with N-API directly.
+  exports.registerFn(0, "findDocument"):
+    let id = args[0].getStr
+    let filter = args[1].getFun
+    let colRef = newOpleRef(id, $ople_collections)
+    let documents = newOpleSet("get_documents", @[colRef])
+    let query = newQuery(documents, db, this.snapshot, this.now)
+    let queryResult = query.find(
+      documents.set, 
+      proc (doc: OpleData): bool =
+        filter(napiCreate doc).getBool
+    )
+    return napiCreate queryResult

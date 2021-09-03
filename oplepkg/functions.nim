@@ -1,3 +1,4 @@
+import ./database
 import ./error
 import ./query
 import ./query/document
@@ -12,6 +13,8 @@ type
 
 # Hard-coded functions
 var functions: Table[string, OpleFunction]
+
+echo "RUN functions.nim"
 
 proc addFunction*(name: string, f: OpleFunction) =
   if functions.hasKey(name):
@@ -45,7 +48,7 @@ addFunction "create_collection", proc (params: OpleObject) {.query.} =
   query.newCollection params
   let name = params["name"].string
   return \{
-    "ref": newOpleRef(name, "collections"),
+    "ref": newOpleRef(name, $ople_collections),
     "name": params["name"],
     "ts": \query.now.toUnixFloat,
     "history_days": params.getOrDefault("history_days", \30),
