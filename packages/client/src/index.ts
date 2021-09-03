@@ -1,6 +1,7 @@
 export { ref, toRef } from './OpleRef'
 export { auto } from './auto'
 export { Ople } from './Ople'
+export { OpleDate, OpleTime } from './values'
 
 // Advanced use
 export * from './OpleBackend'

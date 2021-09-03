@@ -3,11 +3,11 @@ import Module from 'module'
 import { filespy } from 'filespy'
 import { EventEmitter } from 'events'
 import { debounce } from 'ts-debounce'
-import { ts, Project, SourceFile, Node } from 'ts-morph'
+import { Project, SourceFile } from 'ts-morph'
 import { OpleCollection, parseCollections } from './parsers/database'
 import { OpleFunction, parseFunctions } from './parsers/functions'
 import { OpleSignal, parseSignals } from './parsers/signals'
-import { getNameNode, resolveTypeImport } from './common'
+import { getNameNode, isExternalModule } from './common'
 import { warn } from './warnings'
 
 export async function createParser(root: string) {
@@ -33,11 +33,18 @@ export class OpleParser extends EventEmitter {
     super()
 
     const initProject = new Project({
-      tsConfigFilePath: path.resolve(root, 'tsconfig.json'),
+      tsConfigFilePath: path.join(root, 'tsconfig.json'),
     })
     const backendProject = new Project({
-      tsConfigFilePath: path.resolve(root, 'backend/tsconfig.json'),
+      tsConfigFilePath: path.join(root, 'backend/tsconfig.json'),
     })
+
+    const generatedBackendModule = backendProject.getSourceFile(
+      path.join(root, 'backend/db.ts')
+    )
+    if (generatedBackendModule) {
+      backendProject.removeSourceFile(generatedBackendModule)
+    }
 
     const { functionsByFile } = this
 
@@ -99,16 +106,15 @@ export class OpleParser extends EventEmitter {
     ) => {
       for (const decl of file.getImportDeclarations()) {
         const id = decl.getModuleSpecifierValue()
+        if (Module.builtinModules.includes(id)) {
+          continue
+        }
         const dep = decl.getModuleSpecifierSourceFile()
         if (!dep) {
           warn(decl, `Imported module "${id}" has no type definitions`)
           continue
         }
-        const depPath = dep.getFilePath()
-        if (
-          depPath.startsWith(root + '/') &&
-          !depPath.includes('/node_modules/')
-        ) {
+        if (!isExternalModule(dep, root)) {
           continue // Only interested in external modules.
         }
 

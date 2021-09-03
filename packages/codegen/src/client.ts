@@ -1,8 +1,14 @@
 import endent from 'endent'
 import redent from 'redent'
-import { ts, Node, Signature, Type } from 'ts-morph'
+import { ts, Node, Signature, Type, TypeNode } from 'ts-morph'
 import { OpleParser } from './parser'
-import { findReferencedTypes, mergeIntoSet, printImport } from './common'
+import {
+  findReferencedTypes,
+  isExternalModule,
+  mergeIntoSet,
+  printImport,
+  printJSDocs,
+} from './common'
 import { warn } from './warnings'
 
 /**
@@ -45,33 +51,81 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
     imports[opleClientId].push('OpleListener')
   }
   const typeNames = new Set<string>()
-  const printedTypes: string[] = []
-  referencedTypes.forEach(type => {
-    findReferencedTypes(type, referencedTypes)
-    if (!Node.isNamedNode(type)) {
+  const dedupedTypes: Record<string, Node[]> = {}
+  referencedTypes.forEach(typeNode => {
+    const file = typeNode.getSourceFile()
+
+    // Types from internal modules are recursively crawled.
+    if (!isExternalModule(file, parser.root)) {
+      findReferencedTypes(typeNode, referencedTypes)
+    }
+
+    if (!Node.isNamedNode(typeNode)) {
       return
     }
-    const name = type.getName()
+
+    const name = typeNode.getName()
+    if (name == 'OpleDocument') {
+      return // "OpleDocument<T>" is transformed into "T"
+    }
+    // These types are globally declared in ople.init.ts
+    // but not on the client-side.
     if (/^Ople(Ref|Time|Date)$/.test(name)) {
       imports[opleClientId].push(name)
       return
     }
-    const moduleInfo = parser.dependencies.get(type.getSourceFile())
+
+    const moduleInfo = parser.dependencies.get(file)
     if (moduleInfo) {
       const vars = (imports[moduleInfo.id] ??= [])
-      if (!vars.includes(name)) {
-        if (typeNames.has(name)) {
-          warn(type, `Type skipped. Name already taken: "${name}"`)
+      if (vars.includes(name)) {
+        return
+      }
+      console.log(name + ':', typeNode.getKindName())
+      if (!typeNames.has(name)) {
+        typeNames.add(name)
+        vars.push(name)
+      }
+    } else {
+      console.log(name + ':', typeNode.getKindName())
+      let typeNodes = dedupedTypes[name]
+      if (!typeNodes) {
+        typeNodes = dedupedTypes[name] = []
+        typeNames.add(name)
+      } else if (
+        Node.isTypeAliasDeclaration(typeNode) ||
+        Node.isTypeAliasDeclaration(typeNodes[0])
+      ) {
+        warn(typeNode, `Type skipped. Name already taken: "${name}"`)
+        return
+      }
+      typeNodes.push(typeNode)
+    }
+  })
+  const printedTypes = Object.keys(dedupedTypes).map(name => {
+    const typeNodes = dedupedTypes[name]
+    const lines: string[] = []
+    if (typeNodes.length > 1) {
+      let postlude = ''
+      for (const typeNode of typeNodes) {
+        if (Node.isInterfaceDeclaration(typeNode)) {
+          lines.length || lines.push(`export interface ${name} {`)
+          const sourceFile = typeNode.getSourceFile()
+          for (const prop of typeNode.getMembers()) {
+            if (sourceFile == prop.getSourceFile()) {
+              lines.push(redent(printJSDocs(prop) + prop.getText(), 2))
+            }
+          }
         } else {
-          vars.push(name)
+          postlude += (postlude ? '\n' : '') + typeNode.getFullText()
         }
       }
-    } else if (typeNames.has(name)) {
-      warn(type, `Type skipped. Name already taken: "${name}"`)
+      lines.length && lines.push('}')
+      postlude && lines.push(postlude)
     } else {
-      typeNames.add(name)
-      printedTypes.push(redent(type.getFullText(), 0).trim())
+      lines[0] = typeNodes[0].getFullText()
     }
+    return redent(lines.join('\n'), 0).trim()
   })
 
   return endent`
@@ -120,24 +174,25 @@ function printSignature(sign: Signature, name: string) {
     throw Error('Signature must be from a parametered node')
   }
 
-  const getText = (node: Node | Type) =>
-    node instanceof Type
-      ? node.getText(decl, ts.TypeFormatFlags.UseFullyQualifiedType)
-      : node.getText()
-
-  const params = decl.getParameters().map(getText).join(', ')
-  const returnType = getText(decl.getReturnType()).replace(
-    /\bOpleDocument<(\w+)>/g,
+  const params = decl.getParameters().map(printNode)
+  const typeParams = sign.getTypeParameters().map(printType)
+  const returnType = printType(decl.getReturnType()).replace(
+    /\bOpleDocument<(.+?)>/g,
     '$1'
   )
-  const typeParams = sign.getTypeParameters().map(getText).join(', ')
-
-  const [docs] = sign.getDocumentationComments()
 
   return (
-    (docs ? `/**${docs.getText().replace(/(^|\n)/g, `\n * `)}\n */\n` : ``) +
+    printJSDocs(decl) +
     name +
-    (typeParams.length ? `<${typeParams}>` : ``) +
-    `(${params}): ${returnType}`
+    (typeParams.length ? `<${typeParams.join(', ')}>` : ``) +
+    `(${params.join(', ')}): ${returnType}`
   )
+}
+
+function printNode(node: Node) {
+  return node.getText(true)
+}
+
+function printType(type: Type) {
+  return type.getText().replace(/\bimport\("[^"]+"\)\./g, '')
 }
