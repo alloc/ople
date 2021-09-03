@@ -1,9 +1,9 @@
 {
   "name": "@ople/backend",
   "version": "0.1.0",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "main": "dist/ople-backend.js",
+  "module": "dist/ople-backend.mjs",
+  "typings": "dist/ople-backend.d.ts",
   "prettier": "@alloc/prettier-config",
   "dependencies": {
     "@alloc/is": "^2.1.1",

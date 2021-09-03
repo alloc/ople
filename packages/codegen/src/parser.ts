@@ -26,7 +26,7 @@ export class OpleParser extends EventEmitter {
   signals: Record<string, OpleSignal> = {}
   functions: Record<string, OpleFunction> = {}
   collections: Record<string, OpleCollection> = {}
-  readonly functionsByFile = new Map<SourceFile, OpleFunction[]>()
+  readonly functionsByFile: Record<string, OpleFunction[]> = {}
   readonly dependencies = new Map<SourceFile, DependencyInfo>()
 
   constructor(readonly root: string) {
@@ -38,13 +38,6 @@ export class OpleParser extends EventEmitter {
     const backendProject = new Project({
       tsConfigFilePath: path.join(root, 'backend/tsconfig.json'),
     })
-
-    const generatedBackendModule = backendProject.getSourceFile(
-      path.join(root, 'backend/db.ts')
-    )
-    if (generatedBackendModule) {
-      backendProject.removeSourceFile(generatedBackendModule)
-    }
 
     const { functionsByFile } = this
 
@@ -78,7 +71,7 @@ export class OpleParser extends EventEmitter {
 
     const updateFunctions = () => {
       const functionMap: Record<string, OpleFunction> = {}
-      this.functionsByFile.forEach(functions => {
+      Object.values(this.functionsByFile).forEach(functions => {
         for (const fun of functions) {
           if (fun.name in functionMap) {
             warn(
@@ -124,10 +117,12 @@ export class OpleParser extends EventEmitter {
           dependencies.set(dep, depInfo)
         }
         depInfo.importers.add(rootFile)
-        deps.add(dep)
 
         // Find all dependencies with a recursive crawl.
-        collectDependencies(dep, deps, rootFile)
+        if (!deps.has(file)) {
+          deps.add(dep)
+          collectDependencies(dep, deps, rootFile)
+        }
       }
       if (file == rootFile) {
         cleanDependencies(file, deps)
@@ -162,19 +157,21 @@ export class OpleParser extends EventEmitter {
     })
       .on('create', name => {
         const project = getProject(name)
-        const file = project.addSourceFileAtPath(path.join(root, name))
+        const filePath = path.join(root, name)
+        const file = project.addSourceFileAtPath(filePath)
         collectDependencies(file)
         if (name == initPath) {
           updateCollections(file)
           updateSignals(file)
         } else {
-          functionsByFile.set(file, parseFunctions(file))
+          functionsByFile[filePath] = parseFunctions(file)
         }
         emitUpdate()
       })
       .on('update', name => {
         const project = getProject(name)
-        const file = project.getSourceFile(path.join(root, name))
+        const filePath = path.join(root, name)
+        const file = project.getSourceFile(filePath)
         if (file) {
           file.refreshFromFileSystemSync()
           collectDependencies(file)
@@ -182,14 +179,15 @@ export class OpleParser extends EventEmitter {
             updateCollections(file)
             updateSignals(file)
           } else {
-            functionsByFile.set(file, parseFunctions(file))
+            functionsByFile[filePath] = parseFunctions(file)
           }
           emitUpdate()
         }
       })
       .on('delete', name => {
         const project = getProject(name)
-        const file = project.getSourceFile(path.join(root, name))
+        const filePath = path.join(root, name)
+        const file = project.getSourceFile(filePath)
         if (file) {
           project.removeSourceFile(file)
           cleanDependencies(file, new Set())
@@ -198,7 +196,7 @@ export class OpleParser extends EventEmitter {
             this.collections = {}
             this.signals = {}
           } else {
-            functionsByFile.delete(file)
+            delete functionsByFile[filePath]
           }
           emitUpdate()
         }

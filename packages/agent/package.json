@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "main": "dist/agent.js",
   "module": "dist/agent.mjs",
-  "typings": "dist/agent.d.ts",
+  "typings": "src/index.ts",
   "dependencies": {
     "@ople/nason": "link:../nason",
     "queue-microtask": "npm:@alloc/queue-microtask@^1.1.4"

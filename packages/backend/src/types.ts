@@ -20,7 +20,10 @@ export {
  *       }
  *     }
  */
-export interface User {}
+export abstract class User {
+  // @ts-ignore
+  private __isUser?: true
+}
 
 /**
  * Every signal supported by the client

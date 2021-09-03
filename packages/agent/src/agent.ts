@@ -1,6 +1,6 @@
 import queueMicrotask from 'queue-microtask'
 import { errors } from './errors'
-import {
+import type {
   AgentConfig,
   PackedCall,
   ReplyQueue,
@@ -13,7 +13,7 @@ declare const console: { error: Function }
 export type { AgentConfig }
 
 export interface Agent {
-  call<T = any>(method: string, args?: any[]): PromiseLike<T>
+  call<T = any>(method: string, ...args: any[]): PromiseLike<T>
   onReply(replyId: string, handler: ReplyHandler): void
   flush(): void
 }
@@ -109,12 +109,12 @@ export function makeAgent<RefHandle, Batch extends BatchLike>({
   }
 
   return {
-    call(method, args) {
+    call(method, ...args) {
       if (status < FLUSHING) {
         status = FLUSHING
         queueMicrotask(flush)
       }
-      return enqueueCall(nextBatch, [method, args])
+      return enqueueCall(nextBatch, [method, args.length ? args : null])
     },
     onReply(replyId, handler) {
       replyQueue.set(replyId, handler)
@@ -129,7 +129,7 @@ interface PrivateConfig<RefHandle, Batch> extends AgentConfig {
   /** Add a backend call to the batch. Return a promise or a reply ID. */
   enqueueCall: (
     batch: Batch,
-    call: [method: string, args: any[] | undefined]
+    call: [method: string, args: any[] | null]
   ) => PromiseLike<any>
   /** Finalize the batch and return an encoded request. */
   finalizeBatch: (batch: Batch) => [payload: Uint8Array, calls: PackedCall[]]

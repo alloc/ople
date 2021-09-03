@@ -4,26 +4,26 @@ import { callees, Callee, Caller } from './callees'
 
 export { db, read, write } from 'ople-db'
 
-export function exposeFunction(callee: Callee) {
-  if (!callee.name) {
+export function exposeFunction(fn: Callee) {
+  if (!fn.name) {
     // Return a stub to prevent crashing.
     return { authorize() {} }
   }
-  callees[callee.name] = callee
+  callees[fn.name] = fn
   return {
     authorize(authorize: (caller: Caller) => boolean) {
-      callee.authorize = authorize
+      fn.authorize = authorize
     },
   }
 }
 
-export function exposeFunctions(callees: Record<string, Callee>) {
-  for (const [name, callee] of Object.entries(callees)) {
+export function exposeFunctions(fns: Record<string, Callee>) {
+  for (const [name, callee] of Object.entries(fns)) {
     callees[name] = callee
   }
   return {
     authorize(authorize: (caller: Caller) => boolean) {
-      for (const callee of Object.values(callees)) {
+      for (const callee of Object.values(fns)) {
         callee.authorize = authorize
       }
     },

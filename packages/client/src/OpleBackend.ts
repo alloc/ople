@@ -180,11 +180,7 @@ export function defineBackend<
       }
       const trace = Error()
       const replyId = uid()
-      batch.calls.push([
-        call[0] /* method */,
-        call[1] || null /* args */,
-        replyId,
-      ])
+      batch.calls.push([...call, replyId])
       return new Promise((resolve, reject) => {
         agent.onReply(replyId, (error, result) => {
           if (error) {

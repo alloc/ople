@@ -22,13 +22,10 @@ export interface Sandbox {
 }
 
 export function createSandbox(options: SandboxOptions): Sandbox {
-  const { global = {}, sharedModules = [] } = options
+  const { sharedModules = [] } = options
 
-  // Required globals
+  const global = createGlobalScope(options.global)
   global.global = global
-  global.console = console
-  global.process = process
-  global.Buffer = Buffer
 
   const sandbox: Sandbox = {
     global,
@@ -103,6 +100,18 @@ export function createModuleCache(sharedModules: string[]) {
 function getCachedModule(filename: string): Module | undefined {
   return (Module as any)._cache[filename]
 }
+
+declare const TextEncoder: any
+declare const TextDecoder: any
+
+const createGlobalScope = (global?: any) => ({
+  console,
+  process,
+  Buffer,
+  TextDecoder,
+  TextEncoder,
+  ...global,
+})
 
 const escapedRequire = require
 const escapedResolutions = ['source-map-support']

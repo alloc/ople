@@ -71,8 +71,8 @@ export default async function () {
           dev: true,
           port: backendPort,
           gripSecret: opleEnv.gripSecret,
-          imports: Array.from(codegen.functionsByFile.keys(), file =>
-            relativeToCwd(file.getFilePath().replace(/\.ts$/, ''), backendRoot)
+          imports: Object.keys(codegen.functionsByFile).map(filePath =>
+            relativeToCwd(filePath.replace(/\.ts$/, ''), backendRoot)
           ),
         })
       }

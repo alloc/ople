@@ -1,4 +1,4 @@
-import WebSocket from 'ws'
+import WebSocket = require('ws')
 import { install } from 'source-map-support'
 
 Object.assign(global, { WebSocket })

@@ -2,4 +2,9 @@ import './polyfills'
 import { signUp } from './backend'
 import { Ople } from '@ople/client'
 
-signUp('alec')
+async function run() {
+  const user = await signUp('alec', 'secret')
+  console.log('Signed up:', user)
+}
+
+run().catch(console.error)

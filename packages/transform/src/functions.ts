@@ -6,7 +6,7 @@ import type {
 } from '@babel/core'
 
 type Node = {
-  getPos(): number
+  getStartLineNumber(): number
 }
 
 type Signature = {
@@ -73,7 +73,8 @@ export function babelOpleFunctions(
     if (fun && file.opts.filename == fun.file.getFilePath()) {
       return fun.signatures.some(sig => {
         const decl = sig.getDeclaration()
-        return decl.getPos() == node.start
+        const line = decl.getStartLineNumber()
+        return line == node.loc!.start.line
       })
     }
   }

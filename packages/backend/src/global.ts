@@ -1,5 +1,5 @@
 import type { OpleRef } from 'ople-db'
-import type { RefSignals, Signals, UserRef } from './types'
+import type { RefSignals, Signals, User } from './types'
 import type { Caller } from './callees'
 
 declare global {
@@ -90,7 +90,7 @@ interface EmitFunction {
   /**
    * Send a signal to every connection of the given user.
    */
-  (user: UserRef): Signals
+  (user: OpleRef<User>): Signals
 
   /**
    * Send a signal to every subscriber of the given ref.

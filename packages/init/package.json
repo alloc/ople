@@ -3,5 +3,5 @@
   "version": "0.1.0",
   "source": "init.ts",
   "module": "dist/init.js",
-  "types": "dist/init.d.ts"
+  "types": "init.ts"
 }

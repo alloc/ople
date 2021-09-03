@@ -1,7 +1,9 @@
+import path from 'path'
 import endent from 'endent'
 import redent from 'redent'
-import { ts, Node, Signature, Type, TypeNode } from 'ts-morph'
+import { Node, Signature, Type } from 'ts-morph'
 import { OpleParser } from './parser'
+import { warn } from './warnings'
 import {
   findReferencedTypes,
   isExternalModule,
@@ -9,7 +11,6 @@ import {
   printImport,
   printJSDocs,
 } from './common'
-import { warn } from './warnings'
 
 /**
  * Generate the module that calls `defineBackend`
@@ -52,8 +53,12 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
   }
   const typeNames = new Set<string>()
   const dedupedTypes: Record<string, Node[]> = {}
+  const backendModulePath = path.join(parser.root, 'backend/db.ts')
   referencedTypes.forEach(typeNode => {
     const file = typeNode.getSourceFile()
+    if (file.getFilePath() == backendModulePath) {
+      return // Ignore generated types.
+    }
 
     // Types from internal modules are recursively crawled.
     if (!isExternalModule(file, parser.root)) {
@@ -77,17 +82,18 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
 
     const moduleInfo = parser.dependencies.get(file)
     if (moduleInfo) {
+      if (moduleInfo.id == '@ople/backend') {
+        return
+      }
       const vars = (imports[moduleInfo.id] ??= [])
       if (vars.includes(name)) {
         return
       }
-      console.log(name + ':', typeNode.getKindName())
       if (!typeNames.has(name)) {
         typeNames.add(name)
         vars.push(name)
       }
     } else {
-      console.log(name + ':', typeNode.getKindName())
       let typeNodes = dedupedTypes[name]
       if (!typeNodes) {
         typeNodes = dedupedTypes[name] = []
@@ -185,7 +191,7 @@ function printSignature(sign: Signature, name: string) {
     printJSDocs(decl) +
     name +
     (typeParams.length ? `<${typeParams.join(', ')}>` : ``) +
-    `(${params.join(', ')}): ${returnType}`
+    `(${params.join(', ')}): Promise<${returnType}>`
   )
 }
 
