@@ -1,8 +1,7 @@
-import { OpleCollection } from './collection'
-import { OpleDocument } from './document'
-import { OpleSet } from './set'
+import { OpleArray, OpleCollection, OpleDocument, OpleSet } from './types'
 import { OpleDate, OpleRef, OpleTime } from '../values'
 
+// String functions
 export interface OpleFunctions {
   contains(str: string, substr: string): boolean
   contains(str: string, regex: RegExp): boolean
@@ -11,7 +10,7 @@ export interface OpleFunctions {
 
 // Type-checking functions
 export interface OpleFunctions {
-  isArray(value: unknown): value is unknown[]
+  isArray(value: unknown): value is OpleArray
   isBoolean(value: unknown): value is boolean
   isCollection(value: unknown): value is OpleCollection
   isDate(value: unknown): value is OpleDate

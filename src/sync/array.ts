@@ -1,4 +1,5 @@
 import util from 'util'
+import { ToQuery } from '../convert'
 import { queriesByType } from '../queryMap'
 import { execSync } from './transaction'
 
@@ -7,7 +8,6 @@ const { filter, forEach, map, reduce, slice } = getArrayFunctions(
 )
 
 export class OpleArray<T> {
-  readonly length!: number
   constructor(data: readonly T[]) {
     Object.setPrototypeOf(data, OpleArray.prototype)
     return new Proxy(data, OpleArray.traps) as any
@@ -20,27 +20,27 @@ export class OpleArray<T> {
   filter(predicate: (value: T) => boolean) {
     return new OpleArray(filter(this, predicate))
   }
-  forEach(iterator: (value: T) => void): void {
+  forEach(iterator: (value: T) => void) {
     forEach(this, iterator)
   }
-  map<U>(mapper: (value: T) => U): OpleArray<U> {
+  map<U>(mapper: (value: T) => U) {
     return new OpleArray(map(this, mapper) as U[])
   }
-  select<U>(index: number, fallback: U): T | U
-  select(index: number): T | undefined
+  select<U>(index: number, fallback: U): ToQuery<T | U>
+  select(index: number): ToQuery<T> | undefined
   select(index: number, fallback?: any) {
     return index >= 0 && index < this.length ? this[index] : fallback
   }
   //
   // OpleArrayLike
   //
-  reduce<U>(reducer: (acc: U, value: T) => U, initial: U): U {
-    return reduce(this, reducer as any, initial) as U
+  reduce<U>(reducer: (acc: U, value: T) => U, initial: U) {
+    return reduce(this, reducer as any, initial) as ToQuery<U>
   }
 }
 
 export interface OpleArray<T = any> extends OpleArrayLike<T> {
-  readonly [index: number]: T
+  readonly [index: number]: ToQuery<T>
   append<U>(value: U | U[]): OpleArray<T | U>
   difference(...groups: (any[] | OpleArray)[]): OpleArray<T>
   distinct(): OpleArray<T>
@@ -48,10 +48,8 @@ export interface OpleArray<T = any> extends OpleArrayLike<T> {
   intersection(...groups: (any[] | OpleArray)[]): OpleArray<T>
   isEmpty(): boolean
   isNonEmpty(): boolean
-  mean(): [T] extends [number] ? number : never
   prepend<U>(value: U | U[]): OpleArray<T | U>
   reverse(): OpleArray<T>
-  sum(): [T] extends [number] ? number : never
   take(count: number): OpleArray<T>
   toObject(): OpleArrayToObject<T>
   union<U extends any[] | OpleArray>(
@@ -68,7 +66,7 @@ type OpleArrayElement<T> = T extends Array<infer U>
   : never
 
 type OpleArrayToObject<T> = [T] extends [readonly [string, infer U]]
-  ? Record<string, U>
+  ? Record<string, ToQuery<U>>
   : never
 
 const proto: any = OpleArray.prototype
@@ -88,9 +86,9 @@ export interface OpleArrayLike<T = any> {
   any(): boolean
   isEmpty(): boolean
   isNonEmpty(): boolean
-  length: number
+  readonly length: number
   mean(): [T] extends [number] ? number : never
-  reduce<U>(reducer: (acc: U, value: T) => U, initial: U): U
+  reduce<U>(reducer: (acc: U, value: T) => U, initial: U): ToQuery<U>
   sum(): [T] extends [number] ? number : never
 }
 

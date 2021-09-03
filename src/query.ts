@@ -2,26 +2,27 @@ import { Snapshot } from './internal/db'
 import { jsonReplacer } from './json/replacer'
 import { jsonReviver } from './json/reviver'
 import { queryMap } from './queryMap'
-import { OpleCollection } from './sync/collection'
 import {
-  OpleFrozenDocument as OpleDocument,
+  OpleCollection,
+  OpleCursor,
   OpleDocumentOptions,
-} from './sync/document'
-import { OpleCursor, OplePage } from './sync/page'
-import { OpleSet } from './sync/set'
+  OplePage,
+  OpleSet,
+} from './sync/types'
 import { OpleFunctions } from './sync/stdlib'
 import { OpleQueryError, popStackFrames } from './errors'
 import { OpleRef, OpleTime } from './values'
+import { DeepFreeze, ToQuery } from './convert'
 
 export interface OpleQueries extends OpleFunctions {
-  get<T extends object | null>(ref: OpleRef<T>): OpleDocument<T>
+  get<T extends object | null>(ref: OpleRef<T>): OpleQuery.Document<T>
 
   exists(ref: OpleRef): boolean
 
   create<T extends object | null>(
     collection: OpleRef,
     params: { data: T } & OpleDocumentOptions,
-  ): OpleDocument<T>
+  ): OpleQuery.Document<T>
 
   createCollection<T extends object | null>(
     params: { name: string } & OpleCollection.Options<T>,
@@ -30,12 +31,12 @@ export interface OpleQueries extends OpleFunctions {
   replace<T extends object | null>(
     ref: OpleRef<T>,
     params: { data: T },
-  ): OpleDocument<T>
+  ): OpleQuery.Document<T>
 
   update<T extends object | null>(
     ref: OpleRef<T>,
     params: { data?: Partial<T> } & OpleDocumentOptions,
-  ): OpleDocument<T>
+  ): OpleQuery.Document<T>
 
   paginate<T>(
     set: OpleSet,
@@ -60,6 +61,17 @@ export class OpleQuery {
       throw result
     }
     return result
+  }
+}
+
+export namespace OpleQuery {
+  /** A document from a query. */
+  export declare class Document<T extends object | null = any> {
+    ref: OpleRef<T>
+    data: DeepFreeze<ToQuery<T>>
+    ts: OpleTime
+
+    private _type: 'OpleDocument'
   }
 }
 

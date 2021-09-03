@@ -6,6 +6,8 @@ export interface OpleDocumentOptions {
   ttl?: OpleTime
 }
 
+// export type OpleDocument
+
 /**
  * A document whose `data` object cannot be directly mutated.
  */

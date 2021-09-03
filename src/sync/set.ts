@@ -1,4 +1,3 @@
-import { ToQuery } from '../convert'
 import { queriesByType } from '../queryMap'
 import { OpleTime } from '../values'
 import type { OpleArrayLike } from './array'
@@ -21,7 +20,7 @@ type PaginateOpts = {
 export class OpleSet<T = any> {
   constructor(protected expr: { readonly [key: string]: any }) {}
 
-  paginate(opts: PaginateOpts = {}): OplePage<ToQuery<T>> {
+  paginate(opts: PaginateOpts = {}): OplePage<T> {
     return q.paginate(this, opts.ts, opts.before, opts.after, opts.size)
   }
 }
