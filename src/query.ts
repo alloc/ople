@@ -14,14 +14,14 @@ import { OpleQueryError, popStackFrames } from './errors'
 import { OpleJSON } from './json'
 
 export interface OpleQueries extends OpleFunctions {
-  get<T extends object | null>(ref: OpleRef<T>): OpleDocument.Result<T>
+  get<T extends object | null>(ref: OpleRef<T>): OpleDocument<T>
 
   exists(ref: OpleRef): boolean
 
   create<T extends object | null>(
     collection: OpleRef,
     params: { data: T } & OpleDocument.Options,
-  ): OpleDocument.Result<T>
+  ): OpleDocument<T>
 
   createCollection<T extends object | null>(
     params: { name: string } & OpleCollection.Options<T>,
@@ -30,12 +30,12 @@ export interface OpleQueries extends OpleFunctions {
   replace<T extends object | null>(
     ref: OpleRef<T>,
     params: { data: T },
-  ): OpleDocument.Result<T>
+  ): OpleDocument<T>
 
   update<T extends object | null>(
     ref: OpleRef<T>,
     params: { data?: Partial<T> } & OpleDocument.Options,
-  ): OpleDocument.Result<T>
+  ): OpleDocument<T>
 
   paginate<T>(
     set: OpleSet,

@@ -1,8 +1,6 @@
 import { notImplemented } from './errors'
 import { q } from './sync/transaction'
 
-export { OpleDocument } from './sync/document'
-
 export class OpleRef<T extends object | null = any> {
   constructor(readonly id: string, readonly collection?: OpleRef) {}
 

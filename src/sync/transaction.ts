@@ -3,6 +3,7 @@ import { db, Snapshot, Transaction } from '../internal/db'
 import { makeQuery, OpleQueries } from '../query'
 import { queryMap, writeQueries } from '../queryMap'
 import { OpleArray } from './array'
+import { OpleDocument } from './document'
 
 let snapshot: Snapshot | null = null
 let transaction: Transaction | null = null
@@ -97,6 +98,8 @@ function materialize(value: any): any {
       for (const key in value) {
         value[key] = materialize(value[key])
       }
+    } else if ((value as any).constructor == OpleDocument) {
+      value.data = materialize(value.data)
     }
   }
   return value

@@ -1,15 +1,23 @@
 import {
+  OpleDocument as OpleDocumentResult,
+  OpleDocumentData,
+} from './sync/document'
+import {
   OpleArray,
   OpleCollection,
   OpleCursor,
   OpleDate,
-  OpleDocument,
   OplePage,
   OpleRef,
   OpleSet,
   OpleTime,
 } from './sync/types'
 
+/**
+ * Ensure query types are accepted wherever their material version
+ * is acceptable. For example, an `OpleArray` can be passed instead
+ * of a JavaScript array.
+ */
 export type OpleInput<T> = T extends ReadonlyArray<infer U>
   ? ReadonlyArray<OpleInput<U>> | OpleArray<OpleInput<U>>
   : T extends object
@@ -19,25 +27,22 @@ export type OpleInput<T> = T extends ReadonlyArray<infer U>
   : T
 
 /**
- * This type replaces array types with `OpleArray` and makes
- * document data immutable.
+ * Replace material types with their query version.
+ * For example, arrays are replaced with `OpleArray`.
  *
- * It should only be used by query functions that return a
- * plain object or array.
+ * Only query functions that return a plain object or array
+ * should need to wrap their return type with this.
  */
 export type OpleResult<T> = T extends ReadonlyArray<infer U>
   ? OpleArray<U>
   : T extends object
-  ? T extends OpleDocument<T>
-    ? OpleDocument.Result<T>
-    : 1 extends StrictAssignable<T, QueryResultNoop>
+  ? 1 extends StrictAssignable<T, QueryResultNoop>
     ? T
     : { [P in keyof T]: OpleResult<T[P]> }
   : T
 
 /**
- * Materialize a query result by removing any query-specific
- * interfaces.
+ * Replace all query types with their material version.
  */
 export type Materialize<T> = T extends OpleArray<infer U>
   ? Materialize<U>[]
@@ -46,10 +51,26 @@ export type Materialize<T> = T extends OpleArray<infer U>
     ? { data: Materialize<U>[]; before?: OpleCursor; after?: OpleCursor }
     : T extends OpleCollection<any, infer U>
     ? OpleRef<U>
+    : T extends OpleDocumentResult<infer U>
+    ? OpleDocument<U> & OpleDocumentData<U>
     : 1 extends StrictAssignable<T, MaterializeNoop>
     ? T
     : { [P in keyof T]: Materialize<T[P]> }
   : T
+
+/**
+ * A materialized document with a proxy for direct `data` access.
+ *
+ * Safe to return from a backend function.
+ */
+interface OpleDocument<T extends object | null> {
+  ref: OpleRef<T>
+  data: T
+  ts: OpleTime
+}
+
+// These types are never transformed by Materialize.
+type MaterializeNoop = OpleCursor | OpleDate | OpleRef | OpleSet | OpleTime
 
 // These types are never transformed by QueryInput.
 type QueryInputNoop =
@@ -71,22 +92,13 @@ type QueryResultNoop =
   | OpleSet
   | OpleTime
 
-// These types are never transformed by Materialize.
-type MaterializeNoop =
-  | OpleCursor
-  | OpleDate
-  | OpleDocument
-  | OpleRef
-  | OpleSet
-  | OpleTime
-
 /** Supports JSON-compatible values only */
 export type DeepFreeze<T> = T extends Array<infer Element>
   ? Array<any> extends T
     ? DeepFreezeArray<Element>
     : DeepFreezeProps<T>
   : T extends object
-  ? StrictAssignable<T, DeepFreezeNoop> extends 1
+  ? 1 extends StrictAssignable<T, DeepFreezeNoop>
     ? T
     : DeepFreezeProps<T>
   : T

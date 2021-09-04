@@ -70,9 +70,7 @@ export class OpleCollection<
    * ⚠︎ This is very inefficient on large collections, compared
    * to an indexed search.
    */
-  find(
-    filter: (doc: OpleDocument.Result<T>) => boolean,
-  ): OpleDocument.Result<T> | null {
+  find(filter: (doc: OpleDocument<T>) => boolean): OpleDocument<T> | null {
     return withSnapshot(snapshot => {
       const resultStr = snapshot.findDocument(this._ref.id, docStr => {
         const doc = OpleJSON.parse(docStr)
@@ -89,7 +87,7 @@ export class OpleCollection<
    * to an indexed search.
    */
   filter(
-    filter: (doc: OpleDocument.Result<T>) => boolean,
+    filter: (doc: OpleDocument<T>) => boolean,
     params: OplePagination = { size: 100e3 },
   ): OplePage<OpleDocument<T>> {
     return withSnapshot(snapshot => {
