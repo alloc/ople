@@ -15,7 +15,9 @@ import { OpleJSON } from './json'
 import { OpleInput } from './convert'
 
 export interface OpleQueries extends OpleFunctions {
-  get<T extends object | null>(ref: OpleRef<T>): OpleDocument<T>
+  get<T extends OpleRef>(
+    ref: T,
+  ): T extends OpleRef<infer U> ? OpleDocument<U> : never
 
   exists(ref: OpleRef): boolean
 

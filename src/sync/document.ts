@@ -49,6 +49,11 @@ export class OpleDocument<T extends object | null = any> {
 // Forward unknown properties to the `data` object.
 const docProxy: ProxyHandler<any> = {
   get: (doc, key) => doc[key] || doc.data[key],
+  has: (doc, key) => key in doc.data,
+}
+
+export function isOpleDocument(value: any): value is OpleDocument {
+  return value && value.constructor == OpleDocument
 }
 
 /** Identify a JSON object as compatible with `OpleDocumentResult` */
