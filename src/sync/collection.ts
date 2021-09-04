@@ -1,7 +1,7 @@
 import { OpleInput, OpleResult } from '../convert'
 import { notImplemented } from '../errors'
 import { OpleRef } from '../values'
-import { OpleDocument, OplePage, OpleSet } from './types'
+import type { OpleDocument, OplePage, OpleSet } from './types'
 import { q, withSnapshot } from './transaction'
 import { OpleJSON } from '../json'
 import { OplePagination } from './set'

@@ -1,10 +1,11 @@
 import { DeepFreeze, OpleResult } from '../convert'
 
-export { OpleArray, OpleArrayLike } from './array'
 export { OpleCollection } from './collection'
-export { OpleCursor, OplePage } from './page'
-export { OpleSet } from './set'
 export * from '../values'
+
+export type { OpleArray, OpleArrayLike } from './array'
+export type { OpleCursor, OplePage } from './page'
+export type { OpleSet } from './set'
 
 /** A document result with a proxy that allows direct `data` access. */
 export type OpleDocument<T extends object | null = any> = unknown &
