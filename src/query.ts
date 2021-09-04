@@ -12,6 +12,7 @@ import {
 } from './sync/types'
 import { OpleQueryError, popStackFrames } from './errors'
 import { OpleJSON } from './json'
+import { OpleInput } from './convert'
 
 export interface OpleQueries extends OpleFunctions {
   get<T extends object | null>(ref: OpleRef<T>): OpleDocument<T>
@@ -34,7 +35,7 @@ export interface OpleQueries extends OpleFunctions {
 
   update<T extends object | null>(
     ref: OpleRef<T>,
-    params: { data?: Partial<T> } & OpleDocument.Options,
+    params: { data?: OpleInput<Partial<T>> } & OpleDocument.Options,
   ): OpleDocument<T>
 
   paginate<T>(

@@ -1,7 +1,6 @@
 import { OpleQueryError } from '../errors'
-import { OpleQuery } from '../query'
 import { OpleArray } from '../sync/array'
-import { isDocumentLike } from '../sync/document'
+import { OpleDocument, isDocumentLike } from '../sync/document'
 import { OpleSet } from '../sync/set'
 import { OpleDate, OpleRef, OpleTime } from '../values'
 
@@ -28,7 +27,7 @@ export function jsonReviver(_key: string, value: any) {
     }
   }
   if (isDocumentLike(value)) {
-    return new OpleDocument.Result(value.ref, value.data, value.ts)
+    return new OpleDocument(value.ref, value.data, value.ts)
   }
   return value
 }

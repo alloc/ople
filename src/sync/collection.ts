@@ -1,4 +1,4 @@
-import { OpleResult } from '../convert'
+import { OpleInput, OpleResult } from '../convert'
 import { notImplemented } from '../errors'
 import { OpleRef } from '../values'
 import { OpleDocument, OplePage, OpleSet } from './types'
@@ -116,13 +116,11 @@ export class OpleCollection<
   /** Merge new data into a document */
   update(
     ref: string | OpleRef<T>,
-    options: { data?: Partial<T> } & OpleDocument.Options,
+    options: { data?: OpleInput<Partial<T>> } & OpleDocument.Options,
   ) {
     return q.update(coerceToRef(ref, this._ref), options)
   }
 }
-
-export interface OpleCollection<T> {}
 
 export namespace OpleCollection {
   /** The options for `Database#createCollection` */

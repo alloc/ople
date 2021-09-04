@@ -1,4 +1,3 @@
-import { OpleQuery } from '../query'
 import { OpleRef } from '../values'
 import { OpleCollection, OpleDocument } from './types'
 import { q } from './transaction'
@@ -20,9 +19,7 @@ export const db: OpleDatabase = {
     }
     return q.createCollection({ ...options, name })
   },
-  replace(ref, data) {
-    return q.replace(ref, { data })
-  },
+  replace: (ref, data) => q.replace(ref, { data }),
   update: q.update,
 }
 
@@ -53,16 +50,13 @@ export interface OpleDatabase {
   ): OpleCollection.CreateResult<T>
 
   /** Replace a document's data */
-  replace<T extends object | null>(
-    ref: OpleRef<T>,
-    data: T,
-  ): OpleDocument.Result<T>
+  replace<T extends object | null>(ref: OpleRef<T>, data: T): OpleDocument<T>
 
   /** Merge new data into a document */
   update<T extends object | null>(
     ref: OpleRef<T>,
     options: { data?: OpleInput<Partial<T>> } & OpleDocument.Options,
-  ): OpleDocument.Result<T>
+  ): OpleDocument<T>
 }
 
 /**
