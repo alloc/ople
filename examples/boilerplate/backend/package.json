@@ -1,0 +1,6 @@
+{
+  "name": "backend",
+  "dependencies": {
+    "@ople/backend": "^0.1.0"
+  }
+}

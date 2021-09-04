@@ -122,6 +122,8 @@ export default async function () {
       const map: any = bundled.output[0].map
       map.sourceRoot = backendRoot
 
+      log(log.yellow(bundled.output[0].code))
+
       const code =
         bundled.output[0].code + convertSourceMap.fromObject(map).toComment()
 

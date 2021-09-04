@@ -22,6 +22,10 @@ export function generateServer({
 
     ${imports.map(path => `import "${path}"`).join(`\n`)}
 
+    process.on('unhandledRejection', (e) => {
+      console.error(e.stack)
+    })
+
     ${
       dev
         ? endent`

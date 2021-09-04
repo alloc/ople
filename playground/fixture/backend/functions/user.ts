@@ -6,6 +6,9 @@ export namespace User {
 }
 
 exposeFunctions({
+  whoAmI() {
+    return caller.user && read(() => db.get(caller.user!))
+  },
   signUp(name: string, password: User.Password) {
     const user = write(() => {
       const users = db.getCollection('users')

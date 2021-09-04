@@ -44,16 +44,22 @@ export function babelOpleFunctions(
       ObjectMethod(path, { file }) {
         if (isOpleFunction(path.node, file)) {
           injectCaller(path.node.params)
+        } else {
+          debugger
         }
       },
       FunctionExpression(path, { file }) {
         if (isOpleFunction(path.node, file)) {
           injectCaller(path.node.params)
+        } else {
+          debugger
         }
       },
       FunctionDeclaration(path, { file }) {
         if (isOpleFunction(path.node, file)) {
           injectCaller(path.node.params)
+        } else {
+          debugger
         }
       },
     },
