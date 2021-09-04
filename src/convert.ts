@@ -22,6 +22,8 @@ export type ToQuery<T> = T extends ReadonlyArray<infer U>
   : T extends object
   ? T extends OpleDocument<infer U>
     ? OpleQuery.Document<U>
+    : T extends OpleRef<infer U>
+    ? OpleQuery.Ref<U>
     : StrictAssignable<T, ToQueryNoop> extends 1
     ? T
     : { [P in keyof T]: ToQuery<T[P]> }
@@ -34,6 +36,8 @@ export type FromQuery<T> = T extends OpleArray<infer U>
     ? { data: FromQuery<U>[]; before?: OpleCursor; after?: OpleCursor }
     : T extends OpleQuery.Document<infer U>
     ? OpleDocument<U>
+    : T extends OpleQuery.Ref<infer U>
+    ? OpleRef<U>
     : T extends OpleCollection<any, infer U>
     ? OpleRef<U>
     : StrictAssignable<T, FromQueryNoop> extends 1
@@ -48,7 +52,6 @@ type ToQueryNoop =
   | OpleCursor
   | OpleDate
   | OplePage
-  | OpleRef
   | OpleSet
   | OpleTime
 

@@ -1,18 +1,18 @@
 import { Snapshot } from './internal/db'
-import { jsonReplacer } from './json/replacer'
-import { jsonReviver } from './json/reviver'
 import { queryMap } from './queryMap'
+import { OpleFunctions } from './sync/stdlib'
+import { q } from './sync/transaction'
 import {
   OpleCollection,
   OpleCursor,
-  OpleDocumentOptions,
+  OpleDocument,
   OplePage,
   OpleSet,
 } from './sync/types'
-import { OpleFunctions } from './sync/stdlib'
 import { OpleQueryError, popStackFrames } from './errors'
 import { OpleRef, OpleTime } from './values'
 import { DeepFreeze, ToQuery } from './convert'
+import { OpleJSON } from './json'
 
 export interface OpleQueries extends OpleFunctions {
   get<T extends object | null>(ref: OpleRef<T>): OpleQuery.Document<T>
@@ -21,7 +21,7 @@ export interface OpleQueries extends OpleFunctions {
 
   create<T extends object | null>(
     collection: OpleRef,
-    params: { data: T } & OpleDocumentOptions,
+    params: { data: T } & OpleDocument.Options,
   ): OpleQuery.Document<T>
 
   createCollection<T extends object | null>(
@@ -35,7 +35,7 @@ export interface OpleQueries extends OpleFunctions {
 
   update<T extends object | null>(
     ref: OpleRef<T>,
-    params: { data?: Partial<T> } & OpleDocumentOptions,
+    params: { data?: Partial<T> } & OpleDocument.Options,
   ): OpleQuery.Document<T>
 
   paginate<T>(
@@ -50,12 +50,12 @@ export interface OpleQueries extends OpleFunctions {
 export class OpleQuery {
   constructor(readonly expr: { readonly [key: string]: any }) {}
   toString() {
-    return JSON.stringify(this.expr, jsonReplacer)
+    return OpleJSON.stringify(this.expr)
   }
   execSync(snapshot: Snapshot) {
     const query = this.toString()
     const resultStr = snapshot.execSync(query)
-    const result = JSON.parse(resultStr, jsonReviver)
+    const result = OpleJSON.parse(resultStr)
     if (result.constructor == OpleQueryError) {
       popStackFrames(result, 6)
       throw result
@@ -65,13 +65,24 @@ export class OpleQuery {
 }
 
 export namespace OpleQuery {
-  /** A document from a query. */
+  /**
+   * A query evaluated to a document.
+   *
+   * Note: Mutations will **not** update this snapshot.
+   */
   export declare class Document<T extends object | null = any> {
-    ref: OpleRef<T>
-    data: DeepFreeze<ToQuery<T>>
-    ts: OpleTime
+    readonly ref: Ref<T>
+    readonly data: DeepFreeze<ToQuery<T>>
+    readonly ts: OpleTime
 
-    private _type: 'OpleDocument'
+    /** Enforces type nominality */
+    private _document: { data: T }
+  }
+  /** A query evaluated to a document ref. */
+  export class Ref<T extends object | null = any> extends OpleRef<T> {
+    get exists(): boolean {
+      return q.exists(this)
+    }
   }
 }
 

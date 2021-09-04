@@ -27,11 +27,36 @@ proc now(): ref Time =
 proc napiCreate(data: OpleData): napi_value =
   napiCreate data.stringify()
 
+template queryDocuments(id: string): OpleQuery =
+  let colRef = newOpleRef(id, $ople_collections)
+  let documents = newOpleSet("get_documents", @[colRef])
+  newQuery(documents, db, this.snapshot, this.now)
+
 init proc(exports: Module) =
+
+  # Iterating over an OpleSet using JavaScript is not really
+  # possible if we don't integrate with N-API directly.
+  fn(2, findDocument):
+    let filter = args[1].getFun
+    let query = queryDocuments(args[0].getStr)
+    return napiCreate query.find(
+      proc (doc: OpleData): bool =
+        filter(napiCreate doc).getBool
+    )
+
+  fn(3, filterDocuments):
+    let params = parseOpleData args[1].getStr
+    let filter = args[2].getFun
+    let query = queryDocuments(args[0].getStr)
+    return napiCreate query.paginate(
+      params.object,
+      proc (doc: OpleData): bool =
+        filter(napiCreate doc).getBool
+    )
 
   fn(1, execSync):
     let queryExprStr = args[0].getStr
-    let queryExpr = parseOpleData newStringStream(queryExprStr)
+    let queryExpr = parseOpleData queryExprStr
     let query = newQuery(queryExpr, db, this.snapshot, this.now)
     let queryResult = query.eval()
     return napiCreate queryResult
@@ -41,6 +66,8 @@ init proc(exports: Module) =
     return nil
 
   SnapshotMethods = toRef \{
+    "findDocument": findDocument,
+    "filterDocuments": filterDocuments,
     "execSync": execSync,
     "finish": finishSnapshot,
   }
@@ -75,18 +102,3 @@ init proc(exports: Module) =
       "handle": createExternalRef(transaction),
       "ts": createExternalRef(now()),
     })
-
-  # Iterating over an OpleSet using JavaScript is not really
-  # possible if we don't integrate with N-API directly.
-  exports.registerFn(0, "findDocument"):
-    let id = args[0].getStr
-    let filter = args[1].getFun
-    let colRef = newOpleRef(id, $ople_collections)
-    let documents = newOpleSet("get_documents", @[colRef])
-    let query = newQuery(documents, db, this.snapshot, this.now)
-    let queryResult = query.find(
-      documents.set, 
-      proc (doc: OpleData): bool =
-        filter(napiCreate doc).getBool
-    )
-    return napiCreate queryResult

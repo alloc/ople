@@ -2,6 +2,7 @@ import { OpleArray } from '../sync/array'
 import { OpleDate, OpleRef, OpleTime } from '../values'
 import { OpleQueryError } from '../errors'
 import { OpleSet } from '../sync/set'
+import { OpleQuery } from '../query'
 
 type DataReviver = (data: any) => any
 const dataRevivers: [string, DataReviver][] = [
@@ -30,7 +31,7 @@ export function jsonReviver(_key: string, value: any) {
 
 function toRef({ id, collection }: { id: string; collection?: any }): OpleRef {
   if (collection) {
-    return new OpleRef(id, collection)
+    return new OpleQuery.Ref(id, collection)
   }
   const ref = (OpleRef.Native as any)[id]
   if (ref) {

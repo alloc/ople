@@ -1,5 +1,6 @@
+import { OpleQuery } from '../query'
 import { OpleRef } from '../values'
-import { OpleCollection } from './collection'
+import { OpleCollection, OpleDocument } from './types'
 import { q } from './transaction'
 
 // These collection names are reserved by FaunaDB.
@@ -18,6 +19,10 @@ export const db: OpleDatabase = {
     }
     return q.createCollection({ ...options, name })
   },
+  replace(ref, data) {
+    return q.replace(ref, { data })
+  },
+  update: q.update,
 }
 
 export interface OpleDatabase {
@@ -45,6 +50,18 @@ export interface OpleDatabase {
     name: string,
     options?: OpleCollection.Options<T>,
   ): OpleCollection.CreateResult<T>
+
+  /** Replace a document's data */
+  replace<T extends object | null>(
+    ref: OpleRef<T>,
+    data: T,
+  ): OpleQuery.Document<T>
+
+  /** Merge new data into a document */
+  update<T extends object | null>(
+    ref: OpleRef<T>,
+    options: { data?: Partial<T> } & OpleDocument.Options,
+  ): OpleQuery.Document<T>
 }
 
 /**

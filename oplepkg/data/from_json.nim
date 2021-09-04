@@ -20,6 +20,9 @@ proc parseOpleData*(s: Stream): OpleData =
   finally:
     p.close()
 
+proc parseOpleData*(s: string): OpleData =
+  parseOpleData newStringStream s
+
 proc parseStringLit(p: var JsonParser): string =
   if p.tok != tkString:
     raiseParseErr(p, "expected string literal")

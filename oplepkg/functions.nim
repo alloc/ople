@@ -14,8 +14,6 @@ type
 # Hard-coded functions
 var functions: Table[string, OpleFunction]
 
-echo "RUN functions.nim"
-
 proc addFunction*(name: string, f: OpleFunction) =
   if functions.hasKey(name):
     raise newException(Defect, "function already exists: " & name)
@@ -50,7 +48,7 @@ addFunction "create_collection", proc (params: OpleObject) {.query.} =
   return \{
     "ref": newOpleRef(name, $ople_collections),
     "name": params["name"],
-    "ts": \query.now.toUnixFloat,
+    "ts": \(query.now.toUnixFloat * 1e6),
     "history_days": params.getOrDefault("history_days", \30),
   }
 

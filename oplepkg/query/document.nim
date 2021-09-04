@@ -33,7 +33,7 @@ proc hasDocument*(docRef: OpleRef) {.query.} =
 proc newDocument*(colRef: OpleRef, props: var OpleObject) {.query.} =
   let col = query.getCollection(colRef.id)
   let docId = query.newDocumentId()
-  props["ts"] = \query.now.toUnixFloat
+  props["ts"] = \(query.now.toUnixFloat * 1e6)
   col.with(query.transaction).put docId, serializeDocument(props)
   return \{
     "ref": newOpleRef(docId, colRef.id),
@@ -55,7 +55,7 @@ proc setDocumentData*(docRef: OpleRef, data: OpleObject) {.query.} =
   let col = query.getCollection(docRef.collection)
   var props = query.getDocument(col, docRef.id)
   props["data"] = \data
-  props["ts"] = \query.now.toUnixFloat
+  props["ts"] = \(query.now.toUnixFloat * 1e6)
   col.with(query.transaction).put docRef.id, serializeDocument(props)
   return \{
     "ref": \docRef,

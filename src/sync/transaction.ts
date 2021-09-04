@@ -13,6 +13,16 @@ export const q = new Proxy({} as OpleQueries, {
     queryMap[callee] ? execSync.bind(null, callee) : undefined,
 })
 
+export function withSnapshot<T>(cb: (snapshot: Snapshot) => T) {
+  if (snapshot) {
+    return cb(snapshot)
+  }
+  if (transaction) {
+    return cb(transaction)
+  }
+  throw Error('Must be within `read` or `write` callback')
+}
+
 /** Untyped query executor */
 export function execSync(callee: string, ...args: any[]) {
   const query = makeQuery(callee, ...args)
@@ -44,12 +54,18 @@ export function read<T>(reader: () => T): FromQuery<T> {
   }
 }
 
+type Writer<T> = (() => T) | ((abort: (message?: string) => never) => T)
+type WriteResult<T, U extends Writer<T>> = U extends () => any
+  ? FromQuery<T>
+  : FromQuery<T> | undefined
+
 /**
  * Write to the database.
  */
-export function write<T>(
-  writer: (abort: (message?: string) => never) => T,
-): FromQuery<T> | undefined {
+export function write<T, U extends Writer<T>>(
+  writer: U | Writer<T>,
+): WriteResult<T, U>
+export function write(writer: (abort: (message?: string) => never) => any) {
   if (snapshot || transaction) {
     throw Error('Nested transactions are forbidden')
   }

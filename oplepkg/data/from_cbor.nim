@@ -27,11 +27,11 @@ proc newOpleArray*(node: CborNode): OpleData =
     newOpleArray(data)
 
 proc newOpleObject*(node: CborNode): OpleData =
-  try:
+  if node.isTagged:
     let tag = int64(node.tag)
     if tag == cborOpleTime:
       raise newException(Defect, "not implemented")
-  except:
+  else:
     var data: Table[string, OpleData]
     for key, value in node.map:
       data[key.text] = newOpleData(value)
@@ -42,14 +42,13 @@ proc newOpleRef*(node: CborNode): OpleData =
   newOpleRef parts[1], parts[0]
 
 proc newOpleString*(node: CborNode): OpleData =
-  try:
+  if node.isTagged:
     let tag = int64(node.tag)
     if tag == cborOpleRef: 
       return newOpleRef(node)
     if tag == cborOpleDate: 
       return newOpleDate(node.text)
-  except:
-    echo $getCurrentException().type
+  else:
     return newOpleString(node.text)
 
 proc newOpleData*(node: CborNode): OpleData =

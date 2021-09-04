@@ -1,5 +1,6 @@
 {.experimental: "notnil".}
 import nimdbx
+import strutils
 import options
 import ../query
 import ./collection
@@ -17,41 +18,14 @@ proc makeCursor(query: OpleQuery, col: Collection not nil, params: OpleObject): 
   elif params.hasKey("after"):
     result.minKey = params["after"].ref.id
 
-# Find the first match in a given OpleSet.
-proc find*(query: OpleQuery, s: OpleSet, isFound: proc (item: OpleData): bool): OpleData =
-  result = \nil
+proc paginate(query: OpleQuery, s: OpleSet, params: OpleObject, isMatch: proc (item: OpleData): bool): OpleData =
+  ## Fill an OplePage with matching values from an OpleSet.
   let call = s.expr
   query.debugPath.add call.callee
-  case call.callee
-    of qDocuments, qGetDocuments:
-      let shouldGetDocs = call.callee == qGetDocuments
-      let colRef = call.arguments[0].ref
-      let col = query.getCollection colRef.id
-      var cur = query.makeCursor(col, emptyOpleObject)
-      while cur.next():
-        let docRef = OpleRef(id: $cur.key, collection: colRef.id)
-        var doc: OpleDocument
-        if shouldGetDocs:
-          let props = parseDocument($cur.value)
-          doc = docRef.toDocument(props["data"].object, props["ts"].float)
-        let match =
-          if shouldGetDocs: newOpleRef(docRef)
-          else: newOpleDocument(doc)
-        if isFound(match):
-          discard query.debugPath.pop()
-          return match
-
-proc paginate*(s: OpleSet) {.query.} =
-  let call = s.expr
-  query.debugPath.add call.callee
-  let params = arguments.toParams
   let limit = params.getOrDefault("size", \64).int
   var matches: OpleArray
   var before: Option[OpleRef]
   var after: Option[OpleRef]
-  echo "callee => " & call.callee
-  echo "limit => " & $limit
-  echo "params => " & params.repr
   case call.callee
     of qDocuments, qGetDocuments:
       let shouldGetDocs = call.callee == qGetDocuments
@@ -65,9 +39,27 @@ proc paginate*(s: OpleSet) {.query.} =
           let props = parseDocument($cur.value)
           doc = some docRef.toDocument(props["data"].object, props["ts"].float)
         let match =
-          if shouldGetDocs: newOpleRef(docRef)
+          if doc.isNone: newOpleRef(docRef)
           else: newOpleDocument(get(doc))
-        matches.add match
+        if isMatch(match):
+          matches.add match
 
   discard query.debugPath.pop()
   return newOplePage(matches, before, after)
+
+proc paginate*(query: OpleQuery, params: OpleObject, isMatch: proc (item: OpleData): bool): OpleData =
+  ## Set pagination for Nim procedures.
+  query.paginate(query.expression.set, params, isMatch)
+
+proc find*(query: OpleQuery, isMatch: proc (item: OpleData): bool): OpleData =
+  ## Find the first match in a given OpleSet.
+  let params = \{ "size": \1 }
+  let page = query.paginate(query.expression.set, params.object, isMatch).page
+  let results = page.data.array
+  if results.len > 0: results[0]
+  else: \nil
+
+proc matchAll(item: OpleData): bool = true
+
+proc paginate*(s: OpleSet) {.query.} =
+  return query.paginate(s, arguments.toParams, matchAll)

@@ -1,13 +1,12 @@
+import { ToQuery } from '../convert'
 import { notImplemented } from '../errors'
-import {
-  OpleFrozenDocument as OpleDocument,
-  OpleDocumentOptions,
-} from './document'
-import { OpleRef } from '../values'
-import { OpleSet } from './set'
-import { q } from './transaction'
-import { db } from '../internal/db'
 import { jsonReviver } from '../json/reviver'
+import { OpleRef } from '../values'
+import { OpleDocument, OplePage, OpleSet } from './types'
+import { q, withSnapshot } from './transaction'
+import { OpleQuery } from '../query'
+import { OpleJSON } from '../json'
+import { OplePagination } from './set'
 
 function coerceToRef<T extends object | null = any>(
   ref: string | OpleRef<T>,
@@ -38,7 +37,7 @@ export class OpleCollection<
   }
 
   /** Get the mutable metadata of this collection */
-  get data(): Meta {
+  get data(): ToQuery<Meta> {
     throw notImplemented
   }
 
@@ -70,31 +69,59 @@ export class OpleCollection<
   /**
    * Find a document by iterating over the entire collection.
    *
-   * ⚠️ This is very inefficient on large collections, compared
+   * ⚠︎ This is very inefficient on large collections, compared
    * to an indexed search.
    */
-  find(filter: (doc: OpleDocument<T>) => boolean) {
-    return db.findDocument(this._ref.id, docStr => {
-      const doc = JSON.parse(docStr, jsonReviver)
-      return filter(doc)
+  find(
+    filter: (doc: OpleQuery.Document<T>) => boolean,
+  ): OpleQuery.Document<T> | null {
+    return withSnapshot(snapshot => {
+      const resultStr = snapshot.findDocument(this._ref.id, docStr => {
+        const doc = OpleJSON.parse(docStr)
+        return filter(doc)
+      })
+      return OpleJSON.parse(resultStr)
+    })
+  }
+
+  /**
+   * Filter a collection by iterating its documents.
+   *
+   * ⚠︎ This is very inefficient on large collections, compared
+   * to an indexed search.
+   */
+  filter(
+    filter: (doc: OpleQuery.Document<T>) => boolean,
+    params: OplePagination = { size: 100e3 },
+  ): OplePage<OpleDocument<T>> {
+    return withSnapshot(snapshot => {
+      const resultStr = snapshot.filterDocuments(
+        this._ref.id,
+        OpleJSON.stringify(params),
+        docStr => {
+          const doc = OpleJSON.parse(docStr)
+          return filter(doc)
+        },
+      )
+      return OpleJSON.parse(resultStr)
     })
   }
 
   /** Create a document in this collection */
-  create(data: T, options?: OpleDocumentOptions): OpleDocument<T> {
+  create(data: T, options?: OpleDocument.Options) {
     return q.create(this._ref, { ...options, data })
   }
 
   /** Replace a document's data */
-  replace(ref: string | OpleRef<T>, data: T): OpleDocument<T> {
+  replace(ref: string | OpleRef<T>, data: T) {
     return q.replace(coerceToRef(ref, this._ref), { data })
   }
 
   /** Merge new data into a document */
   update(
     ref: string | OpleRef<T>,
-    options: { data?: Partial<T> } & OpleDocumentOptions,
-  ): OpleDocument<T> {
+    options: { data?: Partial<T> } & OpleDocument.Options,
+  ) {
     return q.update(coerceToRef(ref, this._ref), options)
   }
 }

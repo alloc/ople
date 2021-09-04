@@ -34,25 +34,6 @@ template `\`*(arg: OpleArray): OpleData =
 template `\`*(arg: OpleRef): OpleData =
   newOpleRef arg
 
-# For error messages
-proc errorRepr*(kind: OpleDataKind): string =
-  result = case kind
-    of ople_null: "Null"
-    of ople_bool: "Boolean"
-    of ople_int: "Integer"
-    of ople_float: "Float"
-    of ople_string: "String"
-    of ople_date: "Date"
-    of ople_time: "Time"
-    of ople_call: "Call"
-    of ople_ref: "Ref"
-    of ople_document: "Document"
-    of ople_object: "Object"
-    of ople_array: "Array"
-    of ople_error: "Error"
-    of ople_page: "Page"
-    of ople_set: "Set"
-
 # Type name to OpleDataKind
 proc parseOpleDataKind*(t: string): OpleDataKind =
   result = case t

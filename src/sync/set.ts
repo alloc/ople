@@ -4,7 +4,7 @@ import type { OpleArrayLike } from './array'
 import { OpleCursor, OplePage } from './page'
 import { execSync, q } from './transaction'
 
-type PaginateOpts = {
+export type OplePagination = {
   ts?: number | OpleTime
   before?: OpleCursor
   after?: OpleCursor
@@ -20,7 +20,7 @@ type PaginateOpts = {
 export class OpleSet<T = any> {
   constructor(protected expr: { readonly [key: string]: any }) {}
 
-  paginate(opts: PaginateOpts = {}): OplePage<T> {
+  paginate(opts: OplePagination = {}): OplePage<T> {
     return q.paginate(this, opts.ts, opts.before, opts.after, opts.size)
   }
 }

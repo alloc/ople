@@ -58,7 +58,7 @@
         "nimcache/@moplepkg@sdata@stypes.nim.c",
         "nimcache/@moplepkg@sdata.nim.c",
         "nimcache/@moplepkg@squery.nim.c",
-        "nimcache/@m..@s..@s..@s.nimble@spkgs@scbor-0.6.0@scbor.nim.c",
+        "nimcache/@m..@s..@s..@s.nimble@spkgs@scbor-0.7.0@scbor.nim.c",
         "nimcache/@moplepkg@sdata@sfrom_cbor.nim.c",
         "nimcache/@moplepkg@sdata@sto_cbor.nim.c",
         "nimcache/@moplepkg@sdatabase.nim.c",

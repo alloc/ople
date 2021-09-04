@@ -26,7 +26,7 @@ proc newCollection*(query: OpleQuery, params: OpleObject) =
     query.fail "instance already exists", "Collection already exists."
   discard query.database.createCollection(name)
   var props: OpleObject
-  props["ts"] = \query.now.toUnixFloat
+  props["ts"] = \(query.now.toUnixFloat * 1e6)
   props["data"] = params.getOrDefault("data", \nil)
   props["ttl_days"] = params.getOrDefault("ttl_days", \nil)
   props["history_days"] = params.getOrDefault("history_days", \30)
