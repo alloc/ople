@@ -1,28 +1,27 @@
 import { Snapshot } from './internal/db'
 import { queryMap } from './queryMap'
 import { OpleFunctions } from './sync/stdlib'
-import { q } from './sync/transaction'
 import {
   OpleCollection,
   OpleCursor,
   OpleDocument,
   OplePage,
+  OpleRef,
   OpleSet,
+  OpleTime,
 } from './sync/types'
 import { OpleQueryError, popStackFrames } from './errors'
-import { OpleRef, OpleTime } from './values'
-import { DeepFreeze, ToQuery } from './convert'
 import { OpleJSON } from './json'
 
 export interface OpleQueries extends OpleFunctions {
-  get<T extends object | null>(ref: OpleRef<T>): OpleQuery.Document<T>
+  get<T extends object | null>(ref: OpleRef<T>): OpleDocument.Result<T>
 
   exists(ref: OpleRef): boolean
 
   create<T extends object | null>(
     collection: OpleRef,
     params: { data: T } & OpleDocument.Options,
-  ): OpleQuery.Document<T>
+  ): OpleDocument.Result<T>
 
   createCollection<T extends object | null>(
     params: { name: string } & OpleCollection.Options<T>,
@@ -31,12 +30,12 @@ export interface OpleQueries extends OpleFunctions {
   replace<T extends object | null>(
     ref: OpleRef<T>,
     params: { data: T },
-  ): OpleQuery.Document<T>
+  ): OpleDocument.Result<T>
 
   update<T extends object | null>(
     ref: OpleRef<T>,
     params: { data?: Partial<T> } & OpleDocument.Options,
-  ): OpleQuery.Document<T>
+  ): OpleDocument.Result<T>
 
   paginate<T>(
     set: OpleSet,
@@ -61,28 +60,6 @@ export class OpleQuery {
       throw result
     }
     return result
-  }
-}
-
-export namespace OpleQuery {
-  /**
-   * A query evaluated to a document.
-   *
-   * Note: Mutations will **not** update this snapshot.
-   */
-  export declare class Document<T extends object | null = any> {
-    readonly ref: Ref<T>
-    readonly data: DeepFreeze<ToQuery<T>>
-    readonly ts: OpleTime
-
-    /** Enforces type nominality */
-    private _document: { data: T }
-  }
-  /** A query evaluated to a document ref. */
-  export class Ref<T extends object | null = any> extends OpleRef<T> {
-    get exists(): boolean {
-      return q.exists(this)
-    }
   }
 }
 

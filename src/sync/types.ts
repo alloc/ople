@@ -1,5 +1,6 @@
-export { OpleSet } from './set'
 export { OpleArray, OpleArrayLike } from './array'
 export { OpleCollection } from './collection'
-export { OpleCursor, OplePage } from './page'
 export { OpleDocument } from './document'
+export { OpleCursor, OplePage } from './page'
+export { OpleSet } from './set'
+export * from '../values'

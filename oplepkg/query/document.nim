@@ -64,23 +64,28 @@ proc setDocumentData*(docRef: OpleRef, data: OpleObject) {.query.} =
   }
 
 proc updateDocument*(docRef: OpleRef, params: OpleObject) {.query.} =
-  discard
-  # const ts = now()
-  # if (data === null) {
-  #   if (!this.writer.exists(id)) {
-  #     throw Error('Document does not exist: ' + id)
-  #   }
-  #   // TODO: set data to null
-  # } else if (data) {
-  #   const oldData = this.writer.get(id)
-  #   if (!oldData) {
-  #     throw Error('Document does not exist: ' + id)
-  #   }
-  #   data = merge(oldData, data)
-  #   this.writer.update(id, { ...data, '@ts': ts })
-  #   return this.toDocument(id, data, ts)
-  # }
-  # throw Error('todo')
+  let col = query.getCollection(docRef.collection)
+  var props = query.getDocument(col, docRef.id)
+
+  # TODO: support other params
+  if params.hasKey("data"):
+    let newData = params["data"]
+    if newData.kind == ople_object:
+      if props["data"].kind == ople_null:
+        props["data"] = newData
+      else:
+        # TODO: deep merging
+        var data = addr props["data"].object
+        for key, val in newData.object:
+          data[][key] = val
+
+  props["ts"] = \(query.now.toUnixFloat * 1e6)
+  col.with(query.transaction).put docRef.id, serializeDocument(props)
+  return \{
+    "ref": \docRef,
+    "data": props["data"],
+    "ts": props["ts"],
+  }
 
 proc mergeProperties*(oldProps: OpleObject, newProps: OpleObject): OpleObject =
   discard

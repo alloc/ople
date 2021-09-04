@@ -38,6 +38,7 @@ addFunction "get", getDocument
 addFunction "exists", hasDocument
 addFunction "create", newDocument
 addFunction "replace", setDocumentData
+addFunction "update", updateDocument
 
 #
 # Collections

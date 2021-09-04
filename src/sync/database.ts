@@ -2,6 +2,7 @@ import { OpleQuery } from '../query'
 import { OpleRef } from '../values'
 import { OpleCollection, OpleDocument } from './types'
 import { q } from './transaction'
+import { OpleInput } from '../convert'
 
 // These collection names are reserved by FaunaDB.
 const reservedCollectionNames = ['events', 'set', 'self', 'documents', '_']
@@ -55,13 +56,13 @@ export interface OpleDatabase {
   replace<T extends object | null>(
     ref: OpleRef<T>,
     data: T,
-  ): OpleQuery.Document<T>
+  ): OpleDocument.Result<T>
 
   /** Merge new data into a document */
   update<T extends object | null>(
     ref: OpleRef<T>,
-    options: { data?: Partial<T> } & OpleDocument.Options,
-  ): OpleQuery.Document<T>
+    options: { data?: OpleInput<Partial<T>> } & OpleDocument.Options,
+  ): OpleDocument.Result<T>
 }
 
 /**

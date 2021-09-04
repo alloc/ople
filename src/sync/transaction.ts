@@ -1,5 +1,5 @@
+import { Materialize } from '../convert'
 import { db, Snapshot, Transaction } from '../internal/db'
-import { FromQuery } from '../convert'
 import { makeQuery, OpleQueries } from '../query'
 import { queryMap, writeQueries } from '../queryMap'
 import { OpleArray } from './array'
@@ -41,7 +41,7 @@ export function execSync(callee: string, ...args: any[]) {
 /**
  * Read from the database.
  */
-export function read<T>(reader: () => T): FromQuery<T> {
+export function read<T>(reader: () => T): Materialize<T> {
   if (snapshot || transaction) {
     throw Error('Nested transactions are forbidden')
   }
@@ -56,8 +56,8 @@ export function read<T>(reader: () => T): FromQuery<T> {
 
 type Writer<T> = (() => T) | ((abort: (message?: string) => never) => T)
 type WriteResult<T, U extends Writer<T>> = U extends () => any
-  ? FromQuery<T>
-  : FromQuery<T> | undefined
+  ? Materialize<T>
+  : Materialize<T> | undefined
 
 /**
  * Write to the database.

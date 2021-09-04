@@ -1,10 +1,8 @@
-import { ToQuery } from '../convert'
+import { OpleResult } from '../convert'
 import { notImplemented } from '../errors'
-import { jsonReviver } from '../json/reviver'
 import { OpleRef } from '../values'
 import { OpleDocument, OplePage, OpleSet } from './types'
 import { q, withSnapshot } from './transaction'
-import { OpleQuery } from '../query'
 import { OpleJSON } from '../json'
 import { OplePagination } from './set'
 
@@ -37,7 +35,7 @@ export class OpleCollection<
   }
 
   /** Get the mutable metadata of this collection */
-  get data(): ToQuery<Meta> {
+  get data(): OpleResult<Meta> {
     throw notImplemented
   }
 
@@ -73,8 +71,8 @@ export class OpleCollection<
    * to an indexed search.
    */
   find(
-    filter: (doc: OpleQuery.Document<T>) => boolean,
-  ): OpleQuery.Document<T> | null {
+    filter: (doc: OpleDocument.Result<T>) => boolean,
+  ): OpleDocument.Result<T> | null {
     return withSnapshot(snapshot => {
       const resultStr = snapshot.findDocument(this._ref.id, docStr => {
         const doc = OpleJSON.parse(docStr)
@@ -91,7 +89,7 @@ export class OpleCollection<
    * to an indexed search.
    */
   filter(
-    filter: (doc: OpleQuery.Document<T>) => boolean,
+    filter: (doc: OpleDocument.Result<T>) => boolean,
     params: OplePagination = { size: 100e3 },
   ): OplePage<OpleDocument<T>> {
     return withSnapshot(snapshot => {

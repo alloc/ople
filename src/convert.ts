@@ -2,61 +2,77 @@ import {
   OpleArray,
   OpleCollection,
   OpleCursor,
+  OpleDate,
   OpleDocument,
   OplePage,
+  OpleRef,
   OpleSet,
+  OpleTime,
 } from './sync/types'
-import { OpleDate, OpleRef, OpleTime } from './values'
-import { OpleQuery } from './query'
+
+export type OpleInput<T> = T extends ReadonlyArray<infer U>
+  ? ReadonlyArray<OpleInput<U>> | OpleArray<OpleInput<U>>
+  : T extends object
+  ? 1 extends StrictAssignable<T, QueryInputNoop>
+    ? T
+    : { [P in keyof T]: OpleInput<T[P]> }
+  : T
 
 /**
  * This type replaces array types with `OpleArray` and makes
  * document data immutable.
  *
  * It should only be used by query functions that return a
- * plain object or array. Query functions that return a
- * document should use `OpleQuery.Document` instead.
+ * plain object or array.
  */
-export type ToQuery<T> = T extends ReadonlyArray<infer U>
+export type OpleResult<T> = T extends ReadonlyArray<infer U>
   ? OpleArray<U>
   : T extends object
-  ? T extends OpleDocument<infer U>
-    ? OpleQuery.Document<U>
-    : T extends OpleRef<infer U>
-    ? OpleQuery.Ref<U>
-    : StrictAssignable<T, ToQueryNoop> extends 1
+  ? T extends OpleDocument<T>
+    ? OpleDocument.Result<T>
+    : 1 extends StrictAssignable<T, QueryResultNoop>
     ? T
-    : { [P in keyof T]: ToQuery<T[P]> }
+    : { [P in keyof T]: OpleResult<T[P]> }
   : T
 
-export type FromQuery<T> = T extends OpleArray<infer U>
-  ? FromQuery<U>[]
+/**
+ * Materialize a query result by removing any query-specific
+ * interfaces.
+ */
+export type Materialize<T> = T extends OpleArray<infer U>
+  ? Materialize<U>[]
   : T extends object
   ? T extends OplePage<infer U>
-    ? { data: FromQuery<U>[]; before?: OpleCursor; after?: OpleCursor }
-    : T extends OpleQuery.Document<infer U>
-    ? OpleDocument<U>
-    : T extends OpleQuery.Ref<infer U>
-    ? OpleRef<U>
+    ? { data: Materialize<U>[]; before?: OpleCursor; after?: OpleCursor }
     : T extends OpleCollection<any, infer U>
     ? OpleRef<U>
-    : StrictAssignable<T, FromQueryNoop> extends 1
+    : 1 extends StrictAssignable<T, MaterializeNoop>
     ? T
-    : { [P in keyof T]: FromQuery<T[P]> }
+    : { [P in keyof T]: Materialize<T[P]> }
   : T
 
-// These object types are never transformed by ToQuery.
-type ToQueryNoop =
+// These types are never transformed by QueryInput.
+type QueryInputNoop =
+  | OpleCursor
+  | OpleDate
+  | OplePage
+  | OpleRef
+  | OpleSet
+  | OpleTime
+
+// These types are never transformed by QueryResult.
+type QueryResultNoop =
   | OpleArray
   | OpleCollection
   | OpleCursor
   | OpleDate
   | OplePage
+  | OpleRef
   | OpleSet
   | OpleTime
 
-// These object types are never transformed by FromQuery.
-type FromQueryNoop =
+// These types are never transformed by Materialize.
+type MaterializeNoop =
   | OpleCursor
   | OpleDate
   | OpleDocument

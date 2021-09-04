@@ -1,8 +1,9 @@
-import { OpleArray } from '../sync/array'
-import { OpleDate, OpleRef, OpleTime } from '../values'
 import { OpleQueryError } from '../errors'
-import { OpleSet } from '../sync/set'
 import { OpleQuery } from '../query'
+import { OpleArray } from '../sync/array'
+import { isDocumentLike } from '../sync/document'
+import { OpleSet } from '../sync/set'
+import { OpleDate, OpleRef, OpleTime } from '../values'
 
 type DataReviver = (data: any) => any
 const dataRevivers: [string, DataReviver][] = [
@@ -26,12 +27,15 @@ export function jsonReviver(_key: string, value: any) {
       return revive(data)
     }
   }
+  if (isDocumentLike(value)) {
+    return new OpleDocument.Result(value.ref, value.data, value.ts)
+  }
   return value
 }
 
 function toRef({ id, collection }: { id: string; collection?: any }): OpleRef {
   if (collection) {
-    return new OpleQuery.Ref(id, collection)
+    return new OpleRef(id, collection)
   }
   const ref = (OpleRef.Native as any)[id]
   if (ref) {
