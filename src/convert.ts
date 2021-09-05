@@ -7,7 +7,7 @@ import {
   OpleCollection,
   OpleCursor,
   OpleDate,
-  OplePage,
+  OplePage as OplePageResult,
   OpleRef,
   OpleSet,
   OpleTime,
@@ -47,8 +47,8 @@ export type OpleResult<T> = T extends ReadonlyArray<infer U>
 export type Materialize<T> = T extends OpleArray<infer U>
   ? Materialize<U>[]
   : T extends object
-  ? T extends OplePage<infer U>
-    ? { data: Materialize<U>[]; before?: OpleCursor; after?: OpleCursor }
+  ? T extends OplePageResult<infer U>
+    ? OplePage<Materialize<U>>
     : T extends OpleCollection<any, infer U>
     ? OpleRef<U>
     : T extends OpleDocumentResult<infer U>
@@ -57,6 +57,12 @@ export type Materialize<T> = T extends OpleArray<infer U>
     ? T
     : { [P in keyof T]: Materialize<T[P]> }
   : T
+
+interface OplePage<T> {
+  data: T[]
+  before?: OpleCursor
+  after?: OpleCursor
+}
 
 /**
  * A materialized document with a proxy for direct `data` access.

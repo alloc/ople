@@ -1,6 +1,5 @@
 import { DeepFreeze, OpleResult, OpleInput } from '../convert'
 import { OpleRef, OpleTime } from '../values'
-import { db } from './database'
 
 export interface OpleDocumentOptions {
   credentials?: object
@@ -38,7 +37,7 @@ export class OpleDocument<T extends object | null = any> {
   update(data: null, options: OpleDocumentOptions): this
   /** @internal */
   update(data: OpleInput<Partial<T>> | null, options?: OpleDocumentOptions) {
-    const self = db.update(this.ref, data ? { data, ...options } : options!)
+    const self = this.ref.update(data as any, options)
     return Object.assign(this, { data: self.data, ts: self.ts })
   }
 

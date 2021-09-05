@@ -1,4 +1,6 @@
+import { OpleInput } from './convert'
 import { notImplemented } from './errors'
+import { OpleDocument } from './sync/types'
 import { q } from './sync/transaction'
 
 export class OpleRef<T extends object | null = any> {
@@ -10,6 +12,34 @@ export class OpleRef<T extends object | null = any> {
 
   get isCollection(): boolean {
     return this.collection?.id == 'collections'
+  }
+
+  equals(ref: any): boolean {
+    return (
+      Boolean(ref) &&
+      ref.id == this.id &&
+      (this.collection
+        ? this.collection.equals(ref.collection)
+        : !ref.collection)
+    )
+  }
+
+  /**
+   * Update the document's data and (optionally) its metadata.
+   */
+  update(
+    data: OpleInput<Partial<T>>,
+    options?: OpleDocument.Options,
+  ): OpleDocument<T>
+  /**
+   * Update the document's metadata.
+   *
+   * Passing `null` to data will **not** erase anything.
+   */
+  update(data: null, options: OpleDocument.Options): OpleDocument<T>
+  /** @internal */
+  update(data: OpleInput<Partial<T>> | null, options?: OpleDocument.Options) {
+    return q.update(this, data ? { data, ...options } : options!)
   }
 
   toString() {
