@@ -1,6 +1,5 @@
 import macros
 import nimdbx
-import options
 import ./data
 import ./error
 
@@ -12,9 +11,13 @@ type
   OpleQuery* = ref object
     now*: Time
     error*: OpleError
+    current*: ptr OpleCall
+    expression*: OpleData
     database*: Database
     snapshot*: Snapshot
-    expression*: OpleData
+    callbacks*: OpleCallbacks
+    pageParams*: Option[OpleObject]
+    pageResult*: Option[OplePage]
     debugPath*: seq[string]
     t: Option[Transaction]
 
@@ -27,10 +30,17 @@ proc transaction*(query: OpleQuery): Transaction =
     query.fail "read only", "cannot write in a readonly query"
   result = query.t.get()
 
-proc newQuery*(expression: OpleData, database: Database, snapshot: Snapshot, now: Time): OpleQuery =
+proc newQuery*(
+  expression: OpleData, 
+  callbacks: OpleCallbacks, 
+  database: Database, 
+  snapshot: Snapshot, 
+  now: Time,
+): OpleQuery =
   result = OpleQuery(
     now: now,
     expression: expression,
+    callbacks: callbacks,
     database: database,
     snapshot: snapshot,
     t: if snapshot of Transaction:
@@ -78,29 +88,30 @@ proc dataKey(kind: OpleDataKind): string =
     of ople_array: "array"
     of ople_page: "page"
     of ople_set: "set"
+    of ople_callback: "invoke"
     else: ""
 
 macro query*(fn: untyped): untyped =
   let prevParams = fn.params
 
   fn.params = nnkFormalParams.newTree(
-    newIdentNode("OpleData"),
+    ident("OpleData"),
     newIdentDefs(
-      newIdentNode("query"),
-      newIdentNode("OpleQuery")
+      ident("query"),
+      ident("OpleQuery")
     ),
     newIdentDefs(
-      newIdentNode("arguments"),
-      newIdentNode("OpleArray")
+      ident("arguments"),
+      ident("OpleArray")
     )
   )
 
   for i, param in prevParams:
     if i == 0: continue
     var init = newCall(
-      newIdentNode("expectArgument"),
-      newIdentNode("query"),
-      newIdentNode("arguments"),
+      ident("expectArgument"),
+      ident("query"),
+      ident("arguments"),
       newIntLitNode(i - 1)
     )
 
@@ -109,11 +120,12 @@ macro query*(fn: untyped): untyped =
       if isVar: param[1][0].strVal
       else: param[1].strVal
 
-    let paramKind = parseOpleDataKind paramType
+    var paramKind: OpleDataKind
     if paramType != "OpleData":
-      init.add newIdentNode($paramKind)
+      paramKind = parseOpleDataKind paramType
+      init.add ident($paramKind)
+      init = newDotExpr(init, ident(paramKind.dataKey))
 
-    init = newDotExpr(init, newIdentNode(paramKind.dataKey))
     fn.body.insert i - 1,
       if isVar: newVarStmt(param[0], init)
       else: newLetStmt(param[0], init)

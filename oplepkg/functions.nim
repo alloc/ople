@@ -1,6 +1,7 @@
 import ./database
 import ./error
 import ./query
+import ./query/array
 import ./query/document
 import ./query/collection
 import ./query/set
@@ -31,10 +32,19 @@ proc callFunction*(query: OpleQuery, callee: string, args: OpleArray): OpleData 
 addFunction "call", proc (callee: string, args: OpleArray) {.query.} =
   callFunction(query, callee, args)
 
+# TODO: timestamp argument
+addFunction "get", proc (arg: OpleData) {.query.} =
+  case arg.kind
+  of ople_ref:
+    query.getDocument(arguments)
+  of ople_set:
+    query.first(arguments)
+  else:
+    query.fail "invalid_argument", "expected a Ref or Set"
+
 #
 # Documents
 #
-addFunction "get", getDocument
 addFunction "exists", hasDocument
 addFunction "create", newDocument
 addFunction "replace", setDocumentData
@@ -57,3 +67,10 @@ addFunction "create_collection", proc (params: OpleObject) {.query.} =
 # Sets
 #
 addFunction "paginate", paginate
+addFunction "filter", filter
+addFunction "map", map
+
+#
+# Arrays
+#
+addFunction "count", count

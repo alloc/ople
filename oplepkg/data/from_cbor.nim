@@ -1,5 +1,4 @@
 import cbor
-import options
 import strutils
 import tables
 import ../data

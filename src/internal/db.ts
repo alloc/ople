@@ -28,27 +28,8 @@ export interface DatabaseHandle {
 }
 
 export interface Snapshot {
-  /**
-   * Find a document by iterating a collection.
-   *
-   * The `filter` function receives a document in JSON format.
-   * The result is the first document for which `filter` returns true.
-   */
-  findDocument(collection: string, filter: (doc: string) => boolean): string
-  /**
-   * Find documents by iterating a collection.
-   *
-   * The `params` string should be a JSON object of pagination options.
-   * The `filter` function receives a document in JSON format.
-   * The result is a page of documents for which `filter` returns true.
-   */
-  filterDocuments(
-    collection: string,
-    params: string,
-    filter: (doc: string) => boolean,
-  ): string
-  /** Execute a query and stall the thread until it completes */
-  execSync(query: string): string
+  /** Execute a query, which blocks the thread until it completes */
+  execSync(query: string, callbacks?: Record<string, Function>): string
   /** Release memory */
   finish(): void
 }

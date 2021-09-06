@@ -65,9 +65,11 @@
         "nimcache/@moplepkg@squery@scollection.nim.c",
         "nimcache/@moplepkg@sref.nim.c",
         "nimcache/@moplepkg@squery@sdocument.nim.c",
+        "nimcache/@moplepkg@squery@scursor.nim.c",
         "nimcache/@moplepkg@squery@sset.nim.c",
         "nimcache/@moplepkg@sdata@sfrom_json.nim.c",
         "nimcache/@moplepkg@sdata@sto_json.nim.c",
+        "nimcache/@moplepkg@squery@sarray.nim.c",
         "nimcache/@moplepkg@sfunctions.nim.c",
         "nimcache/@moplepkg@seval.nim.c",
         "nimcache/@mople.nim.c"

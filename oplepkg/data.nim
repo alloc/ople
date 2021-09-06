@@ -50,5 +50,6 @@ proc parseOpleDataKind*(t: string): OpleDataKind =
     of "OpleError": ople_error
     of "OplePage": ople_page
     of "OpleSet": ople_set
+    of "OpleCallback": ople_callback
     else:
       raise newException(Defect, "cannot convert $1 to OpleDataKind" % [t])

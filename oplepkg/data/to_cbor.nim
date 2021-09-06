@@ -51,14 +51,10 @@ proc writeCbor*(stream: Stream, data: OpleData, kind: OpleDataKind) =
     of ople_set:
       stream.writeCborTag cborOpleSet
       stream.writeCborArrayLen 2
-      stream.writeCbor data.set.expr.callee
-      stream.writeCbor data.set.expr.arguments
-    of ople_call:
-      raise newException(Defect, "ople_call cannot be stored")
-    of ople_error:
-      raise newException(Defect, "ople_error cannot be stored")
-    of ople_page:
-      raise newException(Defect, "ople_page cannot be stored")
+      stream.writeCbor data.set.source.callee
+      stream.writeCbor data.set.source.arguments
+    else:
+      raise newException(Defect, $kind & " cannot be stored")
 
 proc writeCbor*(stream: Stream, data: OpleData) =
   stream.writeCbor data, data.kind

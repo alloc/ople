@@ -1,5 +1,6 @@
 import { Snapshot } from './internal/db'
 import { queryMap } from './queryMap'
+import { OpleCallback } from './sync/callback'
 import { OpleFunctions } from './sync/stdlib'
 import {
   OpleCollection,
@@ -14,10 +15,17 @@ import { OpleQueryError, popStackFrames } from './errors'
 import { OpleJSON } from './json'
 import { OpleInput } from './convert'
 
+// Note: The parameter names *need* to match what FaunaDB expects
+// (except the first parameter, as the method name is used instead).
+// For guidance, see https://github.com/fauna/faunadb-js/blob/main/src/query.js
 export interface OpleQueries extends OpleFunctions {
   get<T extends OpleRef>(
     ref: T,
   ): T extends OpleRef<infer U> ? OpleDocument<U> : never
+
+  get<T extends OpleSet>(
+    set: T,
+  ): (T extends OpleSet<infer U> ? U : never) | null
 
   exists(ref: OpleRef): boolean
 
@@ -47,16 +55,28 @@ export interface OpleQueries extends OpleFunctions {
     after?: OpleCursor,
     size?: number,
   ): OplePage<T>
+
+  filter(filter: (value: any) => boolean, collection: OpleSet): OpleSet
+
+  map(map: (value: any) => any, collection: OpleSet): OpleSet
 }
 
 export class OpleQuery {
-  constructor(readonly expr: { readonly [key: string]: any }) {}
+  constructor(readonly expr: OpleExpression) {}
+
   toString() {
     return OpleJSON.stringify(this.expr)
   }
+
   execSync(snapshot: Snapshot) {
-    const query = this.toString()
-    const resultStr = snapshot.execSync(query)
+    const callbacks: Record<string, Function> = {}
+    const query = JSON.stringify(this.expr, (key, value) => {
+      if (value && value.constructor == OpleCallback) {
+        callbacks[value.id] = value.invoke
+      }
+      return OpleJSON.replace(key, value)
+    })
+    const resultStr = snapshot.execSync(query, callbacks)
     const result = OpleJSON.parse(resultStr)
     if (result.constructor == OpleQueryError) {
       popStackFrames(result, 6)
@@ -66,16 +86,23 @@ export class OpleQuery {
   }
 }
 
-export function makeQuery<T extends keyof OpleQueries>(
+export function makeQuery<T extends string>(
   callee: T,
-  ...args: Parameters<OpleQueries[T]>
-): OpleQuery
-export function makeQuery(callee: string, ...args: any[]): OpleQuery
-export function makeQuery(callee: string, ...args: any[]) {
+  ...args: T extends keyof OpleQueries ? Parameters<OpleQueries[T]> : any[]
+): OpleQuery {
+  return new OpleQuery(makeExpression(callee, ...args))
+}
+
+export type OpleExpression = Readonly<Record<string, any>>
+
+export function makeExpression<T extends string>(
+  callee: T,
+  ...args: T extends keyof OpleQueries ? Parameters<OpleQueries[T]> : any[]
+): OpleExpression {
   const expr: { [key: string]: any } = {}
   const params = queryMap[callee]
   for (let i = 0; i < args.length; i++) {
     expr[params[i]] = args[i]
   }
-  return new OpleQuery(expr)
+  return expr
 }

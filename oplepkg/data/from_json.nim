@@ -5,13 +5,17 @@ import streams
 import tables
 import ../data
 
-proc parseOpleData(p: var JsonParser): OpleData
+type OpleParser = object of JsonParser
+  callbacks*: OpleCallbacks
 
-proc raiseCustomParseErr(p: JsonParser, msg: string) {.noReturn.} =
+proc parseOpleData(p: var OpleParser): OpleData
+
+proc raiseCustomParseErr(p: OpleParser, msg: string) {.noReturn.} =
   raise newException(JsonParsingError, "($1, $2) Error: $3" % [$getLine(p), $getColumn(p), msg])
 
-proc parseOpleData*(s: Stream): OpleData =
-  var p: JsonParser
+proc parseOpleData*(s: Stream, callbacks: OpleCallbacks): OpleData =
+  var p: OpleParser
+  p.callbacks = callbacks
   p.open(s, "")
   try:
     discard getTok(p) # read first token
@@ -20,17 +24,17 @@ proc parseOpleData*(s: Stream): OpleData =
   finally:
     p.close()
 
-proc parseOpleData*(s: string): OpleData =
-  parseOpleData newStringStream s
+proc parseOpleData*(s: string, callbacks: OpleCallbacks): OpleData =
+  parseOpleData newStringStream(s), callbacks
 
-proc parseStringLit(p: var JsonParser): string =
+proc parseStringLit(p: var OpleParser): string =
   if p.tok != tkString:
     raiseParseErr(p, "expected string literal")
   result = p.a
   p.a = ""
   discard getTok(p)
 
-proc parseOpleRef(p: var JsonParser): OpleData =
+proc parseOpleRef(p: var OpleParser): OpleData =
   eat(p, tkCurlyLe)
   var key = parseStringLit(p)
   if key != "id":
@@ -55,13 +59,13 @@ proc parseOpleRef(p: var JsonParser): OpleData =
   eat(p, tkCurlyRi)
   newOpleRef id, collection
 
-proc parseOpleTime(p: var JsonParser): OpleData =
+proc parseOpleTime(p: var OpleParser): OpleData =
   newOpleTime parseStringLit(p)
 
-proc parseOpleDate(p: var JsonParser): OpleData =
+proc parseOpleDate(p: var OpleParser): OpleData =
   newOpleDate parseStringLit(p)
 
-proc parseOpleObject(p: var JsonParser): OpleData =
+proc parseOpleObject(p: var OpleParser): OpleData =
   if p.tok != tkCurlyLe:
     raiseParseErr(p, "expected object")
   discard getTok(p)
@@ -77,7 +81,7 @@ proc parseOpleObject(p: var JsonParser): OpleData =
   eat(p, tkCurlyRi)
   newOpleObject(obj)
 
-proc parseOpleCall(p: var JsonParser): OpleData =
+proc parseOpleCall(p: var OpleParser): OpleData =
   let callee = parseStringLit(p)
   eat(p, tkColon)
   var debugId = callee
@@ -92,13 +96,17 @@ proc parseOpleCall(p: var JsonParser): OpleData =
     eat(p, tkColon)
   newOpleCall(callee, arguments)
 
-proc parseOpleSet(p: var JsonParser): OpleData =
+proc parseOpleSet(p: var OpleParser): OpleData =
   eat(p, tkCurlyLe)
-  let data = parseOpleCall(p)
+  let source = parseOpleCall(p).call
   eat(p, tkCurlyRi)
-  newOpleSet data.call
+  newOpleSet source
 
-proc parseOpleData(p: var JsonParser): OpleData =
+proc parseOpleCallback(p: var OpleParser): OpleData =
+  let id = parseStringLit(p)
+  newOpleCallback p.callbacks[id]
+
+proc parseOpleData(p: var OpleParser): OpleData =
   case p.tok
 
   of tkString:
@@ -138,12 +146,13 @@ proc parseOpleData(p: var JsonParser): OpleData =
       raiseParseErr(p, "expected string literal")
 
     let firstKey = p.a
-    let parseSpecial: proc(p: var JsonParser): OpleData =
+    let parseSpecial: proc(p: var OpleParser): OpleData =
       case firstKey
       of "@ref": parseOpleRef
       of "@ts": parseOpleTime
       of "@date": parseOpleDate
       of "@set": parseOpleSet
+      of "@callback": parseOpleCallback
       else: nil
 
     if parseSpecial != nil or firstKey == "@obj":

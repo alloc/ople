@@ -1,3 +1,4 @@
+import { makeExpression, makeQuery, OpleExpression } from '../query'
 import { queriesByType } from '../queryMap'
 import { OpleTime } from '../values'
 import type { OpleArrayLike } from './array'
@@ -18,10 +19,22 @@ export type OplePagination = {
  * before you can access their underlying data.
  */
 export class OpleSet<T = any> {
-  constructor(protected expr: { readonly [key: string]: any }) {}
+  constructor(protected expr: OpleExpression) {}
 
   paginate(opts: OplePagination = {}): OplePage<T> {
     return q.paginate(this, opts.ts, opts.before, opts.after, opts.size)
+  }
+
+  map<U>(map: (value: T) => U): OpleSet<U> {
+    return new OpleSet(makeExpression('map', map, this))
+  }
+
+  filter(filter: (value: T) => boolean): OpleSet<T> {
+    return new OpleSet(makeExpression('filter', filter, this))
+  }
+
+  first(): T | null {
+    return q.get(this)
   }
 }
 
@@ -32,7 +45,6 @@ export interface OpleSet<T> extends OpleArrayLike<T> {
   difference(...groups: OpleSet[]): OpleSet<T>
   /** Ensure all elements are unique */
   distinct(): OpleSet<T>
-  filter(predicate: (value: T) => boolean): OpleSet<T>
   intersection(...groups: OpleSet[]): OpleSet<T>
   reverse(): OpleSet<T>
   union<U extends OpleSet>(...groups: U[]): OpleSet<T | OpleSetElement<U>>

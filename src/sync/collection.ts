@@ -1,10 +1,10 @@
 import { OpleInput, OpleResult } from '../convert'
 import { notImplemented } from '../errors'
-import { OpleRef } from '../values'
-import type { OpleDocument, OplePage, OpleSet } from './types'
-import { q, withSnapshot } from './transaction'
 import { OpleJSON } from '../json'
-import { OplePagination } from './set'
+import { OpleRef } from '../values'
+import { OplePagination, OpleSet } from './set'
+import { q, withSnapshot } from './transaction'
+import type { OpleDocument, OplePage } from './types'
 
 function coerceToRef<T extends object | null = any>(
   ref: string | OpleRef<T>,
@@ -83,24 +83,22 @@ export class OpleCollection<
   /**
    * Filter a collection by iterating its documents.
    *
-   * ⚠︎ This is very inefficient on large collections, compared
+   * If you pass an `OplePagination` object, the results will
+   * be paginated immediately.
+   *
+   * ⚠︎ This can be very inefficient on large collections, compared
    * to an indexed search.
    */
+  filter(filter: (doc: OpleDocument<T>) => boolean): OpleSet<OpleDocument<T>>
+
   filter(
     filter: (doc: OpleDocument<T>) => boolean,
-    params: OplePagination = { size: 100e3 },
-  ): OplePage<OpleDocument<T>> {
-    return withSnapshot(snapshot => {
-      const resultStr = snapshot.filterDocuments(
-        this._ref.id,
-        OpleJSON.stringify(params),
-        docStr => {
-          const doc = OpleJSON.parse(docStr)
-          return filter(doc)
-        },
-      )
-      return OpleJSON.parse(resultStr)
-    })
+    params: OplePagination,
+  ): OplePage<OpleDocument<T>>
+
+  filter(filter: (doc: OpleDocument<T>) => boolean, params?: OplePagination) {
+    const set = this.documents.filter(filter)
+    return params ? set.paginate(params) : set
   }
 
   /** Create a document in this collection */

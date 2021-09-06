@@ -2,6 +2,7 @@ import options
 import tables
 import times
 
+export options
 export tables
 export times
 
@@ -25,6 +26,7 @@ type
     ople_error
     ople_page
     ople_set
+    ople_callback
 
   OpleData* = object
     debugId*: string
@@ -59,6 +61,8 @@ type
       page*: OplePage
     of ople_set:
       set*: OpleSet
+    of ople_callback:
+      invoke*: OpleCallback
 
   OpleDate* = DateTime
   OpleTime* = DateTime
@@ -69,19 +73,22 @@ type
     ts*: float64 # secs since unix epoch
 
   OplePage* = ref object of RootObj
-    data*: OpleData
+    data*: OpleArray
     before*: Option[OpleRef]
     after*: Option[OpleRef]
 
-  OpleSet* = ref object of RootObj
-    expr*: OpleCall
+  OpleCursor* = proc (): Option[OpleData]
 
+  OpleSet* = object
+    source*: OpleCall
+    cursor*: OpleCursor
+
+  # For schema refs, "collection" is an empty string.
   OpleRef* = object
     id*: string
-    # For native collections, this is an empty string.
     collection*: string
 
-  OpleCall* = object
+  OpleCall* = object of RootObj
     callee*: string
     arguments*: seq[OpleData]
 
@@ -89,13 +96,17 @@ type
     parameters*: seq[string]
     body*: OpleCall
 
-  OpleError* = ref object
+  OpleError* = ref object of RootObj
     code*: string
     description*: string
 
   OpleArray* = seq[OpleData]
 
   OpleObject* = Table[string, OpleData]
+
+  OpleCallback* = proc (args: varargs[OpleData]): OpleData
+
+  OpleCallbacks* = TableRef[string, OpleCallback]
 
 template isNull*(data: OpleData): bool =
   data.kind == ople_null
@@ -160,21 +171,30 @@ proc newOpleArray*(data: seq[OpleData]): auto =
 proc newOpleError*(error: OpleError, debugPath: seq[string]): auto =
   OpleData(kind: ople_error, error: error, debugPath: debugPath)
 
-proc newOplePage*(data: seq[OpleData], before: Option[OpleRef], after: Option[OpleRef]): auto =
+proc newOplePage*(page: OplePage): auto =
+  OpleData(kind: ople_page, page: page)
+
+proc newOplePage*(data: OpleArray, before: Option[OpleRef], after: Option[OpleRef]): auto =
   OpleData(
     kind: ople_page,
     page: OplePage(
-      data: newOpleArray(data),
+      data: data,
       before: before,
       after: after
     )
   )
 
-proc newOpleSet*(expr: OpleCall): auto =
-  OpleData(kind: ople_set, set: OpleSet(expr: expr))
+proc newOpleSet*(source: OpleCall, cursor: OpleCursor): auto =
+  OpleData(kind: ople_set, set: OpleSet(source: source, cursor: cursor))
+
+proc newOpleSet*(source: OpleCall): auto =
+  OpleData(kind: ople_set, set: OpleSet(source: source))
 
 proc newOpleSet*(callee: string, arguments: seq[OpleData]): auto =
   newOpleSet(OpleCall(callee: callee, arguments: arguments))
+
+proc newOpleCallback*(invoke: OpleCallback): auto =
+  OpleData(kind: ople_callback, invoke: invoke)
 
 # For error messages
 proc errorRepr*(kind: OpleDataKind): string =
@@ -194,3 +214,4 @@ proc errorRepr*(kind: OpleDataKind): string =
     of ople_error: "Error"
     of ople_page: "Page"
     of ople_set: "Set"
+    of ople_callback: "Callback"

@@ -3,6 +3,7 @@ import strutils
 import tables
 import ./functions
 import ./query
+import ./query/cursor
 
 export newQuery, OpleQuery
 
@@ -40,12 +41,26 @@ proc eval*(query: OpleQuery, call: OpleCall): OpleData =
 
   query.assertFunction(call.callee)
 
+  let oldPageParams = query.pageParams
+  let oldPageResult = query.pageResult
+
+  let isPaginate = call.callee == "paginate"
+  if isPaginate:
+    query.pageParams = some call.arguments.toParams
+    query.pageResult = some OplePage(data: newSeq[OpleData]())
+
   # Evaluate any nested calls.
   var arguments: OpleArray
-  for argument in items(call.arguments):
+  for argument in call.arguments:
     arguments.add query.eval argument
 
-  query.callFunction(call.callee, arguments)
+  query.current = unsafeAddr call
+  result = query.callFunction(call.callee, arguments)
+  query.current = nil
+
+  if isPaginate:
+    query.pageParams = oldPageParams
+    query.pageResult = oldPageResult
 
 proc eval*(query: OpleQuery, obj: OpleObject): OpleData =
   result = OpleData(kind: ople_object)
@@ -55,6 +70,9 @@ proc eval*(query: OpleQuery, obj: OpleObject): OpleData =
 proc eval*(query: OpleQuery, arr: OpleArray): OpleData =
   \arr.map proc (data: OpleData): OpleData =
     query.eval data
+
+proc eval*(query: OpleQuery, s: OpleSet): OpleData =
+  newOpleSet s.source, query.makeCursor(s.source)
 
 proc eval*(query: OpleQuery, expression: OpleData): OpleData =
   let hasDebugId = expression.debugId != ""
@@ -67,6 +85,7 @@ proc eval*(query: OpleQuery, expression: OpleData): OpleData =
       of ople_call: query.eval expression.call
       of ople_object: query.eval expression.object
       of ople_array: query.eval expression.array
+      of ople_set: query.eval expression.set
       else: expression
 
   except OpleFailure:

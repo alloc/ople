@@ -1,4 +1,5 @@
 import napibindings
+import sequtils
 import streams
 import times
 import ./oplepkg/query/set
@@ -27,37 +28,22 @@ proc now(): ref Time =
 proc napiCreate(data: OpleData): napi_value =
   napiCreate data.stringify()
 
-template queryDocuments(id: string): OpleQuery =
-  let colRef = newOpleRef(id, $ople_collections)
-  let documents = newOpleSet("get_documents", @[colRef])
-  newQuery(documents, db, this.snapshot, this.now)
+proc prepareCallbacks(map: napi_value): OpleCallbacks =
+  result = newTable[string, OpleCallback]()
+  let callbacks = result
+  for key, value in map:
+    let fn = value.getFun
+    result[key] = proc (args: varargs[OpleData]): OpleData =
+      let ret = fn args.mapIt(napiCreate(it.stringify))
+      parseOpleData(ret.getStr, callbacks)
 
 init proc(exports: Module) =
 
-  # Iterating over an OpleSet using JavaScript is not really
-  # possible if we don't integrate with N-API directly.
-  fn(2, findDocument):
-    let filter = args[1].getFun
-    let query = queryDocuments(args[0].getStr)
-    return napiCreate query.find(
-      proc (doc: OpleData): bool =
-        filter(napiCreate doc).getBool
-    )
-
-  fn(3, filterDocuments):
-    let params = parseOpleData args[1].getStr
-    let filter = args[2].getFun
-    let query = queryDocuments(args[0].getStr)
-    return napiCreate query.paginate(
-      params.object,
-      proc (doc: OpleData): bool =
-        filter(napiCreate doc).getBool
-    )
-
   fn(1, execSync):
+    let callbacks = prepareCallbacks args[1]
     let queryExprStr = args[0].getStr
-    let queryExpr = parseOpleData queryExprStr
-    let query = newQuery(queryExpr, db, this.snapshot, this.now)
+    let queryExpr = parseOpleData(queryExprStr, callbacks)
+    let query = newQuery(queryExpr, callbacks, db, this.snapshot, this.now)
     let queryResult = query.eval()
     return napiCreate queryResult
 
@@ -66,8 +52,6 @@ init proc(exports: Module) =
     return nil
 
   SnapshotMethods = toRef \{
-    "findDocument": findDocument,
-    "filterDocuments": filterDocuments,
     "execSync": execSync,
     "finish": finishSnapshot,
   }

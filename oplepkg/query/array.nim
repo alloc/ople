@@ -1,16 +1,20 @@
-import ../functions
-import ../query/types
+import ../query
 
-addFunction("count"):
-  let s = arguments[0]
-  if s of OpleArray:
-    return OpleInteger(data: OpleArray(s).data.len)
-  if s of OplePage:
-    return OpleInteger(data: OplePage(s).data.len)
-  if s of OpleSet:
+proc count*(s: OpleData) {.query.} =
+  case s.kind
+  of ople_array:
+    return \s.array.len
+  of ople_page:
+    return \s.page.data.len
+  of ople_call:
+    # TODO: only evaluate an OpleCall if its related OpleSet
+    # has been reduced or filtered.
     raise newException(Defect, "not implemented")
-  raiseOpleError "expected an Array, Page, or Set"
-
+  of ople_set:
+    # TODO: just return the associated collection's document count
+    raise newException(Defect, "not implemented")
+  else:
+    query.fail "invalid argument", "expected an Array, Page, or Set"
 
 # const toArray = (arg: any[] | OpleArray) =>
 #   Array.isArray(arg) ? arg : arg[kData]

@@ -57,7 +57,7 @@ proc `%`*(data: OpleData): JsonNode =
   of ople_array: %data.array
   of ople_error: newJObject(data.error, data.debugPath)
   of ople_page: %data.page
-  of ople_set: newJObject(data.set.expr)
+  of ople_set: newJObject(data.set.source)
   else: 
     raise newException(Defect, $data.kind & " cannot be serialized to JSON")
 
