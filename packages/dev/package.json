@@ -23,6 +23,7 @@
     "cac": "^6.0.0",
     "convert-source-map": "^1.8.0",
     "debounce": "^1.2.0",
+    "dotenv": "^10.0.0",
     "esbuild": "^0.12.22",
     "filespy": "^1.2.4",
     "is": "npm:@alloc/is@^2.1.1",

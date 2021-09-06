@@ -50,7 +50,12 @@ export function defineBackend<
   Collections extends object,
   Functions extends object,
   Signals extends object
->(config: AgentConfig) {
+>({
+  onError,
+  ...config
+}: AgentConfig & {
+  onError(error: any): void
+}) {
   const handleCache = new PutCache<OpleRefHandle>()
 
   // Cache the promises of refs being fetched, so we can
@@ -113,7 +118,7 @@ export function defineBackend<
         pulls,
         (error, pulled: [OpleRef, OpleTime, any][]) =>
           error
-            ? console.error(error)
+            ? onError(error)
             : pulled.forEach(([ref, ts, data]) => {
                 const handle = handleCache.take(ref)
                 applyPatch(handle, data, ts)
@@ -128,7 +133,7 @@ export function defineBackend<
         ]),
         (error, created: [OpleRef, OpleTime][]) => {
           if (error) {
-            console.error(error)
+            onError(error)
           } else {
             let i = 0
             handles.forEach(handle => {
@@ -153,7 +158,7 @@ export function defineBackend<
         refs,
         (error, handles: OpleRefHandle[]) =>
           error
-            ? console.error(error)
+            ? onError(error)
             : handles.forEach(handle => {
                 fetching[handle].resolve(handle)
                 delete fetching[handle]
@@ -166,7 +171,10 @@ export function defineBackend<
   const getCollection = (name: string) =>
     collections[name] || (collections[name] = new OpleCollection(name, backend))
 
-  const coding = getEncoder(getCollection)
+  const coding = getEncoder(getCollection, (calleeId, args) =>
+    agent.call(calleeId, ...args)
+  )
+
   const watched = new Set<OpleRefHandle>()
   const encodeBatch = makeBatchEncoder(coding)
 
@@ -175,7 +183,7 @@ export function defineBackend<
     ...config,
     makeBatch: () => new OpleBatch(),
     enqueueCall(batch, call) {
-      if (call[0][0] == '@') {
+      if (call[0][0] == '@' && call[0] != '@page') {
         return enqueueMethodCall(batch, call as OpleMethodCall)
       }
       const trace = Error()

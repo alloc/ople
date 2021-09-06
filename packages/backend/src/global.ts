@@ -1,6 +1,8 @@
-import type { OpleRef } from 'ople-db'
+import type { OpleRef, OpleSet } from 'ople-db'
 import type { RefSignals, Signals, User } from './types'
 import type { Caller } from './callees'
+
+type PagerSource = (...args: any[]) => OpleSet
 
 declare global {
   type OpleRef<T extends object = any> = import('ople-db').OpleRef<T>
@@ -9,12 +11,22 @@ declare global {
   type OpleDate = import('ople-db').OpleDate
 
   /**
+   * Expose a backend function that pages through a query set.
+   */
+  function exposePager(callee: PagerSource): ExposedFunctions
+
+  /**
+   * Expose backend functions that page through a query set.
+   */
+  function exposePagers(callees: Record<string, PagerSource>): ExposedFunctions
+
+  /**
    * Expose a backend function to the client.
    */
   function exposeFunction(callee: Function): ExposedFunctions
 
   /**
-   * Expose one or more backend functions to the client.
+   * Expose backend functions to the client.
    */
   function exposeFunctions(callees: Record<string, Function>): ExposedFunctions
 

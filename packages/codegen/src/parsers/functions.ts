@@ -13,6 +13,7 @@ import { warn } from '../warnings'
 
 export type OpleFunction = {
   name: string
+  isPager?: boolean
   signatures: Signature[]
   referencedTypes: Set<Node>
   node: Node
@@ -21,11 +22,12 @@ export type OpleFunction = {
 
 export function parseFunctions(file: SourceFile) {
   const functions: OpleFunction[] = []
-  for (const node of findExposedFunctions(file)) {
+  for (const { isPager, node } of findExposedFunctions(file)) {
     const [name, signatures] = extractSignatures(node)
     if (name)
       functions.push({
         name,
+        isPager,
         signatures,
         referencedTypes: getReferencedTypes(signatures),
         node,
@@ -51,7 +53,7 @@ export type ExposedFunction =
   | ShorthandPropertyAssignment
 
 export function findExposedFunctions(source: SourceFile) {
-  const exposedFunctions: ExposedFunction[] = []
+  const exposedFunctions: { isPager?: boolean; node: ExposedFunction }[] = []
   source.forEachChild(stmt => {
     if (!Node.isExpressionStatement(stmt)) {
       return
@@ -63,21 +65,27 @@ export function findExposedFunctions(source: SourceFile) {
     const calleeNode = callNode.getExpression()
     if (Node.isIdentifier(calleeNode)) {
       const callee = calleeNode.getText()
-      if (callee == 'exposeFunction') {
+      if (/^expose(Function|Pager)$/.test(callee)) {
         const [arg] = callNode.getArguments()
         if (Node.isIdentifier(arg)) {
-          exposedFunctions.push(arg)
+          exposedFunctions.push({
+            isPager: /Pager/.test(callee),
+            node: arg,
+          })
         } else if (Node.isFunctionExpression(arg)) {
           const nameNode = arg.getNameNode()
           if (nameNode) {
-            exposedFunctions.push(arg)
+            exposedFunctions.push({
+              isPager: /Pager/.test(callee),
+              node: arg,
+            })
           } else {
             warn(arg, `Exposed function must be named`)
           }
         } else {
           warn(arg, `Unsupported node type: ${arg.getKindName()}`)
         }
-      } else if (callee == 'exposeFunctions') {
+      } else if (/^expose(Function|Pager)s$/.test(callee)) {
         const [arg] = callNode.getArguments()
         if (Node.isObjectLiteralExpression(arg)) {
           for (const prop of arg.getProperties()) {
@@ -86,7 +94,10 @@ export function findExposedFunctions(source: SourceFile) {
               Node.isPropertyAssignment(prop) ||
               Node.isShorthandPropertyAssignment(prop)
             ) {
-              exposedFunctions.push(prop)
+              exposedFunctions.push({
+                isPager: /Pager/.test(callee),
+                node: prop,
+              })
             } else {
               warn(prop, `Unsupported node type: ${prop.getKindName()}`)
             }

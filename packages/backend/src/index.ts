@@ -6,7 +6,7 @@ export * from './context'
 
 // Types
 export * from './types'
-export { Caller } from './callees'
+export type { Caller, CallerMeta } from './callees'
 
 // Global functions
 import * as env from './env'

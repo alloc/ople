@@ -3,7 +3,7 @@ import Module from 'module'
 import { filespy } from 'filespy'
 import { EventEmitter } from 'events'
 import { debounce } from 'ts-debounce'
-import { Project, SourceFile } from 'ts-morph'
+import { Node, Project, SourceFile } from 'ts-morph'
 import { OpleCollection, parseCollections } from './parsers/database'
 import { OpleFunction, parseFunctions } from './parsers/functions'
 import { OpleSignal, parseSignals } from './parsers/signals'
@@ -26,6 +26,7 @@ export class OpleParser extends EventEmitter {
   signals: Record<string, OpleSignal> = {}
   functions: Record<string, OpleFunction> = {}
   collections: Record<string, OpleCollection> = {}
+  exportedTypes: Node[] = []
   readonly functionsByFile: Record<string, OpleFunction[]> = {}
   readonly dependencies = new Map<SourceFile, DependencyInfo>()
 
@@ -40,6 +41,17 @@ export class OpleParser extends EventEmitter {
     })
 
     const { functionsByFile } = this
+
+    const updateExportedTypes = (initFile: SourceFile) => {
+      this.exportedTypes = initFile
+        .getDescendants()
+        .filter(
+          node =>
+            Node.isInterfaceDeclaration(node) ||
+            Node.isTypeAliasDeclaration(node) ||
+            Node.isNamespaceDeclaration(node)
+        )
+    }
 
     const updateCollections = (initFile: SourceFile) => {
       this.collections = {}
@@ -161,6 +173,7 @@ export class OpleParser extends EventEmitter {
         const file = project.addSourceFileAtPath(filePath)
         collectDependencies(file)
         if (name == initPath) {
+          updateExportedTypes(file)
           updateCollections(file)
           updateSignals(file)
         } else {
@@ -176,6 +189,7 @@ export class OpleParser extends EventEmitter {
           file.refreshFromFileSystemSync()
           collectDependencies(file)
           if (name == initPath) {
+            updateExportedTypes(file)
             updateCollections(file)
             updateSignals(file)
           } else {
@@ -228,8 +242,9 @@ export class OpleParser extends EventEmitter {
 }
 
 export interface OpleParser {
+  /** The parser is ready. */
   on(name: 'ready', handler: () => void): this
-  /** The project is updating. */
+  /** The parser is updating. */
   on(name: 'update', handler: () => void): this
   /** Stop watching for changes. */
   close: () => Promise<void>

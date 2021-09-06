@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "dependencies": {
+    "@ople/init": "link:../../packages/init"
+  },
+  "devDependencies": {
+    "@ople/dev": "link:../../packages/dev"
+  }
+}

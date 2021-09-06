@@ -1,24 +1,34 @@
 import path from 'path'
 import endent from 'endent'
 import redent from 'redent'
-import { Node, Signature, Type } from 'ts-morph'
+import { Node, ParameterDeclaration, Signature, Type } from 'ts-morph'
 import { OpleParser } from './parser'
 import { warn } from './warnings'
 import {
   findReferencedTypes,
+  getNameNode,
   isExternalModule,
   mergeIntoSet,
   printImport,
   printJSDocs,
 } from './common'
+import { OpleFunction } from './parsers/functions'
+import { tokenize } from './tokenize'
 
 /**
  * Generate the module that calls `defineBackend`
  * on the frontend.
  */
 export function printClientModule(parser: OpleParser, backendUrl: string) {
-  const { collections } = parser
+  const { collections, exportedTypes } = parser
   const referencedTypes = new Set<Node>()
+
+  exportedTypes.forEach(type => {
+    const name = getNameNode(type)?.getText()
+    if (name && !/^(Signals|CallerMeta)$/.test(name)) {
+      referencedTypes.add(type)
+    }
+  })
 
   const collectionTypes = Object.values(collections).map(coll => {
     let type = `${coll.name}: OpleCollection`
@@ -29,12 +39,6 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
     return type
   })
 
-  const functions = Object.values(parser.functions)
-  const functionTypes = functions.map(fun => {
-    mergeIntoSet(referencedTypes, fun.referencedTypes)
-    return fun.signatures.map(sig => printSignature(sig, fun.name))
-  })
-
   const signals = Object.values(parser.signals)
   const signalTypes = signals.map(signal => {
     mergeIntoSet(referencedTypes, signal.referencedTypes)
@@ -42,22 +46,43 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
   })
 
   const opleClientId = '@ople/client'
-  const imports: Record<string, string[]> = {
-    [opleClientId]: ['defineBackend', 'OpleProtocol'],
+  const imports: Record<string, Set<string>> = {
+    [opleClientId]: new Set(['defineBackend', 'OpleProtocol']),
   }
   if (collectionTypes.length) {
-    imports[opleClientId].push('OpleCollection')
+    imports[opleClientId].add('OpleCollection')
   }
   if (signalTypes.length) {
-    imports[opleClientId].push('OpleListener')
+    imports[opleClientId].add('OpleListener')
   }
+
+  const functions = Object.values(parser.functions)
+  const functionTypes = functions.map(fun => {
+    mergeIntoSet(referencedTypes, fun.referencedTypes)
+    if (fun.isPager) {
+      imports[opleClientId].add('OplePager')
+    }
+    return fun.signatures.map(sig => {
+      const text = printSignature(sig, fun)
+      if (text.includes('OpleRefLike')) {
+        imports[opleClientId].add('OpleRefLike')
+      }
+      return text
+    })
+  })
+
   const typeNames = new Set<string>()
   const dedupedTypes: Record<string, Node[]> = {}
   const backendModulePath = path.join(parser.root, 'backend/db.ts')
+
   referencedTypes.forEach(typeNode => {
     const file = typeNode.getSourceFile()
-    if (file.getFilePath() == backendModulePath) {
-      return // Ignore generated types.
+    const filePath = file.getFilePath()
+    if (filePath == backendModulePath) {
+      return // Ignore generated types
+    }
+    if (filePath.includes('/node_modules/@ople/init/')) {
+      return // Ignore "@ople/init" types
     }
 
     // Types from internal modules are recursively crawled.
@@ -70,13 +95,16 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
     }
 
     const name = typeNode.getName()
-    if (name == 'OpleDocument') {
-      return // "OpleDocument<T>" is transformed into "T"
+
+    // These types don't exist on the client side.
+    if (/^Ople(Set|Document)$/.test(name)) {
+      return
     }
+
     // These types are globally declared in ople.init.ts
     // but not on the client-side.
     if (/^Ople(Ref|Time|Date)$/.test(name)) {
-      imports[opleClientId].push(name)
+      imports[opleClientId].add(name)
       return
     }
 
@@ -85,13 +113,13 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
       if (moduleInfo.id == '@ople/backend') {
         return
       }
-      const vars = (imports[moduleInfo.id] ??= [])
-      if (vars.includes(name)) {
+      const vars = (imports[moduleInfo.id] ??= new Set())
+      if (vars.has(name)) {
         return
       }
       if (!typeNames.has(name)) {
         typeNames.add(name)
-        vars.push(name)
+        vars.add(name)
       }
     } else {
       let typeNodes = dedupedTypes[name]
@@ -108,6 +136,7 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
       typeNodes.push(typeNode)
     }
   })
+
   const printedTypes = Object.keys(dedupedTypes).map(name => {
     const typeNodes = dedupedTypes[name]
     const lines: string[] = []
@@ -153,7 +182,10 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
       ${signalTypes.join('\n')}
     }
 
+    declare const console: any
+
     const backend = defineBackend<Collections, Functions, Signals>({
+      onError: console.error,
       protocol: OpleProtocol.ws,
       url: "${backendUrl}",
     })
@@ -174,29 +206,99 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
   `
 }
 
-function printSignature(sign: Signature, name: string) {
+function printSignature(sign: Signature, fun: OpleFunction) {
   const decl = sign.getDeclaration()
   if (!Node.isParameteredNode(decl)) {
     throw Error('Signature must be from a parametered node')
   }
 
-  const params = decl.getParameters().map(printNode)
   const typeParams = sign.getTypeParameters().map(printType)
-  const returnType = printType(decl.getReturnType()).replace(
-    /\bOpleDocument<(.+?)>/g,
-    '$1'
-  )
+  const params = decl.getParameters().map(printParam)
+  if (fun.isPager) {
+    params.push(`pagerOptions?: OplePager.Options`)
+  }
 
   return (
     printJSDocs(decl) +
-    name +
+    fun.name +
     (typeParams.length ? `<${typeParams.join(', ')}>` : ``) +
-    `(${params.join(', ')}): Promise<${returnType}>`
+    `(${params.join(', ')}): ${printReturnType(decl.getReturnType(), fun)}`
   )
 }
 
-function printNode(node: Node) {
-  return node.getText(true)
+function printParam(param: ParameterDeclaration) {
+  return (
+    (param.isRestParameter() ? '...' : '') +
+    param.getName() +
+    (param.isOptional() ? '?' : '') +
+    ': ' +
+    printParamType(param.getType())
+  )
+}
+
+// string literals | identifiers | whitespace | punctuation
+const tsLang = /"(.*?)"|[_$\w\d]+|\s+|[.|&?<>{}\[\],:;]/
+
+function printParamType(type: Type) {
+  return tokenize(printType(type), tsLang)
+    .map(token => (token == 'OpleRef' ? 'OpleRefLike' : token))
+    .join('')
+}
+
+function printReturnType(type: Type, fun: OpleFunction) {
+  let returnType = 'Promise<'
+
+  let token: string,
+    tokens = tokenize(printType(type), tsLang)
+
+  if (fun.isPager) {
+    if (tokens[0] !== 'OpleSet') {
+      warn(fun.node, 'Pager function must return an OpleSet')
+      return 'never'
+    }
+    tokens[0] = 'OplePager'
+  }
+
+  for (let i = 0; i < tokens.length; i++) {
+    token = tokens[i]
+    // Strip "OpleDocument" but leave its type argument.
+    if (token == 'OpleDocument') {
+      if (tokens[i + 1] == '<') {
+        i += 1
+
+        // Find the matching ">" token.
+        let depth = 0
+        while (tokens[++i] != '>' || depth > 0) {
+          returnType += tokens[i]
+          if (tokens[i] == '<') {
+            depth += 1
+          } else if (tokens[i] == '>') {
+            depth -= 1
+          }
+        }
+      }
+      // Strip the `data` proxy from an `OpleDocument` type.
+      if (tokens[i + 2] == '&') {
+        // Jump past "{" token.
+        i += 4
+
+        // Find the matching "}" token.
+        let depth = 0
+        while (tokens[++i] != '}' || depth > 0) {
+          if (tokens[i] == '{') {
+            depth += 1
+          } else if (tokens[i] == '}') {
+            depth -= 1
+          }
+        }
+      }
+    } else {
+      returnType += token
+    }
+  }
+
+  returnType += '>'
+  return returnType
 }
 
 function printType(type: Type) {

@@ -10,7 +10,23 @@ export interface Callee {
 /** Backend callees which are called by the client. */
 export const callees: Record<string, Callee> = {}
 
-export type CallerMeta = Record<string, string | number | boolean>
+/**
+ * Connection metadata shared between backend calls.
+ *
+ * ---
+ * Use "interface merging" to define custom properties:
+ *
+ *     declare module "@ople/backend" {
+ *       export interface CallerMeta {
+ *         admin: boolean
+ *       }
+ *     }
+ *
+ * Then you can assign to them:
+ *
+ *     caller.meta.admin = true
+ */
+export interface CallerMeta {}
 
 export class Caller {
   private _user?: OpleRef<User>
@@ -23,13 +39,13 @@ export class Caller {
 
   constructor(
     connectionId: string,
-    { user = '', ...meta }: CallerMeta,
+    { user, ...meta }: Record<string, any>,
     /** @internal */
     readonly context: ServerContext
   ) {
     this.id = connectionId
-    this.uid = user as string
-    this.meta = meta
+    this.uid = user
+    this.meta = meta as CallerMeta
   }
 
   /** Exists when `this.uid` does. */

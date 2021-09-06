@@ -1,15 +1,27 @@
 import { is } from '@alloc/is'
 import { OpleRef } from 'ople-db'
 import { callees, Callee, Caller } from './callees'
+import { createPager } from './pager'
 
 export { db, read, write } from 'ople-db'
 
-export function exposeFunction(fn: Callee) {
-  if (!fn.name) {
+export function exposePager(fn: Callee) {
+  return exposeFunction(createPager(fn.name, fn), fn.name)
+}
+
+export function exposePagers(fns: Record<string, Callee>) {
+  for (const name in fns) {
+    fns[name] = createPager(name, fns[name])
+  }
+  return exposeFunctions(fns)
+}
+
+export function exposeFunction(fn: Callee, name = fn.name) {
+  if (!name) {
     // Return a stub to prevent crashing.
     return { authorize() {} }
   }
-  callees[fn.name] = fn
+  callees[name] = fn
   return {
     authorize(authorize: (caller: Caller) => boolean) {
       fn.authorize = authorize

@@ -2,7 +2,7 @@ import { IncomingMessage, ServerResponse } from 'http'
 import readBody from 'raw-body'
 import { is } from '@alloc/is'
 import { PackedCall } from '@ople/nason'
-import { Caller, CallerMeta } from './callees'
+import { Caller } from './callees'
 import { ServerContext } from './context'
 import { processBatch } from './batch'
 import { decodeBatch } from './nason'
@@ -102,18 +102,19 @@ export const createMiddleware = ({
           } else if (caller) {
             if (caller.uid !== meta.user) {
               const events: object[] = []
+
               if (caller.uid)
                 events.push({
                   type: 'subscribe',
                   channel: 'u:' + caller.uid,
                 })
+
               if (meta.user)
                 events.push({
                   type: 'unsubscribe',
                   channel: 'u:' + meta.user,
                 })
 
-              caller.meta.user = caller.uid
               output = grip.encodeWebSocketEvents(
                 events.map(grip.makeControlEvent)
               )
@@ -148,7 +149,7 @@ const toHeaderCase = (input: string) =>
   )
 
 const parseCallerMeta = (headers: Record<string, any>) =>
-  Object.entries(headers).reduce((meta: CallerMeta, [name, value]) => {
+  Object.entries(headers).reduce((meta: Record<string, any>, [name, value]) => {
     if (/^meta-/i.test(name)) {
       name = fromHeaderCase(name.slice(5))
       meta[name] = JSON.parse(value)

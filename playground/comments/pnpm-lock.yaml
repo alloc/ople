@@ -1,0 +1,11 @@
+lockfileVersion: 5.3
+
+specifiers:
+  '@ople/dev': link:../../packages/dev
+  '@ople/init': link:../../packages/init
+
+dependencies:
+  '@ople/init': link:../../packages/init
+
+devDependencies:
+  '@ople/dev': link:../../packages/dev

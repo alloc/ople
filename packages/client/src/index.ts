@@ -13,7 +13,8 @@ export { OpleProtocol } from '@ople/agent'
 export * from 'wana'
 
 // Types
-export type { OpleRef, OpleRefHandle } from './OpleRef'
+export type { OpleRef, OpleRefHandle, OpleRefLike } from './OpleRef'
 export type { OpleEffect } from './OpleContext'
 export type { OpleCollection } from './values'
 export type { OpleListener } from './signals'
+export type { OplePager, OplePage } from './OplePager'

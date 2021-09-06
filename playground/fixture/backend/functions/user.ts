@@ -12,7 +12,7 @@ exposeFunctions({
   signUp(name: string, password: User.Password) {
     const user = write(() => {
       const users = db.getCollection('users')
-      const match = users.find(user => user.data.name == name)
+      const match = users.find(user => user.name == name)
       if (match) {
         throw `User named "${name}" already exists`
       }
@@ -27,11 +27,11 @@ exposeFunctions({
   login(name: string, password: User.Password) {
     const user = read(() => {
       const users = db.getCollection('users')
-      const match = users.find(user => user.data.name == name)
+      const match = users.find(user => user.name == name)
       if (!match) {
         throw `User named "${name}" does not exist`
       }
-      if (match.data._password !== password) {
+      if (match._password !== password) {
         throw `Incorrect password`
       }
       return match

@@ -1,14 +1,20 @@
 import { makeNason } from '@ople/nason'
 import { OpleCollection, OpleDate, OpleRef, OpleTime } from './values'
 import { initHandle, OpleRefHandle } from './OpleRef'
+import { OplePager } from './OplePager'
 
 const hasConstructor = (ctr: Function) => (val: any) =>
   ctr === (val && val.constructor)
 
-export const getEncoder = (getCollection: (name: string) => OpleCollection) =>
-  makeNason<OpleRef, OpleTime, OpleDate, OpleRefHandle>([
+export const getEncoder = (
+  getCollection: (name: string) => OpleCollection,
+  call: (calleeId: string, args: any[]) => PromiseLike<any>
+) =>
+  makeNason<OpleRef, OpleTime, OpleDate, OpleRefHandle, OplePager>([
     {
-      test: val => val instanceof OpleRef,
+      test: (val: any) =>
+        Boolean(val) &&
+        (val.constructor == OpleRefHandle || val instanceof OpleRef),
       pack: String,
       unpack(encodedRef) {
         const [scope, id] = encodedRef.split('/')
@@ -28,5 +34,18 @@ export const getEncoder = (getCollection: (name: string) => OpleCollection) =>
     },
     {
       unpack: ([ref, ts, data]) => initHandle(data, ref, ts),
+    },
+    {
+      unpack: ([calleeId, args, firstPage, size, ts]) =>
+        new OplePager(firstPage, opts =>
+          call('@page', [
+            calleeId,
+            args.concat({
+              ts,
+              size,
+              ...opts,
+            }),
+          ])
+        ),
     },
   ])

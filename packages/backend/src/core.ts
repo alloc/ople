@@ -1,5 +1,7 @@
-import { db, OpleDocument, OpleRef, OpleTime, read, write } from 'ople-db'
+import { db, OpleRef, OpleTime, read, write } from 'ople-db'
 import { Callee } from './callees'
+import { invokeFunction } from './invoke'
+import { OplePager } from './pager'
 
 type PullMap = Record<string, number>
 type PullResult = [OpleRef, OpleTime, object]
@@ -59,5 +61,9 @@ export const coreFunctions: Record<string, Callee | undefined> = {
     for (const ref of refs) {
       caller.context.unsubscribe(caller.id, 'r:' + ref.toString())
     }
+  },
+  async '@page'(caller, [calleeId, args]: [string, any[]]) {
+    const pager: OplePager = await invokeFunction(caller, calleeId, args)
+    return pager.page
   },
 }

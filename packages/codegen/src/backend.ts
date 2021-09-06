@@ -3,6 +3,7 @@ import redent from 'redent'
 import { Node } from 'ts-morph'
 import {
   findReferencedTypes,
+  getNameNode,
   mergeIntoSet,
   printImport,
   printJSDocs,
@@ -11,8 +12,15 @@ import { OpleParser } from './parser'
 import { warn } from './warnings'
 
 export function printBackendModule(parser: OpleParser) {
-  const { collections } = parser
+  const { collections, exportedTypes } = parser
   const referencedTypes = new Set<Node>()
+
+  exportedTypes.forEach(type => {
+    const name = getNameNode(type)?.getText()
+    if (name && name !== 'Signals') {
+      referencedTypes.add(type)
+    }
+  })
 
   const documentTypes: string[] = []
   const collectionTypes: string[] = []
@@ -35,7 +43,11 @@ export function printBackendModule(parser: OpleParser) {
   })
 
   const opleBackendId = '@ople/backend'
-  const imports: Record<string, string[]> = { [opleBackendId]: [] }
+  const imports: Record<string, Set<string>> = {
+    [opleBackendId]: new Set(['User']),
+  }
+
+  let callerMeta = ''
   const userProps: string[] = []
   const printedTypes: string[] = []
   const typeNames = new Set<string>()
@@ -57,15 +69,22 @@ export function printBackendModule(parser: OpleParser) {
       } else {
         warn(type, `"User" type must be an interface`)
       }
+    } else if (name == 'CallerMeta') {
+      if (Node.isInterfaceDeclaration(type)) {
+        type.setIsExported(true)
+        callerMeta = type.getText()
+      } else {
+        warn(type, `"User" type must be an interface`)
+      }
     } else {
       const moduleInfo = parser.dependencies.get(type.getSourceFile())
       if (moduleInfo) {
-        const vars = (imports[moduleInfo.id] ??= [])
-        if (!vars.includes(name)) {
+        const vars = (imports[moduleInfo.id] ??= new Set())
+        if (!vars.has(name)) {
           if (typeNames.has(name)) {
             warn(type, `Type skipped. Name already taken: "${name}"`)
           } else {
-            vars.push(name)
+            vars.add(name)
           }
         }
       } else if (typeNames.has(name)) {
@@ -97,7 +116,10 @@ export function printBackendModule(parser: OpleParser) {
       export interface OpleCollections {
         ${collectionTypes.join('\n')}
       }
+      ${callerMeta}
     }
+
+    export { User }
 
     ${printedTypes.join('\n\n')}
   `

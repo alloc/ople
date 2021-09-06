@@ -30,6 +30,7 @@ export default async function () {
 
   let opleServer: Promise<http.Server | null> = Promise.resolve(null)
 
+  // TODO: find package.json with "vite" in devDependencies
   const viteServer = await vite.createServer({
     root: projectRoot,
   })
@@ -68,6 +69,7 @@ export default async function () {
     load(id) {
       if (id === entryPath) {
         return generateServer({
+          cwd: backendRoot,
           dev: true,
           port: backendPort,
           gripSecret: opleEnv.gripSecret,
@@ -122,8 +124,6 @@ export default async function () {
       const map: any = bundled.output[0].map
       map.sourceRoot = backendRoot
 
-      log(log.yellow(bundled.output[0].code))
-
       const code =
         bundled.output[0].code + convertSourceMap.fromObject(map).toComment()
 
@@ -145,11 +145,23 @@ export default async function () {
         oldServer.close(err => (err ? reject(err) : resolve()))
       )
     }
-    type Serve = (config: typeof pushpin) => http.Server
+
+    const processEnv = { ...process.env }
     const sandbox = createSandbox({
-      sharedModules: ['ople-db'],
+      sharedModules: ['ople-db', 'dotenv'],
+      global: {
+        // Override `process.env` so that dotenv doesn't trip over
+        // variables set by previous server instances.
+        process: new Proxy(process, {
+          get: (_, key: keyof NodeJS.Process) =>
+            key == 'env' ? processEnv : process[key],
+        }),
+      },
     })
+
+    type Serve = (config: typeof pushpin) => http.Server
     const serve: Serve = sandbox.load(code, entryPath)
+
     return new Promise<http.Server>((resolve, reject) => {
       const server = serve(pushpin).on('error', reject)
       server.on('listening', () => {

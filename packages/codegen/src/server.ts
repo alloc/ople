@@ -1,11 +1,13 @@
 import endent from 'endent'
 
 export function generateServer({
+  cwd,
   dev,
   port,
   imports,
   gripSecret,
 }: {
+  cwd: string
   dev: boolean
   port: number
   imports: string[]
@@ -20,11 +22,13 @@ export function generateServer({
     import { serve, ${makeContext} } from "@ople/backend"
     import "@ople/backend/global"
 
-    ${imports.map(path => `import "${path}"`).join(`\n`)}
-
-    process.on('unhandledRejection', (e) => {
+    process.chdir("${cwd}")
+    require('dotenv').config()
+    process.on("unhandledRejection", (e) => {
       console.error(e.stack)
     })
+
+    ${imports.map(path => `import "${path}"`).join(`\n`)}
 
     ${
       dev

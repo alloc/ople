@@ -19,9 +19,9 @@ export const mergeIntoSet = <T>(
   from: { forEach(cb: (value: T) => void): void }
 ) => from.forEach(value => into.add(value))
 
-export const printImport = ([source, vars]: [string, string[]]) =>
+export const printImport = ([source, vars]: [string, Set<string>]) =>
   `import ` +
-  (vars.length ? `{ ${vars.join(', ')} } from ` : ``) +
+  (vars.size ? `{ ${Array.from(vars).join(', ')} } from ` : ``) +
   `"${source}"`
 
 export function printJSDocs(node: Node) {
