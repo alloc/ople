@@ -1,47 +1,4 @@
 import { is } from '@alloc/is'
-import type { OpleBackend } from './OpleBackend'
-
-type Data = Record<string, any>
-
-export class OpleRef<T extends Data = any> {
-  readonly collection: OpleCollection
-
-  constructor(
-    readonly id: string,
-    readonly scope: OpleCollection | OpleBackend
-  ) {
-    // When the `scope` is not a collection, this ref points to a collection.
-    this.collection = scope instanceof OpleCollection ? scope : (this as any)
-  }
-
-  get backend(): OpleBackend {
-    return this.collection.backend
-  }
-
-  toString() {
-    return this.collection.id + '/' + this.id
-  }
-
-  // @ts-ignore
-  protected _type: 'OpleRef' & { data: T }
-}
-
-export class OpleCollection<T extends Data = any> extends OpleRef {
-  constructor(id: string, backend: OpleBackend<any>) {
-    super(id, backend)
-  }
-
-  get backend() {
-    return this.scope as OpleBackend
-  }
-
-  toString() {
-    return this.id
-  }
-
-  // @ts-ignore
-  protected _documentType: T
-}
 
 export class OpleTime {
   readonly isoTime: string

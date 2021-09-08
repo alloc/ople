@@ -2,6 +2,7 @@ lockfileVersion: 5.3
 
 specifiers:
   '@alloc/is': ^2.1.1
+  '@alloc/is-dev': ^1.2.2
   '@alloc/types': ^1.2.6
   '@ople/agent': link:../agent
   '@ople/nason': link:../nason
@@ -13,6 +14,7 @@ specifiers:
 
 dependencies:
   '@alloc/is': 2.1.2
+  '@alloc/is-dev': 1.2.2
   '@alloc/types': 1.3.0
   '@ople/agent': link:../agent
   '@ople/nason': link:../nason

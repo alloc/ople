@@ -11,12 +11,20 @@ exposePagers({
   },
 })
 
-exposeFunctions({
-  publish(text: string) {
-    publish(caller.user, text)
+exposeCreators({
+  publish(props: { text: string }) {
+    return publish(caller.user, props.text)
   },
-  reply(to: OpleRef<Post> | OpleRef<Reply>, text: string) {
-    publish(caller.user, text, to)
+  reply(props: {
+    text: string
+    post?: OpleRef<Post>
+    parent?: OpleRef<Reply>
+  }) {
+    const to = props.parent || props.post
+    if (!to) {
+      throw `Cannot reply to nothing`
+    }
+    return publish(caller.user, props.text, to)
   },
 })
 

@@ -15,6 +15,7 @@ export type { AgentConfig }
 export interface Agent {
   call<T = any>(method: string, ...args: any[]): PromiseLike<T>
   onReply(replyId: string, handler: ReplyHandler): void
+  onSignal(name: string, args?: any[]): void
   flush(): void
 }
 
@@ -93,11 +94,12 @@ export function makeAgent<RefHandle, Batch extends BatchLike>({
           const { reason, callIndex } = JSON.parse(error)
           console.error(
             `Function "${calls[callIndex][0]}" threw an error` +
-              (reason ? `\n  ↳  ${reason.replace(/\n/g, '\n     ')}` : ``)
+              (reason ? `\n  ↳ ${reason.replace(/\n/g, '\n     ')}` : ``)
           )
         } catch {
           console.error(error)
         }
+        batch.resolve()
       } else {
         batch.resolve()
       }
@@ -119,6 +121,7 @@ export function makeAgent<RefHandle, Batch extends BatchLike>({
     onReply(replyId, handler) {
       replyQueue.set(replyId, handler)
     },
+    onSignal,
     flush,
   }
 }

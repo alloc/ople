@@ -19,13 +19,6 @@ export type HandlePacker<
   | Client.HandlePacker<OpleRef, OpleTime, OpleHandle>
   | Server.HandlePacker<OpleRef, OpleTime, OpleHandle>
 
-export type PagerPacker<
-  OplePager extends object,
-  OpleTime extends object = any
-> =
-  | Client.PagerPacker<OplePager, OpleTime>
-  | Server.PagerPacker<OplePager, OpleTime>
-
 namespace Client {
   /** Client cannot send an `OpleHandle` */
   export type PackedHandle = never
@@ -38,18 +31,6 @@ namespace Client {
     test?: never
     pack?: never
     unpack: (handle: Server.PackedHandle<OpleRef, OpleTime>) => OpleHandle
-  }
-
-  /** Client cannot send an `OplePager` */
-  export type PackedPager = never
-
-  export interface PagerPacker<
-    OplePager extends object,
-    OpleTime extends object
-  > {
-    test?: never
-    pack?: never
-    unpack: (pager: Server.PackedPager<OpleTime>) => OplePager
   }
 }
 
@@ -66,23 +47,6 @@ namespace Server {
   > {
     test: (value: unknown) => boolean
     pack: (handle: OpleHandle) => Server.PackedHandle<OpleRef, OpleTime>
-    unpack?: never
-  }
-
-  export type PackedPager<OpleTime extends object> = [
-    calleeId: string,
-    args: any[],
-    page: { data: any[]; before?: any; after?: any },
-    size: number | null,
-    ts: number | OpleTime | null
-  ]
-
-  export interface PagerPacker<
-    OplePager extends object,
-    OpleTime extends object
-  > {
-    test: (value: unknown) => boolean
-    pack: (pager: OplePager) => Server.PackedPager<OpleTime>
     unpack?: never
   }
 }

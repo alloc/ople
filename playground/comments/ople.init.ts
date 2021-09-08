@@ -30,7 +30,9 @@ export interface Reply {
 openCollection<Reply>('replies')
 
 // Server-sent messages
-export interface Signals {}
+export interface Signals {
+  test(ref: OpleRef<Post>): void
+}
 
 // Caller metadata
 export interface CallerMeta {

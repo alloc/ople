@@ -1,26 +1,19 @@
 import { makeNason } from '@ople/nason'
-import { OpleCollection, OpleDate, OpleRef, OpleTime } from './values'
-import { initHandle, OpleRefHandle } from './OpleRef'
-import { OplePager } from './OplePager'
+import { OpleDate, OpleTime } from './values'
+import { initDocument, OpleDocument } from './OpleDocument'
+import { OpleRef } from './OpleRef'
 
 const hasConstructor = (ctr: Function) => (val: any) =>
   ctr === (val && val.constructor)
 
-export const getEncoder = (
-  getCollection: (name: string) => OpleCollection,
-  call: (calleeId: string, args: any[]) => PromiseLike<any>
-) =>
-  makeNason<OpleRef, OpleTime, OpleDate, OpleRefHandle, OplePager>([
+export const getEncoder = (unpackRef: (packedRef: string) => OpleRef) =>
+  makeNason<OpleRef, OpleTime, OpleDate, OpleDocument>([
     {
       test: (val: any) =>
         Boolean(val) &&
-        (val.constructor == OpleRefHandle || val instanceof OpleRef),
+        (val.constructor == OpleDocument || val instanceof OpleRef),
       pack: String,
-      unpack(encodedRef) {
-        const [scope, id] = encodedRef.split('/')
-        const collection = getCollection(scope)
-        return id ? new OpleRef(id, collection) : collection
-      },
+      unpack: unpackRef,
     },
     {
       test: hasConstructor(OpleTime),
@@ -33,19 +26,6 @@ export const getEncoder = (
       unpack: isoDate => new OpleDate(isoDate),
     },
     {
-      unpack: ([ref, ts, data]) => initHandle(data, ref, ts),
-    },
-    {
-      unpack: ([calleeId, args, firstPage, size, ts]) =>
-        new OplePager(firstPage, opts =>
-          call('@page', [
-            calleeId,
-            args.concat({
-              ts,
-              size,
-              ...opts,
-            }),
-          ])
-        ),
+      unpack: ([ref, ts, data]) => initDocument(data, ref, ts),
     },
   ])

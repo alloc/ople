@@ -1,7 +1,13 @@
 import path from 'path'
 import endent from 'endent'
 import redent from 'redent'
-import { Node, ParameterDeclaration, Signature, Type } from 'ts-morph'
+import {
+  Node,
+  ParameterDeclaration,
+  ParameteredNode,
+  Signature,
+  Type,
+} from 'ts-morph'
 import { OpleParser } from './parser'
 import { warn } from './warnings'
 import {
@@ -30,15 +36,6 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
     }
   })
 
-  const collectionTypes = Object.values(collections).map(coll => {
-    let type = `${coll.name}: OpleCollection`
-    if (coll.type) {
-      findReferencedTypes(coll.type, referencedTypes)
-      type += '<' + coll.type.getText() + '>'
-    }
-    return type
-  })
-
   const signals = Object.values(parser.signals)
   const signalTypes = signals.map(signal => {
     mergeIntoSet(referencedTypes, signal.referencedTypes)
@@ -49,9 +46,6 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
   const imports: Record<string, Set<string>> = {
     [opleClientId]: new Set(['defineBackend', 'OpleProtocol']),
   }
-  if (collectionTypes.length) {
-    imports[opleClientId].add('OpleCollection')
-  }
   if (signalTypes.length) {
     imports[opleClientId].add('OpleListener')
   }
@@ -60,7 +54,9 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
   const functionTypes = functions.map(fun => {
     mergeIntoSet(referencedTypes, fun.referencedTypes)
     if (fun.isPager) {
-      imports[opleClientId].add('OplePager')
+      imports[opleClientId].add('OplePage')
+    } else if (fun.isCreator) {
+      imports[opleClientId].add('makeCreator')
     }
     return fun.signatures.map(sig => {
       const text = printSignature(sig, fun)
@@ -170,10 +166,6 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
      */
     ${Object.entries(imports).map(printImport).join('\n')}
 
-    interface Collections {
-      ${collectionTypes.join('\n')}
-    }
-
     interface Functions {
       ${functionTypes.join('\n')}
     }
@@ -184,7 +176,7 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
 
     declare const console: any
 
-    const backend = defineBackend<Collections, Functions, Signals>({
+    const backend = defineBackend<Functions, Signals>({
       onError: console.error,
       protocol: OpleProtocol.ws,
       url: "${backendUrl}",
@@ -195,7 +187,20 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
     const { functions, signals } = backend
 
     ${functions
-      .map(({ name }) => `export const ${name} = functions.${name}`)
+      .map(({ name, isCreator, signatures }) => {
+        let value = `functions.${name}`
+        if (isCreator) {
+          const [
+            props,
+          ] = (signatures[0].getDeclaration() as ParameteredNode).getParameters()
+          const propTypes = props
+            .getType()
+            .getProperties()
+            .map(prop => prop.getName())
+          value = `makeCreator(${value}, "${propTypes}")`
+        }
+        return `export const ${name} = ${value}`
+      })
       .join('\n')}
 
     ${signals
@@ -215,7 +220,7 @@ function printSignature(sign: Signature, fun: OpleFunction) {
   const typeParams = sign.getTypeParameters().map(printType)
   const params = decl.getParameters().map(printParam)
   if (fun.isPager) {
-    params.push(`pagerOptions?: OplePager.Options`)
+    params.push(`pageOptions?: OplePage.Options`)
   }
 
   return (
@@ -256,7 +261,7 @@ function printReturnType(type: Type, fun: OpleFunction) {
       warn(fun.node, 'Pager function must return an OpleSet')
       return 'never'
     }
-    tokens[0] = 'OplePager'
+    tokens[0] = 'OplePage'
   }
 
   for (let i = 0; i < tokens.length; i++) {

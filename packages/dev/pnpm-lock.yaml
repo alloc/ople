@@ -12,6 +12,7 @@ specifiers:
   '@ople/transform': link:../transform
   '@rollup/plugin-babel': ^5.3.0
   '@rollup/plugin-node-resolve': ^13.0.4
+  '@rollup/plugin-sucrase': ^4.0.0
   '@types/babel__code-frame': ^7.0.3
   '@types/convert-source-map': ^1.5.2
   '@types/debounce': ^1.2.0
@@ -56,6 +57,7 @@ dependencies:
   '@ople/transform': link:../transform
   '@rollup/plugin-babel': 5.3.0_@babel+core@7.15.0+rollup@2.56.3
   '@rollup/plugin-node-resolve': 13.0.4_rollup@2.56.3
+  '@rollup/plugin-sucrase': 4.0.0_rollup@2.56.3
   ansi-italic: 0.1.1
   cac: 6.7.1
   convert-source-map: 1.8.0
@@ -414,6 +416,17 @@ packages:
       rollup: 2.56.3
     dev: false
 
+  /@rollup/plugin-sucrase/4.0.0_rollup@2.56.3:
+    resolution: {integrity: sha512-+GQMrkkA1WaEIwpW0PWnDTC8ZoP/DUDQd6ipsAh63Dq65y2rhe1r8YQ/SIQvqd+09t35wRDkY7Xd7O2yQGEOCQ==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      rollup: ^2.53.1
+    dependencies:
+      '@rollup/pluginutils': 4.1.1
+      rollup: 2.56.3
+      sucrase: 3.20.1
+    dev: false
+
   /@rollup/pluginutils/3.1.0_rollup@2.56.3:
     resolution: {integrity: sha512-GksZ6pr6TpIjHm8h9lSQ8pi8BE9VeubNT0OMJ3B5uZJ8pz73NPiqOtCog/x2/QzM1ENChPKxMDhiQuRHsqc+lg==}
     engines: {node: '>= 8.0.0'}
@@ -583,8 +596,8 @@ packages:
     hasBin: true
     dev: false
 
-  /balanced-match/1.0.0:
-    resolution: {integrity: sha1-ibTRmasr7kneFk6gK4nORi1xt2c=}
+  /balanced-match/1.0.2:
+    resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
     dev: false
 
   /base/0.11.2:
@@ -619,7 +632,7 @@ packages:
   /brace-expansion/1.1.11:
     resolution: {integrity: sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==}
     dependencies:
-      balanced-match: 1.0.0
+      balanced-match: 1.0.2
       concat-map: 0.0.1
     dev: false
 
@@ -1912,6 +1925,19 @@ packages:
 
   /sucrase/3.17.1:
     resolution: {integrity: sha512-04cNLFAhS4NBG2Z/MTkLY6HdoBsqErv3wCncymFlfFtnpMthurlWYML2RlID4M2BbiJSu1eZdQnE8Lcz4PCe2g==}
+    engines: {node: '>=8'}
+    hasBin: true
+    dependencies:
+      commander: 4.1.1
+      glob: 7.1.6
+      lines-and-columns: 1.1.6
+      mz: 2.7.0
+      pirates: 4.0.1
+      ts-interface-checker: 0.1.13
+    dev: false
+
+  /sucrase/3.20.1:
+    resolution: {integrity: sha512-BIG59HaJOxNct9Va6KvT5yzBA/rcMGetzvZyTx0ZdCcspIbpJTPS64zuAfYlJuOj+3WaI5JOdA+F0bJQQi8ZiQ==}
     engines: {node: '>=8'}
     hasBin: true
     dependencies:

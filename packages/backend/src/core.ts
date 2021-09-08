@@ -6,24 +6,12 @@ import { OplePager } from './pager'
 type PullMap = Record<string, number>
 type PullResult = [OpleRef, OpleTime, object]
 type PatchMap = Record<string, Record<string, any>>
-type CreatePayload = [collection: string, data: object][]
 
 // TODO: add hard limits to array lengths
 export const coreFunctions: Record<string, Callee | undefined> = {
   async '@get'(_caller, refs: OpleRef[]) {
     // TODO: run "canRead" hook
     return read(() => refs.map(db.get))
-  },
-  async '@create'(_caller, payload: CreatePayload) {
-    const created: [OpleRef, OpleTime][] = []
-    for (const [collection, data] of payload) {
-      // TODO: run "canWrite" hook
-      const document = write(() => db.getCollection(collection).create(data))
-      if (document) {
-        created.push([document.ref, document.ts])
-      }
-    }
-    return created
   },
   async '@push'(_caller, payload: PatchMap) {
     throw Error('not implemented')
@@ -61,9 +49,5 @@ export const coreFunctions: Record<string, Callee | undefined> = {
     for (const ref of refs) {
       caller.context.unsubscribe(caller.id, 'r:' + ref.toString())
     }
-  },
-  async '@page'(caller, [calleeId, args]: [string, any[]]) {
-    const pager: OplePager = await invokeFunction(caller, calleeId, args)
-    return pager.page
   },
 }

@@ -1,9 +1,13 @@
 {
   "private": true,
   "dependencies": {
-    "@ople/init": "link:../../packages/init"
+    "@ople/init": "link:../../packages/init",
+    "stacktracey": "^2.1.7"
   },
   "devDependencies": {
-    "@ople/dev": "link:../../packages/dev"
+    "@ople/dev": "link:../../packages/dev",
+    "@types/ws": "^7.4.7",
+    "kleur": "^4.1.4",
+    "ws": "^8.2.1"
   }
 }

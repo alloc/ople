@@ -1,9 +1,34 @@
 import { is } from '@alloc/is'
-import { AnyFn, Disposable } from '@alloc/types'
+import { Any, Disposable } from '@alloc/types'
 import invariant from 'tiny-invariant'
 import { getOple, setEffect, withOple } from './OpleContext'
 import { toRef } from './OpleRef'
 import { Ople } from './Ople'
+
+export function makeSignal<T>(): OpleSignal<T> {
+  const listeners = new Set<OpleListener>()
+  function s(listener: any) {
+    invariant(!listener.context, 'Handler already in use')
+    setEffect(listener, active => {
+      if (active) {
+        s.size++
+        listeners.add(listener)
+      } else {
+        listeners.delete(listener)
+        s.size--
+      }
+    })
+    listener.context = getOple()
+    listener.dispose = disposeListener
+    return listener
+  }
+  s.size = 0
+  s.emit = (...args: any[]) =>
+    listeners.forEach(listener => {
+      withOple(listener.context!, listener, args)
+    })
+  return s
+}
 
 export interface SignalFactory<Signals extends object> {
   <P extends string & keyof Signals>(signalId: P): Signals[P]
@@ -25,24 +50,39 @@ export function makeSignalFactory<Signals extends object>(
       target = arg
       invariant(toRef(target), 'Target ref must exist')
     }
+    invariant(!listener.context, 'Handler already in use')
     setEffect(listener, active => {
       if (active) {
-        invariant(!listener.target, 'Handler already in use')
         listener.target = target
-        listener.context = getOple()
         addListener(target, signalId, listener)
       } else {
         removeListener(target, signalId, listener)
-        listener.target = listener.context = void 0
+        listener.target = void 0
       }
     })
+    listener.context = getOple()
     listener.dispose = disposeListener
     return listener
   }
 }
 
+type SignalArgs<T> = [T] extends [Any]
+  ? [value?: any]
+  : void extends T
+  ? []
+  : [value: T]
+
+export interface OpleSignal<T = any> {
+  (listener: (...args: SignalArgs<T>) => boolean | void): OpleListener
+  /** Notify all active listeners */
+  emit(...args: SignalArgs<T>): void
+  /** The number of active listeners */
+  size: number
+}
+
 /** The listener of a signal. */
-export interface OpleListener extends AnyFn, Disposable {
+export interface OpleListener extends Disposable {
+  (...args: any[]): void
   /**
    * The signal target.
    *
@@ -60,5 +100,6 @@ export interface OpleListener extends AnyFn, Disposable {
 function disposeListener(this: OpleListener) {
   if (this.context) {
     withOple(this.context, setEffect, [this, null])
+    this.context = undefined
   }
 }

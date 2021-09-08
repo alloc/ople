@@ -6,7 +6,7 @@ import { User } from "@ople/backend"
 
 declare module "@ople/backend" {
   export interface Signals {
-    
+    test(ref: OpleRef<Post>): void
   }
   export interface User {
     name: string

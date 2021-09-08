@@ -1,32 +1,29 @@
 import { is } from '@alloc/is'
 import { OpleRef } from 'ople-db'
 import { callees, Callee, Caller } from './callees'
-import { createPager } from './pager'
+import { wrapPager } from './pager'
 
 export { db, read, write } from 'ople-db'
 
-export function exposePager(fn: Callee) {
-  return exposeFunction(createPager(fn.name, fn), fn.name)
+const wrapCreator = (create: Function) => (...args: any[]) => {
+  const doc: OpleDocument = create()
+  // Pack the document into a tuple to avoid the creation
+  // of a new document on the client side.
+  return [doc.ref, doc.data, doc.ts]
 }
 
-export function exposePagers(fns: Record<string, Callee>) {
+export function exposeCreators(fns: Record<string, Callee>) {
   for (const name in fns) {
-    fns[name] = createPager(name, fns[name])
+    fns[name] = wrapCreator(fns[name])
   }
   return exposeFunctions(fns)
 }
 
-export function exposeFunction(fn: Callee, name = fn.name) {
-  if (!name) {
-    // Return a stub to prevent crashing.
-    return { authorize() {} }
+export function exposePagers(fns: Record<string, Callee>) {
+  for (const name in fns) {
+    fns[name] = wrapPager(fns[name])
   }
-  callees[name] = fn
-  return {
-    authorize(authorize: (caller: Caller) => boolean) {
-      fn.authorize = authorize
-    },
-  }
+  return exposeFunctions(fns)
 }
 
 export function exposeFunctions(fns: Record<string, Callee>) {

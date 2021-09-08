@@ -54,16 +54,23 @@ export function processBatch(
         } else {
           await callPromise
           callIndex = i
-          callPromise = invokeFunction(caller, calleeId, args).then(result => {
-            if (replyId) {
-              if (is.undefined(result)) {
-                result = null
+          callPromise = invokeFunction(caller, calleeId, args)
+          if (replyId) {
+            callPromise = callPromise.then(
+              result => {
+                if (is.undefined(result)) {
+                  result = null
+                }
+                resolve(callerId, replyId, result)
+              },
+              error => {
+                reject(callerId, replyId, error)
               }
-              resolve(callerId, replyId, result)
-            }
-          })
+            )
+          }
         }
       }
+      await callPromise
       resolve(callerId, batchId, null)
     } catch (error: any) {
       if (is.error(error)) {
@@ -89,7 +96,7 @@ export function processBatch(
           callerId,
           batchId,
           JSON.stringify({
-            error: error.reason,
+            reason: error.reason,
             callIndex,
           })
         )

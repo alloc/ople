@@ -1,14 +1,14 @@
-import { AnyFn } from '@alloc/types'
 import { makeAgent, Agent, ReplyHandler, AgentConfig } from '@ople/agent'
 import { makeBatchEncoder, makeReplyDecoder, PackedCall } from '@ople/nason'
 import invariant from 'tiny-invariant'
 import { uid } from 'uid'
 import { getEncoder } from './nason'
-import { makeSignalFactory, OpleListener, SignalFactory } from './signals'
+import { makeSignalFactory, OpleListener } from './signals'
 import { defer, Deferred } from './utils/defer'
 import { PutCache } from './utils/PutCache'
-import { OpleCollection, OpleTime } from './values'
+import { OpleTime } from './values'
 import { withOple } from './OpleContext'
+import { OpleRef } from './OpleRef'
 import {
   OpleBatch,
   OpleMethod,
@@ -20,15 +20,13 @@ import {
 import {
   applyPatch,
   initRef,
-  OpleRef,
-  OpleRefHandle,
-  ref,
+  toDoc,
   takeChanges,
   toRef,
-} from './OpleRef'
+  OpleDocument,
+} from './OpleDocument'
 
 export interface OpleBackend<
-  Collections extends object = Record<string, OpleCollection>,
   Functions extends object = any,
   Signals extends object = any
 > {
@@ -40,8 +38,7 @@ export interface OpleBackend<
   }
   get<T>(ref: OpleRef<T>, force?: boolean): Promise<T>
   call: Agent['call']
-  collection<P extends keyof Collections>(name: P): Collections[P]
-  collection(name: string): OpleCollection
+  emit<P extends keyof Signals>(name: P, ...args: SignalArgs<Signals[P]>): void
   functions: Functions
   signals: Signals
 }
@@ -56,11 +53,11 @@ export function defineBackend<
 }: AgentConfig & {
   onError(error: any): void
 }) {
-  const handleCache = new PutCache<OpleRefHandle>()
+  const documents = new PutCache<OpleDocument>()
 
   // Cache the promises of refs being fetched, so we can
   // avoid duplicate @get calls.
-  const fetching: Record<string, Deferred<OpleRefHandle>> = {}
+  const fetching: Record<string, Deferred<OpleDocument>> = {}
 
   const enqueueMethodCall = (batch: OpleBatch, call: OpleMethodCall) => {
     if (call[0] == '@get') {
@@ -71,21 +68,21 @@ export function defineBackend<
       }
       return fetching[ref]
     }
-    const [handle] = call[1]
+    const [doc] = call[1]
     if (call[0] == '@watch') {
-      batch.delete('@unwatch', handle)
-      handleCache.put(handle)
-      watched.add(handle)
+      batch.delete('@unwatch', doc)
+      documents.put(doc)
+      watched.add(doc)
     } else if (call[0] == '@unwatch' || call[0] == '@delete') {
-      batch.delete('@watch', handle)
-      if (watched.delete(handle)) {
-        handleCache.delete(handle)
+      batch.delete('@watch', doc)
+      if (watched.delete(doc)) {
+        documents.delete(doc)
       }
     }
-    if (call[0] == '@delete' && batch.delete('@create', handle)) {
+    if (call[0] == '@delete') {
       return Promise.resolve()
     }
-    batch.call(call[0], handle)
+    batch.call(call[0], doc)
     return batch.promise
   }
 
@@ -95,24 +92,24 @@ export function defineBackend<
       batch: OpleBatch
     ) => [payload?: OpleMethodPayload<P>, onReply?: ReplyHandler]
   } = {
-    '@push'(handles, batch) {
-      // It's possible that all handles were deleted
+    '@push'(docs, batch) {
+      // It's possible that all documents were deleted
       // between queueing and this call.
-      if (handles.size) {
+      if (docs.size) {
         const patches: PatchMap = {}
-        handles.forEach(handle => {
-          patches[handle] = takeChanges(handle)
+        docs.forEach(doc => {
+          patches[doc] = takeChanges(doc)
         })
         batch.patches = patches
         return [patches]
       }
       return []
     },
-    '@pull'(handles) {
-      const pulls: Record<OpleRefHandle, string> = {}
-      handles.forEach(handle => {
-        pulls[handle] = handle.lastModified!.isoTime
-        handleCache.put(handle)
+    '@pull'(docs) {
+      const pulls: Record<OpleDocument, string> = {}
+      docs.forEach(doc => {
+        pulls[doc] = doc.lastModified!.isoTime
+        documents.put(doc)
       })
       return [
         pulls,
@@ -120,73 +117,51 @@ export function defineBackend<
           error
             ? onError(error)
             : pulled.forEach(([ref, ts, data]) => {
-                const handle = handleCache.take(ref)
-                applyPatch(handle, data, ts)
+                const doc = documents.take(ref)
+                applyPatch(doc, data, ts)
               }),
       ]
     },
-    '@create'(handles) {
-      return [
-        Array.from(handles, handle => [
-          getCollection(handle).id,
-          takeChanges(handle),
-        ]),
-        (error, created: [OpleRef, OpleTime][]) => {
-          if (error) {
-            onError(error)
-          } else {
-            let i = 0
-            handles.forEach(handle => {
-              const [ref, ts] = created[i++]
-              initRef(handle, ref, ts)
-            })
-          }
-        },
-      ]
+    '@delete'(docs) {
+      return [docs]
     },
-    '@delete'(handles) {
-      return [handles]
+    '@watch'(docs) {
+      return [docs]
     },
-    '@watch'(handles) {
-      return [handles]
-    },
-    '@unwatch'(handles) {
-      return [handles]
+    '@unwatch'(docs) {
+      return [docs]
     },
     '@get'(refs) {
       return [
         refs,
-        (error, handles: OpleRefHandle[]) =>
+        (error, docs: OpleDocument[]) =>
           error
             ? onError(error)
-            : handles.forEach(handle => {
-                fetching[handle].resolve(handle)
-                delete fetching[handle]
+            : docs.forEach(doc => {
+                fetching[doc].resolve(doc)
+                delete fetching[doc]
               }),
       ]
     },
   }
 
-  const collections: Record<string, OpleCollection> = {}
-  const getCollection = (name: string) =>
-    collections[name] || (collections[name] = new OpleCollection(name, backend))
+  const coding = getEncoder(packedRef => {
+    const [collection, id] = packedRef.split('/')
+    return new OpleRef(id, collection, backend)
+  })
 
-  const coding = getEncoder(getCollection, (calleeId, args) =>
-    agent.call(calleeId, ...args)
-  )
-
-  const watched = new Set<OpleRefHandle>()
+  const watched = new Set<OpleDocument>()
   const encodeBatch = makeBatchEncoder(coding)
 
-  // The agent handles remote communication.
-  const agent = makeAgent<OpleRefHandle, OpleBatch>({
+  // The agent docs remote communication.
+  const agent = makeAgent<OpleDocument, OpleBatch>({
     ...config,
     makeBatch: () => new OpleBatch(),
     enqueueCall(batch, call) {
-      if (call[0][0] == '@' && call[0] != '@page') {
+      if (call[0][0] == '@') {
         return enqueueMethodCall(batch, call as OpleMethodCall)
       }
-      const trace = Error()
+      const trace = Error() // @hide
       const replyId = uid()
       batch.calls.push([...call, replyId])
       return new Promise((resolve, reject) => {
@@ -244,8 +219,8 @@ export function defineBackend<
 
   const signals: { [name: string]: Set<OpleListener> } = {}
   const emit = (name: string, args: any[]) =>
-    signals[name]?.forEach(handler => {
-      withOple(handler.context!, handler, args)
+    signals[name]?.forEach(listener => {
+      withOple(listener.context!, listener, args)
     })
 
   function addListener(target: any, signalId: string, listener: OpleListener) {
@@ -275,14 +250,14 @@ export function defineBackend<
 
   const backend: OpleBackend<Collections, Functions, Signals> = {
     cache: {
-      get: (ref): any => handleCache.get(ref) || null,
+      get: (ref): any => documents.get(ref) || null,
       put(data) {
         invariant(toRef(data), 'Ref must exist')
-        handleCache.put(ref(data))
+        documents.put(toDoc(data))
       },
     },
     async get(ref, force): Promise<any> {
-      return (!force && handleCache.get(ref)) || agent.call('@get', [ref])
+      return (!force && documents.get(ref)) || agent.call('@get', [ref])
     },
     call: agent.call,
     collection: getCollection,
@@ -290,6 +265,9 @@ export function defineBackend<
     signals: makeFunctionMap(
       makeSignalFactory<Signals>(addListener, removeListener)
     ),
+    emit(name, ...args) {
+      agent.onSignal(name, args)
+    },
   }
 
   return backend
@@ -308,3 +286,28 @@ type Keys<T, U> = { [P in keyof T]: T[P] extends U ? P : never }[keyof T]
 function mergeSets<T, P extends Keys<T, Set<any>>>(dest: T, src: T, key: P) {
   dest[key] = new Set([...dest[key], ...src[key]]) as any
 }
+
+export type SignalArgs<T> = Overloads<T> extends infer O
+  ? O extends (listener: (...args: infer A) => any) => any
+    ? A
+    : never
+  : never
+
+/**
+ * A hacky way to convert a group of call signatures (aka overloads)
+ * into a union of function types.
+ */
+type Overloads<T> = T extends {
+  (...args: infer A1): infer R1
+  (...args: infer A2): infer R2
+  (...args: infer A3): infer R3
+}
+  ? ((...args: A1) => R1) | ((...args: A2) => R2) | ((...args: A3) => R3)
+  : T extends {
+      (...args: infer A1): infer R1
+      (...args: infer A2): infer R2
+    }
+  ? ((...args: A1) => R1) | ((...args: A2) => R2)
+  : T extends (...args: any) => any
+  ? T
+  : never

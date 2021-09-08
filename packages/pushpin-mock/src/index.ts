@@ -115,10 +115,10 @@ function createGateway(
   state: GripState
 ) {
   return {
-    async forward(connectionId: string, events: WebSocketEvent[]) {
+    forward(connectionId: string, events: WebSocketEvent[]) {
       const connection = state.connections[connectionId]
       const payload = encodeWebSocketEvents(events)
-      const resp = await fetch(originUrl, {
+      return fetch(originUrl, {
         method: 'POST',
         body: payload,
         headers: new Headers({
@@ -127,47 +127,62 @@ function createGateway(
           ...connection.meta,
         }),
       })
-      const body = await rawBody(resp.body as any)
-      if (!resp.ok) {
-        return console.error(body.toString('utf8'), events)
-      }
-      resp.headers.forEach((value, name) => {
-        // Set connection metadata
-        if (/set-meta-/i.test(name)) {
-          const key = name.slice(4)
-          connection.meta[key] = value
-        }
-        // Unsupported header
-        else if (todoHeaders.includes(name)) {
-          warnOnce(`[pushpin] "${name}" header is not implemented`)
-        }
-      })
-      for (const event of decodeWebSocketEvents(body)) {
-        if (event.type === 'TEXT') {
-          const text = event.content!.toString('utf8')
-          if (text.startsWith('c:')) {
-            const { type, channel } = JSON.parse(text.slice(2))
-
-            // Subscribe
-            if (type === 'subscribe') {
-              subscribe(state, connectionId, channel)
-            }
-            // Unsubscribe
-            else if (type === 'unsubscribe') {
-              unsubscribe(state, connectionId, channel)
-            }
-            // Invalid
-            else {
-              warnOnce(`[pushpin] "${type}" is an invalid control event`)
-            }
+        .then(async resp => {
+          const body = await rawBody(resp.body as any)
+          if (!resp.ok) {
+            return console.error(body.toString('utf8'), payload)
           }
-          // Message
-          else {
-            connection.socket.send(text)
-          }
-        }
-      }
+          resp.headers.forEach((value, name) => {
+            // Set connection metadata
+            if (/set-meta-/i.test(name)) {
+              const key = name.slice(4)
+              connection.meta[key] = value
+            }
+            // Unsupported header
+            else if (todoHeaders.includes(name)) {
+              warnOnce(`[pushpin] "${name}" header is not implemented`)
+            }
+          })
+          const events = decodeWebSocketEvents(body)
+          return processEvents(events, state, connectionId)
+        })
+        .catch(err => {
+          console.error(err)
+        })
     },
+  }
+}
+
+function processEvents(
+  events: WebSocketEvent[],
+  state: GripState,
+  connectionId: string
+) {
+  for (const event of events) {
+    if (event.type === 'TEXT') {
+      const text = event.content!.toString('utf8')
+      if (text.startsWith('c:')) {
+        const { type, channel } = JSON.parse(text.slice(2))
+
+        // Subscribe
+        if (type === 'subscribe') {
+          subscribe(state, connectionId, channel)
+        }
+        // Unsubscribe
+        else if (type === 'unsubscribe') {
+          unsubscribe(state, connectionId, channel)
+        }
+        // Invalid
+        else {
+          warnOnce(`[pushpin] "${type}" is an invalid control event`)
+        }
+      }
+      // Message
+      else {
+        const { socket } = state.connections[connectionId]
+        socket.send(text)
+      }
+    }
   }
 }
 

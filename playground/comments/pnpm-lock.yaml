@@ -3,9 +3,80 @@ lockfileVersion: 5.3
 specifiers:
   '@ople/dev': link:../../packages/dev
   '@ople/init': link:../../packages/init
+  '@types/ws': ^7.4.7
+  kleur: ^4.1.4
+  stacktracey: ^2.1.7
+  ws: ^8.2.1
 
 dependencies:
   '@ople/init': link:../../packages/init
+  stacktracey: 2.1.7
 
 devDependencies:
   '@ople/dev': link:../../packages/dev
+  '@types/ws': 7.4.7
+  kleur: 4.1.4
+  ws: 8.2.1
+
+packages:
+
+  /@types/node/16.7.11:
+    resolution: {integrity: sha512-OtOGO+DYmNNqJQG9HG4e5a6iqoRcNfdCf4ha3div7XF5w/uOa3YVpb5aRGClwSDKLmfOysv2hFIvoklffnQi4w==}
+    dev: true
+
+  /@types/ws/7.4.7:
+    resolution: {integrity: sha512-JQbbmxZTZehdc2iszGKs5oC3NFnjeay7mtAWrdt7qNtAVK0g19muApzAy4bm9byz79xa2ZnO/BOBC2R8RC5Lww==}
+    dependencies:
+      '@types/node': 16.7.11
+    dev: true
+
+  /as-table/1.0.55:
+    resolution: {integrity: sha512-xvsWESUJn0JN421Xb9MQw6AsMHRCUknCe0Wjlxvjud80mU4E6hQf1A6NzQKcYNmYw62MfzEtXc+badstZP3JpQ==}
+    dependencies:
+      printable-characters: 1.0.42
+    dev: false
+
+  /data-uri-to-buffer/2.0.2:
+    resolution: {integrity: sha512-ND9qDTLc6diwj+Xe5cdAgVTbLVdXbtxTJRXRhli8Mowuaan+0EJOtdqJ0QCHNSSPyoXGx9HX2/VMnKeC34AChA==}
+    dev: false
+
+  /get-source/2.0.12:
+    resolution: {integrity: sha512-X5+4+iD+HoSeEED+uwrQ07BOQr0kEDFMVqqpBuI+RaZBpBpHCuXxo70bjar6f0b0u/DQJsJ7ssurpP0V60Az+w==}
+    dependencies:
+      data-uri-to-buffer: 2.0.2
+      source-map: 0.6.1
+    dev: false
+
+  /kleur/4.1.4:
+    resolution: {integrity: sha512-8QADVssbrFjivHWQU7KkMgptGTl6WAcSdlbBPY4uNF+mWr6DGcKrvY2w4FQJoXch7+fKMjj0dRrL75vk3k23OA==}
+    engines: {node: '>=6'}
+    dev: true
+
+  /printable-characters/1.0.42:
+    resolution: {integrity: sha1-Pxjpd6m9jrN/zE/1ZZ176Qhos9g=}
+    dev: false
+
+  /source-map/0.6.1:
+    resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
+    engines: {node: '>=0.10.0'}
+    dev: false
+
+  /stacktracey/2.1.7:
+    resolution: {integrity: sha512-/w8uiORLKmSndIoXcrs09yAfwr34rMpToeXageRKM2a5UhNOLLp1Iag6UP7O0IOYd7zDLNQVOUYHruXmK5dv0w==}
+    dependencies:
+      as-table: 1.0.55
+      get-source: 2.0.12
+    dev: false
+
+  /ws/8.2.1:
+    resolution: {integrity: sha512-XkgWpJU3sHU7gX8f13NqTn6KQ85bd1WU7noBHTT8fSohx7OS1TPY8k+cyRPCzFkia7C4mM229yeHr1qK9sM4JQ==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: ^5.0.2
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+    dev: true

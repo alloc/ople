@@ -4,7 +4,9 @@ exposeFunctions({
   signUp(name: string, password: string) {
     const user = write(() => {
       const users = db.getCollection('users')
-      const match = users.find(user => user.name == name)
+      const match = users.find(user => {
+        return user.name == name
+      })
       if (match) {
         throw `User named "${name}" already exists`
       }
@@ -35,9 +37,8 @@ exposeFunctions({
   logout() {
     caller.uid = ''
   },
-  promote(ref: OpleRef<User>, secret: string) {
-    if (secret && secret == process.env.ADMIN_SECRET) {
-      caller.meta.admin = true
+  promote(ref: OpleRef<User>, secret?: string) {
+    if (caller.meta.admin || (secret && secret == process.env.ADMIN_SECRET)) {
       write(() => {
         ref.update({ admin: true })
       })

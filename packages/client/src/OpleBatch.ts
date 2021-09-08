@@ -13,7 +13,6 @@ export type OpleMethod =
   | '@pull'
   | '@watch'
   | '@unwatch'
-  | '@create'
   | '@delete'
   | '@get'
 
@@ -41,7 +40,6 @@ export class OpleBatch {
     '@unwatch': new Set<OpleRefHandle>(),
     '@push': new Set<OpleRefHandle>(),
     '@pull': new Set<OpleRefHandle>(),
-    '@create': new Set<OpleRefHandle>(),
     '@delete': new Set<OpleRefHandle>(),
     '@get': new Set<OpleRef>(),
   }

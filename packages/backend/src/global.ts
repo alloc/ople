@@ -1,7 +1,8 @@
-import type { OpleRef, OpleSet } from 'ople-db'
+import type { Materialize, OpleRef, OpleSet } from 'ople-db'
 import type { RefSignals, Signals, User } from './types'
 import type { Caller } from './callees'
 
+type Creator = (props: any, ...args: any[]) => Materialize<OpleDocument>
 type PagerSource = (...args: any[]) => OpleSet
 
 declare global {
@@ -11,19 +12,19 @@ declare global {
   type OpleDate = import('ople-db').OpleDate
 
   /**
-   * Expose a backend function that pages through a query set.
+   * Expose one or more backend functions that synchronously return an
+   * unsaved document on the frontend, which makes optimistic updates
+   * easier. Once the new document is saved by the backend, the client
+   * will have its version of the document updated.
    */
-  function exposePager(callee: PagerSource): ExposedFunctions
+  function exposeCreators(callees: Record<string, Creator>): ExposedFunctions
 
   /**
-   * Expose backend functions that page through a query set.
+   * Expose backend functions that can be used by an `OplePages` instance
+   * on the frontend. They must return an `OpleSet` which will be paginated
+   * implicitly for each call.
    */
   function exposePagers(callees: Record<string, PagerSource>): ExposedFunctions
-
-  /**
-   * Expose a backend function to the client.
-   */
-  function exposeFunction(callee: Function): ExposedFunctions
 
   /**
    * Expose backend functions to the client.

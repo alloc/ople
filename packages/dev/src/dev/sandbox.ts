@@ -61,10 +61,8 @@ export function createSandbox(options: SandboxOptions): Sandbox {
 
       code = wrapModule(code, filename, Object.keys(moduleArgs))
 
-      // const lineOffset = fs.existsSync(filename) ? 0 : undefined
       const compiledWrapper: Function = vm.runInContext(code, this.context, {
         filename,
-        // lineOffset,
       })
 
       compiledWrapper.apply(module.exports, Object.values(moduleArgs))

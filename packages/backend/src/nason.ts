@@ -1,17 +1,10 @@
 import { makeBatchDecoder, makeNason, makeReplyEncoder } from '@ople/nason'
 import { OpleDate, OpleRef, OpleTime, isOpleDocument } from 'ople-db'
-import { OplePager } from './pager'
 
 const hasConstructor = (ctr: Function) => (val: any) =>
   ctr === (val && val.constructor)
 
-export const nason = makeNason<
-  OpleRef,
-  OpleTime,
-  OpleDate,
-  OpleDocument,
-  OplePager
->([
+export const nason = makeNason<OpleRef, OpleTime, OpleDate, OpleDocument>([
   {
     test: hasConstructor(OpleRef),
     pack: String,
@@ -30,10 +23,6 @@ export const nason = makeNason<
   {
     test: isOpleDocument,
     pack: record => [record.ref, record.ts, record.data],
-  },
-  {
-    test: hasConstructor(OplePager),
-    pack: pager => Object.values(pager) as any,
   },
 ])
 
