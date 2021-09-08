@@ -1,10 +1,9 @@
 import { is, PlainObject } from '@alloc/is'
 import invariant from 'tiny-invariant'
 import { ChangeObserver, no, o, shallowChanges } from 'wana'
-import { OpleTime } from './values'
-import { OpleRef } from './OpleRef'
-import { setHidden } from './common'
 import { getOple, setEffect, setOnceEffect, OpleEffect } from './OpleContext'
+import { OpleRef } from './OpleRef'
+import { OpleTime } from './values'
 
 type Data = Record<string, any>
 
@@ -14,15 +13,59 @@ const $doc = Symbol.for('ople.document')
 export type OpleRefLike<T extends Data = any> = OpleRef<T> | Document<T>
 
 /**
- * Get or create an `OpleRefHandle` for the given object.
+ * Get the `OpleRef` for the given object, or throw.
+ */
+export function toRef<T extends Data>(
+  data: T & { [$doc]?: OpleDocument<T> }
+): OpleRef<T>
+
+/**
+ * Get the `OpleRef` for the given object, or use the fallback value.
+ */
+export function toRef<T extends Data, U>(
+  data: T & { [$doc]?: OpleDocument<T> },
+  fallback: U
+): OpleRef<T> | U
+
+/** @internal */
+export function toRef(data: any, fallback?: any) {
+  const doc: any = data[$doc]
+  if (doc) {
+    return doc._ref
+  }
+  invariant(arguments.length > 1, 'Ref does not exist')
+  return fallback
+}
+
+/**
+ * Get the `OpleDocument` for the given object, or throw.
+ *
+ * You only need an `OpleDocument` for database manipulation.
+ * It's recommended to only use it within an `Ople` context,
+ * or else change tracking won't be active.
  */
 export function toDoc<T extends object>(
   data: T & { [$doc]?: OpleDocument<T> }
-) {
+): Document<T>
+
+/**
+ * Get the `OpleDocument` for the given object, or use the fallback value.
+ */
+export function toDoc<T extends Data, U>(
+  data: T & { [$doc]?: OpleDocument<T> },
+  fallback: U
+): Document<T> | U
+
+/** @internal */
+export function toDoc(data: any, fallback?: any) {
   invariant(getOple(), 'Must be in an Ople context')
-  const doc = data[$doc] || new OpleDocument(data)
-  trackChanges(doc)
-  return doc as any
+  const doc = data[$doc]
+  if (doc) {
+    trackChanges(doc)
+    return doc
+  }
+  invariant(arguments.length > 1, 'Document not found')
+  return fallback
 }
 
 /** Objects being synced in real-time */
@@ -32,18 +75,19 @@ const autoSyncs = new WeakMap<OpleDocument, OpleEffect>()
 let isPatching = false
 
 class OpleDocument<T extends Data = any> {
+  protected _creating: Promise<void> | null = null
   protected _changed: Set<string>
 
-  constructor(data: T, protected ref: OpleRef | null = null) {
+  constructor(data: T, readonly ref: OpleRef | null = null) {
     this.data = o(data) as T
-    setHidden(data, $doc, this)
 
     // All keys are dirty on new objects.
-    this._changed = o(new Set(this.ref ? undefined : Object.keys(data)))
+    this._changed = o(new Set(ref ? undefined : Object.keys(data)))
   }
 
   /** The observable, readonly data. */
   readonly data: Readonly<T>
+
   /** When the document was last saved to the database. */
   readonly lastModified: OpleTime | null = null
 
@@ -62,7 +106,7 @@ class OpleDocument<T extends Data = any> {
   }
 
   get collection() {
-    return this._collection
+    return this.ref?.collection || null
   }
 
   toString() {
@@ -80,12 +124,21 @@ class OpleDocument<T extends Data = any> {
     Object.keys(arg1).forEach(key => this._changed.add(key))
   }
 
-  save() {
+  /**
+   * If `this.ref` is not defined, you can call this for a `Promise`
+   * that resolves once it exists.
+   *
+   * Otherwise, calling this will push any unsaved changes. This is
+   * safe to call without checking `isModified` first.
+   */
+  async save() {
+    if (!this.ref) {
+      await this._creating
+    }
     if (this._changed.size) {
       invariant(this.ref, 'Cannot save without a collection')
-      this.ref.backend.call('@push', [this])
+      return this.ref.backend.call('@push', [this])
     }
-    return this.data
   }
 
   /**
@@ -101,7 +154,7 @@ class OpleDocument<T extends Data = any> {
     if (enabled) {
       invariant(this.ref, 'Cannot sync an unsaved ref')
       if (!autoSyncs.has(this)) {
-        const { backend } = this.ref
+        const { backend: backend } = this.ref
         // This effect only manages the backend subscription.
         // Pushing changes upstream is managed by the `trackChanges`
         // function, but only if `autoSyncs` contains our document.
@@ -149,7 +202,7 @@ function trackChanges(doc: OpleDocument) {
 
         // Push changes to backend, if auto-sync is on.
         if (autoSyncs.has(doc)) {
-          const { backend } = toRef(doc.data)!
+          const { backend: backend } = toRef(doc.data)!
           backend.call('@push', [doc])
         }
       })
@@ -162,11 +215,6 @@ function trackChanges(doc: OpleDocument) {
 
 const isDocument = (value: any): boolean => value instanceof OpleDocument
 
-/** Get the `OpleRef` (if one exists) for the given object. */
-export const toRef = <T extends Data>(
-  data: T & { [$doc]?: OpleDocument<T> }
-): OpleRef<T> | null => (data[$doc] ? (data[$doc] as any)._ref : null)
-
 /** Initialize the ref of an `OpleDocument` */
 export function initRef(doc: any, ref: OpleRef, ts: OpleTime) {
   invariant(isDocument(doc))
@@ -174,10 +222,19 @@ export function initRef(doc: any, ref: OpleRef, ts: OpleTime) {
   doc.lastModified = ts
 }
 
+/** Create an `OpleDocument` for a new object */
+export function createDocument(data: any, creating: Promise<void>) {
+  const doc: any = new OpleDocument(data)
+  doc._creating = creating.then(() => {
+    doc._creating = null
+  })
+  return doc.data
+}
+
 /** Initialize the `OpleDocument` of a remote object */
-export function initDocument(data: any, ref: OpleRef, ts: OpleTime) {
+export function initDocument(data: any, ref?: OpleRef, ts?: OpleTime) {
   const doc: any = new OpleDocument(data, ref)
-  doc.lastModified = ts
+  if (ts) doc.lastModified = ts
   return doc.data
 }
 

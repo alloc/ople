@@ -1,13 +1,19 @@
 import { makeNason } from '@ople/nason'
 import { OpleDate, OpleTime } from './values'
-import { initDocument, OpleDocument } from './OpleDocument'
+import { OpleDocument } from './OpleDocument'
 import { OpleRef } from './OpleRef'
 
 const hasConstructor = (ctr: Function) => (val: any) =>
   ctr === (val && val.constructor)
 
-export const getEncoder = (unpackRef: (packedRef: string) => OpleRef) =>
-  makeNason<OpleRef, OpleTime, OpleDate, OpleDocument>([
+type PackedRef = string
+type PackedDocument = [ref: OpleRef, ts: OpleTime, data: object]
+
+export const getEncoder = (
+  unpackRef: (ref: PackedRef) => OpleRef,
+  unpackDocument: (doc: PackedDocument) => object
+) =>
+  makeNason<OpleRef, OpleTime, OpleDate, object>([
     {
       test: (val: any) =>
         Boolean(val) &&
@@ -26,6 +32,6 @@ export const getEncoder = (unpackRef: (packedRef: string) => OpleRef) =>
       unpack: isoDate => new OpleDate(isoDate),
     },
     {
-      unpack: ([ref, ts, data]) => initDocument(data, ref, ts),
+      unpack: unpackDocument,
     },
   ])

@@ -13,7 +13,7 @@ exposePagers({
 
 exposeCreators({
   publish(props: { text: string }) {
-    return publish(caller.user, props.text)
+    return createPost(caller.user, props.text)
   },
   reply(props: {
     text: string
@@ -24,47 +24,59 @@ exposeCreators({
     if (!to) {
       throw `Cannot reply to nothing`
     }
-    return publish(caller.user, props.text, to)
+    const reply = createReply(caller.user, props.text, to)
+    const receiver = read(() => db.get(to).author)
+    if (!receiver.equals(caller.user)) {
+      emit(receiver).onReply(to, reply)
+    }
+    return reply
   },
 })
 
-function publish(
-  author: OpleRef<User> | null,
-  text: string,
-  parentRef?: OpleRef<Reply> | OpleRef<Post>
-) {
+function validateAuthor(
+  author: OpleRef<User> | null
+): asserts author is OpleRef<User> {
   if (!author) {
     throw `Not logged in`
   }
+  if (read(() => db.get(author).banned)) {
+    throw `User is banned`
+  }
+}
+
+function createPost(author: OpleRef<User> | null, text: string) {
+  validateAuthor(author)
   return write(() => {
-    const user = db.get(author)
-    if (user.banned) {
-      throw `User is banned`
-    }
-    if (parentRef) {
-      let post: OpleRef<Post>
-      let parent: OpleRef<Reply> | undefined
-
-      const postOrReply = db.get(parentRef)
-      if ('post' in postOrReply) {
-        parent = postOrReply.ref
-        post = postOrReply.post
-      } else {
-        post = postOrReply.ref
-      }
-
-      const replies = db.getCollection('replies')
-      return replies.create({
-        text,
-        author,
-        parent,
-        post,
-      })
-    }
     const posts = db.getCollection('posts')
     return posts.create({
       text,
       author,
     })
+  })
+}
+
+function createReply(
+  author: OpleRef<User> | null,
+  text: string,
+  context: OpleRef<Post> | OpleRef<Reply>
+) {
+  validateAuthor(author)
+  let post: OpleRef<Post>
+  let parent: OpleRef<Reply> | undefined
+
+  const postOrReply = db.get(context)
+  if ('post' in postOrReply) {
+    parent = postOrReply.ref
+    post = postOrReply.post
+  } else {
+    post = postOrReply.ref
+  }
+
+  const replies = db.getCollection('replies')
+  return replies.create({
+    text,
+    author,
+    parent,
+    post,
   })
 }

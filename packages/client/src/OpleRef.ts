@@ -9,6 +9,10 @@ class OpleRef<T extends Data = any> {
     readonly backend: OpleBackend
   ) {}
 
+  get(force?: boolean): Promise<T> {
+    return this.backend.get(this as any, force)
+  }
+
   toString() {
     return this.collection + '/' + this.id
   }

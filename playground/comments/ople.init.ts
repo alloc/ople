@@ -31,7 +31,7 @@ openCollection<Reply>('replies')
 
 // Server-sent messages
 export interface Signals {
-  test(ref: OpleRef<Post>): void
+  onReply(ref: OpleRef<Post> | OpleRef<Reply>, reply: Reply): void
 }
 
 // Caller metadata

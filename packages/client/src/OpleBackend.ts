@@ -24,6 +24,7 @@ import {
   takeChanges,
   toRef,
   OpleDocument,
+  initDocument,
 } from './OpleDocument'
 
 export interface OpleBackend<
@@ -32,11 +33,16 @@ export interface OpleBackend<
 > {
   readonly cache: {
     /** Get a remote object by its ref. */
-    get<T>(ref: OpleRef<T>): T | null
+    get<Ref extends OpleRef>(
+      ref: Ref
+    ): Ref extends OpleRef<infer T> ? T | null : never
     /** Put a remote object in the cache. It must have a ref. */
     put(data: object): void
   }
-  get<T>(ref: OpleRef<T>, force?: boolean): Promise<T>
+  get<Ref extends OpleRef>(
+    ref: Ref,
+    force?: boolean
+  ): Promise<Ref extends OpleRef<infer T> ? T : never>
   call: Agent['call']
   emit<P extends keyof Signals>(name: P, ...args: SignalArgs<Signals[P]>): void
   functions: Functions
@@ -44,7 +50,6 @@ export interface OpleBackend<
 }
 
 export function defineBackend<
-  Collections extends object,
   Functions extends object,
   Signals extends object
 >({
@@ -145,10 +150,20 @@ export function defineBackend<
     },
   }
 
-  const coding = getEncoder(packedRef => {
-    const [collection, id] = packedRef.split('/')
-    return new OpleRef(id, collection, backend)
-  })
+  const coding = getEncoder(
+    packedRef => {
+      const [collection, id] = packedRef.split('/')
+      return new OpleRef(id, collection, backend)
+    },
+    ([ref, ts, data]) => {
+      const doc = documents.get(ref)
+      if (doc) {
+        applyPatch(doc, data, ts)
+        return doc.data
+      }
+      return initDocument(data, ref, ts)
+    }
+  )
 
   const watched = new Set<OpleDocument>()
   const encodeBatch = makeBatchEncoder(coding)
@@ -248,12 +263,13 @@ export function defineBackend<
     }
   }
 
-  const backend: OpleBackend<Collections, Functions, Signals> = {
+  const backend: OpleBackend<Functions, Signals> = {
     cache: {
       get: (ref): any => documents.get(ref) || null,
       put(data) {
-        invariant(toRef(data), 'Ref must exist')
-        documents.put(toDoc(data))
+        const doc = toDoc(data)
+        invariant(doc && doc.ref, 'Ref must exist')
+        documents.put(doc)
       },
     },
     async get(ref, force): Promise<any> {

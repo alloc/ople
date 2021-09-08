@@ -7,6 +7,7 @@ export { OplePages } from './OplePage'
 // Advanced use
 export * from './OpleBackend'
 export { setEffect } from './OpleContext'
+export { makeCreator } from './creator'
 export { makeSignal } from './signals'
 export { attachAuto } from './auto'
 export { OpleProtocol } from '@ople/agent'

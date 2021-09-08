@@ -2,7 +2,7 @@ import { is } from '@alloc/is'
 import { Any, Disposable } from '@alloc/types'
 import invariant from 'tiny-invariant'
 import { getOple, setEffect, withOple } from './OpleContext'
-import { toRef } from './OpleRef'
+import { toRef } from './OpleDocument'
 import { Ople } from './Ople'
 
 export function makeSignal<T>(): OpleSignal<T> {

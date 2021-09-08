@@ -2,26 +2,26 @@ import { Encoder, use } from 'nason/src/index'
 import arrayType from 'nason/src/types/array'
 import objectType from 'nason/src/types/object'
 import stringType from 'nason/src/types/string'
-import { Nason, Packer, HandlePacker } from './types'
+import { Nason, Packer, DocumentPacker } from './types'
 
 export const makeNason = <
   OpleRef extends object,
   OpleTime extends object,
   OpleDate extends object,
-  OpleHandle extends object
+  OpleDocument extends object
 >(
   types: [
     OpleRef: Packer<OpleRef, string>,
     OpleTime: Packer<OpleTime, string>,
     OpleDate: Packer<OpleDate, string>,
-    OpleHandle: HandlePacker<OpleHandle, OpleRef, OpleTime>
+    OpleDocument: DocumentPacker<OpleDocument, OpleRef, OpleTime>
   ]
 ): Nason =>
   use([
     [0, encodeString(types[0])],
     [1, encodeString(types[1])],
     [2, encodeString(types[2])],
-    [3, encodeHandle(types[3])],
+    [3, encodeDocument(types[3])],
   ])
 
 const encodeString = <T>({
@@ -34,11 +34,11 @@ const encodeString = <T>({
   decode: bytes => unpack(stringType.decode(bytes)),
 })
 
-const encodeHandle = <T extends object>({
+const encodeDocument = <T extends object>({
   test = () => false,
   pack,
   unpack,
-}: HandlePacker<T>): Encoder<T> => ({
+}: DocumentPacker<T>): Encoder<T> => ({
   test,
   encode(handle, encode) {
     if (!pack) {

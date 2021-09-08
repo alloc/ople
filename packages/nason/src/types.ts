@@ -11,42 +11,42 @@ export interface Packer<T, U> {
   unpack: (value: U) => T
 }
 
-export type HandlePacker<
-  OpleHandle extends object = object,
+export type DocumentPacker<
+  OpleDocument extends object = object,
   OpleRef extends object = any,
   OpleTime extends object = any
 > =
-  | Client.HandlePacker<OpleRef, OpleTime, OpleHandle>
-  | Server.HandlePacker<OpleRef, OpleTime, OpleHandle>
+  | Client.DocumentPacker<OpleRef, OpleTime, OpleDocument>
+  | Server.DocumentPacker<OpleRef, OpleTime, OpleDocument>
 
 namespace Client {
-  /** Client cannot send an `OpleHandle` */
-  export type PackedHandle = never
+  /** Client cannot send an `OpleDocument` */
+  export type PackedDocument = never
 
-  export interface HandlePacker<
+  export interface DocumentPacker<
     OpleRef extends object = object,
     OpleTime extends object = object,
-    OpleHandle extends object = object
+    OpleDocument extends object = object
   > {
     test?: never
     pack?: never
-    unpack: (handle: Server.PackedHandle<OpleRef, OpleTime>) => OpleHandle
+    unpack: (handle: Server.PackedDocument<OpleRef, OpleTime>) => OpleDocument
   }
 }
 
 namespace Server {
-  export type PackedHandle<
+  export type PackedDocument<
     OpleRef extends object = object,
     OpleTime extends object = object
   > = [ref: OpleRef, ts: OpleTime, data: object]
 
-  export interface HandlePacker<
+  export interface DocumentPacker<
     OpleRef extends object = object,
     OpleTime extends object = object,
-    OpleHandle extends object = object
+    OpleDocument extends object = object
   > {
     test: (value: unknown) => boolean
-    pack: (handle: OpleHandle) => Server.PackedHandle<OpleRef, OpleTime>
+    pack: (handle: OpleDocument) => Server.PackedDocument<OpleRef, OpleTime>
     unpack?: never
   }
 }
