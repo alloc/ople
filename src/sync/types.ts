@@ -17,3 +17,16 @@ export namespace OpleDocument {
     import('./document').OpleDocumentData<T>
   export type Options = import('./document').OpleDocumentOptions
 }
+
+export type Collatable =
+  | import('../values').OpleRef
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+
+export interface Collator<T extends object = any> {
+  id: string
+  collate: (data: T) => Collatable | Collatable[]
+}

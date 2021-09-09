@@ -1,12 +1,10 @@
 import { OpleInput, OpleResult } from '../convert'
-import { notImplemented } from '../errors'
 import { OpleRef } from '../values'
 import { wrapCallback } from './callback'
+import { OpleCollections } from './database'
 import { OplePagination, OpleSet } from './set'
 import { q } from './transaction'
-import type { OpleDocument, OplePage } from './types'
-
-type Collatable = string | number | boolean | null | undefined
+import type { Collator, OpleDocument, OplePage } from './types'
 
 function coerceToRef<T extends object | null = any>(
   ref: string | OpleRef<T>,
@@ -21,9 +19,13 @@ function coerceToRef<T extends object | null = any>(
   return ref
 }
 
+type CollectionMeta<Name> = Name extends keyof OpleCollections
+  ? OpleCollections[Name] & object
+  : any
+
 export class OpleCollection<
   T extends object | null = any,
-  Meta extends object | null = any,
+  Name extends string = string,
 > {
   private _ref: OpleRef
 
@@ -32,13 +34,13 @@ export class OpleCollection<
    *
    * @see https://docs.fauna.com/fauna/current/api/fql/functions/collection
    */
-  constructor(readonly name: string) {
+  constructor(readonly name: Name) {
     this._ref = new OpleRef(name, OpleRef.Native.collections)
   }
 
-  /** Get the mutable metadata of this collection */
-  get data(): OpleResult<Meta> {
-    throw notImplemented
+  /** Get the metadata of this collection */
+  get data(): OpleResult<CollectionMeta<Name>> {
+    return q.get(this._ref).data
   }
 
   /** Check if this collection exists */
@@ -97,6 +99,14 @@ export class OpleCollection<
     return params ? set.paginate(params) : set
   }
 
+  sortBy(collator: Collator) {
+    return new OpleSet<OpleRef<T>>({
+      indexed: this._ref,
+      collator: collator.id,
+      collate: wrapCallback(collator.collate),
+    })
+  }
+
   /** Create a document in this collection */
   create(data: T, options?: OpleDocument.Options) {
     return q.create(this._ref, { ...options, data })
@@ -115,13 +125,13 @@ export class OpleCollection<
     return q.update(coerceToRef(ref, this._ref), options)
   }
 
-  createIndex(name: string, toSortKey: (data: T) => Collatable | Collatable[]) {
-    return q.createIndex({
-      name,
-      source: this._ref,
-      collate: wrapCallback(toSortKey),
-    })
-  }
+  // createIndex(name: string, toSortKey: (data: T) => Collatable | Collatable[]) {
+  //   q.createIndex({
+  //     name,
+  //     source: this._ref,
+  //     collate: wrapCallback(toSortKey),
+  //   })
+  // }
 }
 
 export namespace OpleCollection {

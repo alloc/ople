@@ -2,6 +2,7 @@ import { OpleRef } from '../values'
 import { OpleCollection, OpleDocument } from './types'
 import { q } from './transaction'
 import { OpleInput } from '../convert'
+import { OpleSet } from './set'
 
 // These collection names are reserved by FaunaDB.
 const reservedCollectionNames = ['events', 'set', 'self', 'documents', '_']
@@ -10,6 +11,7 @@ export const db: OpleDatabase = {
   ref: (id: string, collection: any) =>
     new OpleRef(id, new OpleRef(collection, OpleRef.Native.collections)),
   get: q.get,
+  getCollections: () => new OpleSet({ collections: null }),
   getCollection: (name: string) => new OpleCollection(name),
   hasCollection: name =>
     q.exists(new OpleRef(name, OpleRef.Native.collections)),
@@ -33,10 +35,12 @@ export interface OpleDatabase {
 
   get: typeof q.get
 
+  getCollections(): OpleSet<OpleRef>
+
   /** Get a collection that was created statically. */
   getCollection<Name extends keyof OpleDocuments>(
     name: Name,
-  ): OpleCollection<OpleDocuments[Name], OpleCollections[Name]>
+  ): OpleCollection<OpleDocuments[Name], Name>
 
   /** Get a collection that was created dynamically. */
   getCollection(name: string): OpleCollection
@@ -88,7 +92,8 @@ export interface OpleDocuments {}
  *       }
  *     }
  *
- * Now, the IDE will warn you of typos and invalid data when
- * using `db.getCollection("users").data`
+ * Now, the IDE will warn you of typos and invalid data when using:
+ *
+ *     db.getCollection("users").data
  */
 export interface OpleCollections {}

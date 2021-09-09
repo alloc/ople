@@ -1,10 +1,11 @@
 import { makeExpression, makeQuery, OpleExpression } from '../query'
 import { queriesByType } from '../queryMap'
-import { OpleTime } from '../values'
+import { OpleRef, OpleTime } from '../values'
 import type { OpleArrayLike } from './array'
 import { wrapCallback } from './callback'
 import { OpleCursor, OplePage } from './page'
 import { execSync, q } from './transaction'
+import { OpleDocument } from './types'
 
 export type OplePagination = {
   ts?: number | OpleTime
@@ -21,6 +22,12 @@ export type OplePagination = {
  */
 export class OpleSet<T = any> {
   constructor(protected expr: OpleExpression, protected source?: OpleSet) {}
+
+  get documents(): T extends OpleRef<infer U>
+    ? OpleSet<OpleDocument<U>>
+    : never {
+    return new OpleSet(makeExpression('documents', this), this) as any
+  }
 
   paginate(opts: OplePagination = {}): OplePage<T> {
     return q.paginate(this, opts.ts, opts.before, opts.after, opts.size)

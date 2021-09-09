@@ -1,6 +1,7 @@
 import nimdbx
 import ../query
 import ./cursor
+import ./document
 
 proc paginate*(s: OpleSet) {.query.} =
   let page = query.pageResult.get
@@ -28,3 +29,12 @@ proc first*(s: OpleSet) {.query.} =
 # because it needs to be applied before its argument
 # is evaluated.
 proc reverse*(s: OpleData) {.query.} = s
+
+proc documents*(s: OpleSet) {.query.} =
+  query.wrapCursor do () -> Option[OpleData]:
+    for docRef in s.cursor:
+      let props = query.getDocument docRef.ref
+      let data = props.getOrDefault("data", \nil)
+      let doc = docRef.ref.toDocument(data.object, props["ts"].float)
+      return some(newOpleDocument doc)
+    none(OpleData)

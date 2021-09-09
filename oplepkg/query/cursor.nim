@@ -1,11 +1,17 @@
+{.experimental: "notnil".}
 import nimdbx
+import ../database
 import ../query
 import ./collection
 import ./document
+import ./index
 
 const
+  qCollections = "collections"
   qDocuments = "documents"
+  qIndexes = "indexes"
   qGetDocuments = "get_documents" # ople only
+  qIndexedRefs = "indexed_refs" # ople only
 
 proc documentRef(cursor: Cursor): OpleRef {.inline.} =
   OpleRef(id: $cursor.key, collection: cursor.snapshot.collection.name)
@@ -13,20 +19,52 @@ proc documentRef(cursor: Cursor): OpleRef {.inline.} =
 proc documentProps(cursor: Cursor): OpleObject {.inline.} =
   parseDocument $cursor.value
 
-proc document(cursor: Cursor): OpleDocument {.inline.} =
+proc document*(cursor: Cursor, documentRef: OpleRef): OpleDocument {.inline.} =
   let props = cursor.documentProps
-  cursor.documentRef.toDocument(
+  documentRef.toDocument(
     props["data"].object, 
     props["ts"].float
   )
 
+proc document*(cursor: Cursor, documentRef: Option[OpleData]): OpleDocument {.inline.} =
+  cursor.document documentRef.get.ref
+
+proc getCollection(query: OpleQuery, source: OpleCall): CollectionSnapshot =
+  case source.callee
+
+  of qCollections:
+    return query
+      .getSchema(ople_collections)
+      .with(query.snapshot)
+
+  of qIndexes:
+    return query
+      .getSchema(ople_indexes)
+      .with(query.snapshot)
+
+  of qIndexedRefs:
+    let collectionRef = source.arguments[0].ref
+    let collatorId = source.arguments[1].string
+    var collection = query.getIndex(collectionRef, collatorId)
+    if not collection.isNil:
+      return collection.with(query.snapshot)
+    return query.createIndex(
+      collectionRef,
+      collatorId,
+      source.arguments[2].invoke
+    ).with(query.snapshot)
+
+  else:
+    let collectionRef = source.arguments[0].ref
+    return query
+      .getCollection(collectionRef.id)
+      .with(query.snapshot)
+
 proc makeCursor*(query: OpleQuery, source: OpleCall): OpleCursor =
   var
+    cursor = makeCursor(query.getCollection source)
     nextRef: OpleCursor
-    collectionRef = source.arguments[0].ref
-    collection = query.getCollection collectionRef.id
-    cursor = collection.makeCursor query.snapshot
-  
+
   if query.pageParams.isSome:
     let
       pageParams = query.pageParams.get
@@ -76,7 +114,7 @@ proc makeCursor*(query: OpleQuery, source: OpleCall): OpleCursor =
     return proc (): auto =
       let docRef = nextRef()
       if docRef.isSome:
-        some(newOpleDocument cursor.document)
+        some(newOpleDocument cursor.document(docRef))
       else: docRef
 
   query.fail "invalid_set", "Set does not exist"

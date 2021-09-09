@@ -1,4 +1,6 @@
+{.experimental: "notnil".}
 import nimdbx
+import strformat
 import ../query
 import ./document
 
@@ -28,13 +30,12 @@ proc toIndexKey(data: OpleData): Collatable =
   else:
     raise newException(Defect, "Index keys must be an integer, string, boolean, or array")
 
-proc createIndex*(params: OpleObject) {.query.} =
-  let name = params["name"].string
-  let source = params["source"].ref
-  let collate = params["collate"].invoke
-  let collection = query.database.openCollection(source.id)
+proc getIndex*(query: OpleQuery, collectionRef: OpleRef, name: string): Collection =
+  query.database.getOpenCollection &"index::{collectionRef.id}::{name}"
 
-  discard collection.openIndex(name) do (id, dataPtr: DataOut, emit: EmitFunc) -> void:
+proc createIndex*(query: OpleQuery, collectionRef: OpleRef, name: string, collate: OpleCallback): Index {.discardable.} =
+  let collection = query.database.openCollection(collectionRef.id)
+  collection.openIndex(name) do (id, dataPtr: DataOut, emit: EmitFunc) -> void:
     {.cast(noSideEffect).}:
       let data = parseDocument $dataPtr
       let indexKey = collate(newOpleObject(data)).toIndexKey
@@ -43,4 +44,6 @@ proc createIndex*(params: OpleObject) {.query.} =
         indexValue.add $id
         emit(indexKey, indexValue)
 
+proc createIndex*(params: OpleObject) {.query.} =
+  query.createIndex(params["source"].ref, params["name"].string, params["collate"].invoke)
   return \nil

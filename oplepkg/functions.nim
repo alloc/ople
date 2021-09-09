@@ -76,6 +76,7 @@ addFunction "paginate", paginate
 addFunction "filter", filter
 addFunction "map", map
 addFunction "reverse", reverse
+addFunction "documents", documents
 
 #
 # Arrays
