@@ -1,5 +1,7 @@
 import { Post, Reply, User } from '../db'
 
+const likes = newCollator<Reply>(reply => reply.likes)
+
 exposePagers({
   loadPosts() {
     return db.getCollection('posts').documents
@@ -7,7 +9,8 @@ exposePagers({
   loadReplies(parentRef: OpleRef<Post> | OpleRef<Reply>) {
     return db
       .getCollection('replies')
-      .filter(doc => (doc.parent || doc.post).equals(parentRef))
+      .sortBy(likes)
+      .documents.filter(doc => (doc.parent || doc.post).equals(parentRef))
   },
 })
 
@@ -70,5 +73,6 @@ function createReply(
     author,
     parent,
     post,
+    likes: 0,
   })
 }

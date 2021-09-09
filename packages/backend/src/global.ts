@@ -1,4 +1,4 @@
-import type { Materialize, OpleRef, OpleSet } from 'ople-db'
+import type { Collator, Materialize, OpleRef, OpleSet } from 'ople-db'
 import type { RefSignals, Signals, User } from './types'
 import type { Caller } from './callees'
 
@@ -52,6 +52,21 @@ declare global {
    * NB: Disconnection results in automatic unsubscribe.
    */
   function unsubscribe(channel: string): void
+
+  /**
+   * Collators are used when sorting a collection.
+   * When used, the collection is indexed by using the collator
+   * to determine the index keys by which the collection is sorted.
+   *
+   * Every collator has an identifier derived from its implementation.
+   * This allows the index to rebuild when its collator is changed.
+   *
+   * ⚠︎ Any function called by the collator **must never change
+   * its implementation,** or the index will be corrupted.
+   */
+  function newCollator<T extends object>(
+    collate: Collator<T>['collate']
+  ): Collator<T>
 
   /**
    * The place where you keep all that precious data.

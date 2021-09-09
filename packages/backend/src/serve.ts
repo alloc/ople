@@ -1,6 +1,6 @@
-import log from 'lodge'
 import createServer, { ServerOptions } from 'create-server'
 import { createMiddleware, MiddlewareConfig } from './middleware'
+import { log } from './log'
 
 export interface ServeOptions extends ServerOptions, MiddlewareConfig {}
 

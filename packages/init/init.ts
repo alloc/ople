@@ -35,7 +35,7 @@ const api = {
 
 declare global {
   // Placeholder types
-  interface OpleRef<T> {}
+  interface OpleRef<T = any> {}
   interface OpleTime {}
   interface OpleDate {}
 

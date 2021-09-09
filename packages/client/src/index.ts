@@ -1,6 +1,6 @@
 export { auto } from './auto'
 export { Ople, setup } from './Ople'
-export { toDoc, toRef } from './OpleDocument'
+export { toDoc, toRef, trackChanges } from './OpleDocument'
 export { OpleDate, OpleTime } from './values'
 export { OplePages } from './OplePage'
 

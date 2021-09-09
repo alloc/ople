@@ -1,4 +1,4 @@
-import { CallExpression, Node, SourceFile, TypeNode } from 'ts-morph'
+import { ts, CallExpression, Node, SourceFile, TypeNode } from 'ts-morph'
 import { warn } from '../warnings'
 
 const reservedCollectionNames = ['events', 'set', 'self', 'documents', '_']

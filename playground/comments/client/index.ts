@@ -39,7 +39,7 @@ export const app = setup(() => {
 
   function setupReplies(target: Post | Reply) {
     const replies = new OplePages(loadReplies, toRef(target), {
-      data: [], // Prevent initial load.
+      data: [],
     })
     replies.onLoad(reply => {
       onceCreated(reply, () => {
@@ -67,7 +67,7 @@ export const app = setup(() => {
         console.log('Received a reply:', reply)
         const parent = backend.cache.get(to)
         if (parent) {
-          parent.replies
+          parent.replies // TODO
         }
       })
       user.publish = text => {

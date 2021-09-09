@@ -1,6 +1,8 @@
 import { is } from '@alloc/is'
-import { OpleRef } from 'ople-db'
+import md5Hex from 'md5-hex'
+import { Collator, OpleRef } from 'ople-db'
 import { callees, Callee, Caller } from './callees'
+import { editJsonFile } from './fs'
 import { wrapPager } from './pager'
 
 export { db, read, write } from 'ople-db'
@@ -77,3 +79,26 @@ export function subscribe(caller: Caller, channel: string) {
 export function unsubscribe(caller: Caller, channel: string) {
   caller.context.unsubscribe(caller.id, channel)
 }
+
+const collators: { [id: string]: Function } = {}
+
+export function newCollator(collate: Function) {
+  const id = md5Hex(collate.toString()).slice(0, 16)
+  collators[id] = collate
+  return { id, collate }
+}
+
+const metaFile = editJsonFile('ople_data/metadata.json')
+setImmediate(() => {
+  const metaData = metaFile.data
+  const prevCollators: string[] = metaData.collators || []
+  const nextCollators = Object.keys(collators)
+  const missingCollators = prevCollators.filter(id => !collators[id])
+  const unknownCollators = nextCollators.filter(
+    id => !prevCollators.includes(id)
+  )
+  metaData.collators = nextCollators
+  write(() => {
+    db.getIndexes
+  })
+})

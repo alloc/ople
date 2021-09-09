@@ -41,4 +41,5 @@ export interface Reply {
   author: OpleRef<User>
   parent?: OpleRef<Reply>
   post: OpleRef<Post>
+  likes: number
 }

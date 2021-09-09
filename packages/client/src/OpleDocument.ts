@@ -36,10 +36,10 @@ export function toRef<T extends Data, U>(
 ): OpleRef<T> | U
 
 /** @internal */
-export function toRef(data: any, fallback?: any) {
-  const doc: any = data[$doc]
+export function toRef(data: { [$doc]?: OpleDocument<T> }, fallback?: any) {
+  const doc = data[$doc]
   if (doc) {
-    return doc._ref
+    return doc.ref
   }
   invariant(arguments.length > 1, 'Ref does not exist')
   return fallback
@@ -53,23 +53,28 @@ export function toRef(data: any, fallback?: any) {
  * or else change tracking won't be active.
  */
 export function toDoc<T extends object>(
-  data: T & { [$doc]?: OpleDocument<T> }
+  data: OpleRef<T> | (T & { [$doc]?: OpleDocument<T> })
 ): Document<T>
 
 /**
  * Get the `OpleDocument` for the given object, or use the fallback value.
  */
 export function toDoc<T extends Data, U>(
-  data: T & { [$doc]?: OpleDocument<T> },
+  data: OpleRef<T> | (T & { [$doc]?: OpleDocument<T> }),
   fallback: U
 ): Document<T> | U
 
 /** @internal */
 export function toDoc(data: any, fallback?: any) {
-  const doc = data[$doc]
+  let doc = data[$doc]
   if (doc) {
-    getOple() && trackChanges(doc)
     return doc
+  }
+  if (data instanceof OpleRef) {
+    doc = data.backend.cache.get(data)
+    if (doc) {
+      return doc
+    }
   }
   invariant(arguments.length > 1, 'Document not found')
   return fallback
@@ -83,14 +88,11 @@ let isPatching = false
 
 class OpleDocument<T extends Data = any> {
   protected _creating: Promise<void> | null = null
-  protected _changed: Set<string>
+  protected _changed = o(new Set<string>())
 
   constructor(data: T, readonly ref: OpleRef | null = null) {
     setHidden(data, $doc, this)
     this.data = o(data) as T
-
-    // All keys are dirty on new objects.
-    this._changed = o(new Set(ref ? undefined : Object.keys(data)))
   }
 
   /** The observable, readonly data. */
@@ -99,7 +101,7 @@ class OpleDocument<T extends Data = any> {
   /** When the document was last saved to the database. */
   readonly lastModified: OpleTime | null = null
 
-  // For `toRef` compatibility
+  // For `toRef` and `toDoc` compatibility
   protected get [$doc]() {
     return this
   }
@@ -125,11 +127,12 @@ class OpleDocument<T extends Data = any> {
   set<P extends keyof T>(key: P, value: T[P]): void
   set(values: Partial<T>): void
   set(arg1: keyof any | PlainObject, arg2?: any) {
-    if (!is.plainObject(arg1)) {
-      arg1 = { [arg1]: arg2 }
+    const data: any = this.data
+    if (is.plainObject(arg1)) {
+      Object.assign(data, arg1)
+    } else {
+      data[arg1] = arg2
     }
-    Object.assign(this.data, arg1)
-    Object.keys(arg1).forEach(key => this._changed.add(key))
   }
 
   /**
@@ -167,11 +170,8 @@ class OpleDocument<T extends Data = any> {
         // Pushing changes upstream is managed by the `trackChanges`
         // function, but only if `autoSyncs` contains our document.
         const autoSync: OpleEffect = active => {
-          if (active) {
-            backend.call('@watch', [this])
-          } else {
-            backend.call('@unwatch', [this])
-          }
+          trackChanges(this, active)
+          backend.call(active ? '@watch' : '@unwatch', [this])
         }
         setEffect(autoSync, autoSync)
         autoSyncs.set(this, autoSync)
@@ -199,8 +199,18 @@ type Document<T extends Data = any> = string &
 
 export { Document as OpleDocument }
 
-/** Track which keys have changed while the current `Ople` context is active. */
-function trackChanges(doc: OpleDocument) {
+/**
+ * Track which keys have changed while the current `Ople` context is
+ * active, so that local changes can be pushed to the database.
+ *
+ * Use this function whenever it's possible for the client to modify
+ * the document. Note that `.autoSync(true)` calls this for you.
+ */
+export function trackChanges(data: object, enabled?: boolean) {
+  const doc = toDoc(data)
+  if (enabled === false) {
+    return setSharedEffect(doc, null)
+  }
   let observer: ChangeObserver | undefined
   setSharedEffect(doc, active => {
     if (active) {
@@ -226,7 +236,7 @@ const isDocument = (value: any): boolean => value instanceof OpleDocument
 /** Initialize the ref of an `OpleDocument` */
 export function initRef(doc: any, ref: OpleRef, ts: OpleTime) {
   invariant(isDocument(doc))
-  doc._ref = ref
+  doc.ref = ref
   doc.lastModified = ts
 }
 
@@ -258,6 +268,7 @@ export function applyPatch(doc: any, patch: any, ts: OpleTime) {
 /** Mark a changed property for next `@push` batch. */
 export function markChanged(doc: any, key: string) {
   invariant(isDocument(doc), 'Object passed to `markChanged` is not a document')
+  debugger
   doc._changed.add(key)
 }
 
@@ -278,18 +289,22 @@ export function takeChanges(doc: any) {
  *
  * If a ref already exists, the listener is called immediately.
  */
-export function onceCreated(data: object, listener: () => void) {
+export function onceCreated(data: object, listener?: () => void) {
   const doc = toDoc(data)
   invariant(doc, 'Object passed to `whenCreated` has no document')
   if (doc.ref) {
-    return listener()
+    listener?.()
+    return Promise.resolve()
   }
   const ople = getOple()
-  doc.save().then(() => {
-    if (!ople || ople.active) {
-      listener()
-    } else {
-      withOple(ople, setOnceEffect, [listener, listener])
-    }
-  })
+  const creating = doc.save()
+  return listener
+    ? creating.then(() => {
+        if (!ople || ople.active) {
+          withOple(ople, listener)
+        } else {
+          withOple(ople, setOnceEffect, [listener, listener])
+        }
+      })
+    : creating
 }

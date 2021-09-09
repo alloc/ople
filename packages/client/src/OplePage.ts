@@ -26,7 +26,11 @@ export interface OplePager<T = any, Args extends any[] = []> {
 
 export namespace OplePages {
   export interface Options<T = any> extends OplePage.Options {
-    /** Populate the first page immediately with local data. */
+    /**
+     * Populate the first page immediately with local data.
+     *
+     * To skip auto-loading the first page, set this to an empty array.
+     */
     data?: T[]
   }
 }
@@ -53,7 +57,7 @@ export class OplePages<T = any, Args extends any[] = any> extends Array<T> {
 
     this.defaultPageSize = pageOptions.size
     this.pages = o(
-      data
+      data?.length
         ? [{ data, before: pageOptions.before, after: pageOptions.after }]
         : []
     )

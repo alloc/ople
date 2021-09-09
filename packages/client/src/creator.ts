@@ -32,8 +32,9 @@ export function makeCreator<
         if (devProxy) {
           devProxy.get = Reflect.get
         }
-        initRef(toDoc(props), ref, ts)
-        applyPatch(props, data, ts)
+        const doc = toDoc(props)
+        initRef(doc, ref, ts)
+        applyPatch(doc, data, ts)
       }
     )
 
