@@ -13,6 +13,8 @@ const
   qIf = "if"
   qOr = "or"
   qAnd = "and"
+  qPaginate = "paginate"
+  qReverse = "reverse"
 
 proc eval*(query: OpleQuery, call: OpleCall): OpleData =
   case call.callee
@@ -44,10 +46,13 @@ proc eval*(query: OpleQuery, call: OpleCall): OpleData =
   let oldPageParams = query.pageParams
   let oldPageResult = query.pageResult
 
-  let isPaginate = call.callee == "paginate"
+  let isPaginate = call.callee == qPaginate
   if isPaginate:
     query.pageParams = some call.arguments.toParams
     query.pageResult = some OplePage(data: newSeq[OpleData]())
+
+  if query.pageParams.isSome and call.callee == qReverse:
+    query.pageParams.get["reverse"] = \true
 
   # Evaluate any nested calls.
   var arguments: OpleArray
@@ -78,7 +83,8 @@ proc eval*(query: OpleQuery, expression: OpleData): OpleData =
   let hasDebugId = expression.debugId != ""
   if hasDebugId:
     query.debugPath.add expression.debugId
-  echo "eval: " & query.debugPath.join(".") & " [" & $expression.kind & "]"
+
+  # echo "eval: " & query.debugPath.join(".") & " [" & $expression.kind & "]"
 
   try:
     return case expression.kind

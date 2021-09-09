@@ -43,7 +43,7 @@ function replaceDate(date: OpleDate) {
 
 function replaceSet(set: OpleSet) {
   // @ts-ignore
-  return { '@set': set.expr }
+  return set.source ? set.expr : { '@set': set.expr }
 }
 
 function replaceCallback(cb: OpleCallback) {

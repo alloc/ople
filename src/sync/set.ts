@@ -2,6 +2,7 @@ import { makeExpression, makeQuery, OpleExpression } from '../query'
 import { queriesByType } from '../queryMap'
 import { OpleTime } from '../values'
 import type { OpleArrayLike } from './array'
+import { wrapCallback } from './callback'
 import { OpleCursor, OplePage } from './page'
 import { execSync, q } from './transaction'
 
@@ -19,22 +20,29 @@ export type OplePagination = {
  * before you can access their underlying data.
  */
 export class OpleSet<T = any> {
-  constructor(protected expr: OpleExpression) {}
+  constructor(protected expr: OpleExpression, protected source?: OpleSet) {}
 
   paginate(opts: OplePagination = {}): OplePage<T> {
     return q.paginate(this, opts.ts, opts.before, opts.after, opts.size)
   }
 
   map<U>(map: (value: T) => U): OpleSet<U> {
-    return new OpleSet(makeExpression('map', map, this))
+    return new OpleSet(makeExpression('map', wrapCallback(map), this), this)
   }
 
   filter(filter: (value: T) => boolean): OpleSet<T> {
-    return new OpleSet(makeExpression('filter', filter, this))
+    return new OpleSet(
+      makeExpression('filter', wrapCallback(filter), this),
+      this,
+    )
   }
 
   first(): T | null {
     return q.get(this)
+  }
+
+  reverse() {
+    return new OpleSet(makeExpression('reverse', this), this)
   }
 }
 

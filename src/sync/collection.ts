@@ -1,10 +1,12 @@
 import { OpleInput, OpleResult } from '../convert'
 import { notImplemented } from '../errors'
-import { OpleJSON } from '../json'
 import { OpleRef } from '../values'
+import { wrapCallback } from './callback'
 import { OplePagination, OpleSet } from './set'
-import { q, withSnapshot } from './transaction'
+import { q } from './transaction'
 import type { OpleDocument, OplePage } from './types'
+
+type Collatable = string | number | boolean | null | undefined
 
 function coerceToRef<T extends object | null = any>(
   ref: string | OpleRef<T>,
@@ -67,17 +69,11 @@ export class OpleCollection<
   /**
    * Find a document by iterating over the entire collection.
    *
-   * ⚠︎ This is very inefficient on large collections, compared
+   * ⚠︎ This can be very inefficient on large collections, compared
    * to an indexed search.
    */
   find(filter: (doc: OpleDocument<T>) => boolean): OpleDocument<T> | null {
-    return withSnapshot(snapshot => {
-      const resultStr = snapshot.findDocument(this._ref.id, docStr => {
-        const doc = OpleJSON.parse(docStr)
-        return filter(doc)
-      })
-      return OpleJSON.parse(resultStr)
-    })
+    return q.get(this.filter(filter))
   }
 
   /**
@@ -117,6 +113,14 @@ export class OpleCollection<
     options: { data?: OpleInput<Partial<T>> } & OpleDocument.Options,
   ) {
     return q.update(coerceToRef(ref, this._ref), options)
+  }
+
+  createIndex(name: string, toSortKey: (data: T) => Collatable | Collatable[]) {
+    return q.createIndex({
+      name,
+      source: this._ref,
+      collate: wrapCallback(toSortKey),
+    })
   }
 }
 

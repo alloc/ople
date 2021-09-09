@@ -56,9 +56,17 @@ export interface OpleQueries extends OpleFunctions {
     size?: number,
   ): OplePage<T>
 
-  filter(filter: (value: any) => boolean, collection: OpleSet): OpleSet
+  filter(filter: OpleCallback, collection: OpleSet): OpleSet
 
-  map(map: (value: any) => any, collection: OpleSet): OpleSet
+  map(map: OpleCallback, collection: OpleSet): OpleSet
+
+  reverse(values: OpleSet): OpleSet
+
+  createIndex(params: {
+    name: string
+    source: OpleRef
+    collate: OpleCallback
+  }): void
 }
 
 export class OpleQuery {
@@ -78,7 +86,7 @@ export class OpleQuery {
     })
     const resultStr = snapshot.execSync(query, callbacks)
     const result = OpleJSON.parse(resultStr)
-    if (result.constructor == OpleQueryError) {
+    if (result && result.constructor == OpleQueryError) {
       popStackFrames(result, 6)
       throw result
     }

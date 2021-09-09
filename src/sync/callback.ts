@@ -1,4 +1,5 @@
 import { uid } from 'uid'
+import { OpleJSON } from '../json'
 
 export function wrapCallback(cb: Function) {
   return new OpleCallback(cb)
@@ -6,7 +7,10 @@ export function wrapCallback(cb: Function) {
 
 export class OpleCallback {
   readonly id: string
-  constructor(readonly invoke: Function) {
+  readonly invoke: Function
+  constructor(cb: Function) {
     this.id = uid()
+    this.invoke = (...args: string[]) =>
+      OpleJSON.stringify(cb(...args.map(OpleJSON.parse)))
   }
 }

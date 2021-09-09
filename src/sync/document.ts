@@ -61,13 +61,13 @@ export function isDocumentLike(value: Record<string, any>) {
   return (
     keys.length == 3 &&
     hasConstructor(value.ref, OpleRef) &&
-    hasConstructor(value.ts, OpleTime) &&
-    hasConstructor(value.data, Object)
+    hasConstructor(value.data, Object) &&
+    (hasConstructor(value.ts, Number) || hasConstructor(value.ts, OpleTime))
   )
 }
 
 function hasConstructor(val: any, ctr: Function) {
-  return val.constructor == ctr
+  return Boolean(val) && val.constructor == ctr
 }
 
 // https://github.com/microsoft/TypeScript/issues/14829#issuecomment-504042546

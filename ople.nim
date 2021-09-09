@@ -39,9 +39,9 @@ proc prepareCallbacks(map: napi_value): OpleCallbacks =
 
 init proc(exports: Module) =
 
-  fn(1, execSync):
-    let callbacks = prepareCallbacks args[1]
+  fn(2, execSync):
     let queryExprStr = args[0].getStr
+    let callbacks = prepareCallbacks args[1]
     let queryExpr = parseOpleData(queryExprStr, callbacks)
     let query = newQuery(queryExpr, callbacks, db, this.snapshot, this.now)
     let queryResult = query.eval()

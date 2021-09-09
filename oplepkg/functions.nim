@@ -4,6 +4,7 @@ import ./query
 import ./query/array
 import ./query/document
 import ./query/collection
+import ./query/index
 import ./query/set
 
 type
@@ -64,11 +65,17 @@ addFunction "create_collection", proc (params: OpleObject) {.query.} =
   }
 
 #
+# Indexes
+#
+addFunction "create_index", createIndex
+
+#
 # Sets
 #
 addFunction "paginate", paginate
 addFunction "filter", filter
 addFunction "map", map
+addFunction "reverse", reverse
 
 #
 # Arrays

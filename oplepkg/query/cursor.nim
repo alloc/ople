@@ -22,30 +22,52 @@ proc document(cursor: Cursor): OpleDocument {.inline.} =
 
 proc makeCursor*(query: OpleQuery, source: OpleCall): OpleCursor =
   var
+    nextRef: OpleCursor
     collectionRef = source.arguments[0].ref
     collection = query.getCollection collectionRef.id
     cursor = collection.makeCursor query.snapshot
-    pageParams = query.pageParams.get
-    pageResult = query.pageResult.get
-    limit = pageParams.getOrDefault("size", \64).int
+  
+  if query.pageParams.isSome:
+    let
+      pageParams = query.pageParams.get
+      pageResult = query.pageResult.get
+      limit = pageParams.getOrDefault("size", \64).int
+      reverse = pageParams.getOrDefault("reverse", \false).bool
+    
+    if pageParams.hasKey("ts"):
+      raise newException(Defect, "'ts' param of Paginate is not implemented")
+    if pageParams.hasKey("before"):
+      cursor.maxKey = pageParams["before"].ref.id
+    elif pageParams.hasKey("after"):
+      cursor.minKey = pageParams["after"].ref.id
 
-  if pageParams.hasKey("ts"):
-    raise newException(Defect, "'ts' param of Paginate is not implemented")
-  if pageParams.hasKey("before"):
-    cursor.maxKey = pageParams["before"].ref.id
-  elif pageParams.hasKey("after"):
-    cursor.minKey = pageParams["after"].ref.id
+    if reverse:
+      cursor.last()
 
-  let nextRef = proc (): auto =
-    if cursor.next():
-      let docRef = cursor.documentRef
-      let pageSize = pageResult.data.len
-      if pageSize < limit:
-        if pageSize == 0 and pageParams.hasKey("after"):
-          pageResult.before = some(docRef)
-        return some(newOpleRef docRef)
-      pageResult.after = some(docRef)
-    none(OpleData)
+    nextRef = proc (): auto =
+      let exists =
+        if reverse: cursor.prev()
+        else: cursor.next()
+
+      if exists:
+        let docRef = cursor.documentRef
+        let pageSize = pageResult.data.len
+        if pageSize < limit:
+          if pageSize == 0 and pageParams.hasKey("after"):
+            pageResult.before = some(docRef)
+          return some(newOpleRef docRef)
+        pageResult.after = some(docRef)
+
+      cursor.close()
+      none(OpleData)
+
+  else:
+    nextRef = proc (): auto =
+      if cursor.next():
+        some(newOpleRef cursor.documentRef)
+      else:
+        cursor.close()
+        none(OpleData)
 
   if source.callee == qDocuments:
     return nextRef

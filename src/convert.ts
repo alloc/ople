@@ -21,7 +21,7 @@ import {
 export type OpleInput<T> = T extends ReadonlyArray<infer U>
   ? ReadonlyArray<OpleInput<U>> | OpleArray<OpleInput<U>>
   : T extends object
-  ? 1 extends StrictAssignable<T, QueryInputNoop>
+  ? 1 extends StrictAssignable<T, OpleInputNoop>
     ? T
     : { [P in keyof T]: OpleInput<T[P]> }
   : T
@@ -36,7 +36,7 @@ export type OpleInput<T> = T extends ReadonlyArray<infer U>
 export type OpleResult<T> = T extends ReadonlyArray<infer U>
   ? OpleArray<U>
   : T extends object
-  ? 1 extends StrictAssignable<T, QueryResultNoop>
+  ? 1 extends StrictAssignable<T, OpleResultNoop>
     ? T
     : { [P in keyof T]: OpleResult<T[P]> }
   : T
@@ -58,7 +58,7 @@ export type Materialize<T> = T extends OpleArray<infer U>
     : { [P in keyof T]: Materialize<T[P]> }
   : T
 
-interface OplePage<T> {
+interface OplePage<T = any> {
   data: T[]
   before?: OpleCursor
   after?: OpleCursor
@@ -79,21 +79,15 @@ interface OpleDocument<T extends object | null> {
 type MaterializeNoop = OpleCursor | OpleDate | OpleRef | OpleSet | OpleTime
 
 // These types are never transformed by QueryInput.
-type QueryInputNoop =
-  | OpleCursor
-  | OpleDate
-  | OplePage
-  | OpleRef
-  | OpleSet
-  | OpleTime
+type OpleInputNoop = OpleCursor | OpleDate | OpleRef | OpleSet | OpleTime
 
 // These types are never transformed by QueryResult.
-type QueryResultNoop =
+type OpleResultNoop =
   | OpleArray
   | OpleCollection
   | OpleCursor
   | OpleDate
-  | OplePage
+  | OplePageResult
   | OpleRef
   | OpleSet
   | OpleTime
@@ -118,7 +112,6 @@ type DeepFreezeNoop =
   | OpleCollection
   | OpleCursor
   | OpleDate
-  | OplePage
   | OpleRef
   | OpleSet
   | OpleTime
