@@ -48,9 +48,34 @@ export function setEffect(owner: object, effect: OpleEffect | null) {
   }
 }
 
-type OnceEffect = OpleEffect & { opleCount?: number }
+/**
+ * Next time the current `Ople` context becomes active, run the given effect
+ * and then unset it. If already active, run the effect immediately.
+ */
+export function setOnceEffect(owner: object, effect: OpleEffect | null) {
+  invariant(current, 'Must be in an Ople context')
+  const prevEffect = current.effects.get(owner)
+  if (prevEffect && effect) {
+    throw Error('Cannot overwrite an existing effect')
+  }
+  const context = current
+  if (effect) {
+    if (context.active) {
+      effect(true)
+    } else {
+      context.effects.set(owner, () => {
+        context.effects.delete(owner)
+        effect(true)
+      })
+    }
+  } else if (prevEffect) {
+    context.effects.delete(owner)
+  }
+}
 
-const onceEffects = new WeakMap<object, OnceEffect>()
+type SharedEffect = OpleEffect & { opleCount?: number }
+
+const sharedEffects = new WeakMap<object, SharedEffect>()
 
 /**
  * Set an effect that is kept alive by multiple `Ople` contexts.
@@ -60,23 +85,23 @@ const onceEffects = new WeakMap<object, OnceEffect>()
  *
  * You must use the same `owner` to coordinate between contexts.
  */
-export function setOnceEffect(owner: object, effect: OpleEffect | null) {
+export function setSharedEffect(owner: object, effect: OpleEffect | null) {
   invariant(current, 'Must be in an Ople context')
-  let onceEffect = onceEffects.get(owner)
+  let sharedEffect = sharedEffects.get(owner)
   if (effect) {
-    if (!onceEffect) {
+    if (!sharedEffect) {
       let activeCount = 0
-      onceEffect = active =>
+      sharedEffect = active =>
         (active ? ++activeCount == 1 : --activeCount == 0) && effect(active)
-      onceEffect.opleCount = 0
-      onceEffects.set(owner, onceEffect)
+      sharedEffect.opleCount = 0
+      sharedEffects.set(owner, sharedEffect)
     }
-    onceEffect.opleCount!++
-    setEffect(owner, onceEffect)
-  } else if (onceEffect) {
+    sharedEffect.opleCount!++
+    setEffect(owner, sharedEffect)
+  } else if (sharedEffect) {
     setEffect(owner, null)
-    if (--onceEffect.opleCount! == 0) {
-      onceEffects.delete(owner)
+    if (--sharedEffect.opleCount! == 0) {
+      sharedEffects.delete(owner)
     }
   }
 }

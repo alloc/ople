@@ -100,6 +100,7 @@ export const createMiddleware = ({
               input.length + response.length
             )
           } else if (caller) {
+            const metaEntries = Object.entries(caller.meta)
             if (caller.uid !== meta.user) {
               const events: object[] = []
 
@@ -115,11 +116,12 @@ export const createMiddleware = ({
                   channel: 'u:' + meta.user,
                 })
 
+              metaEntries.push(['user', caller.uid])
               output = grip.encodeWebSocketEvents(
                 events.map(grip.makeControlEvent)
               )
             }
-            for (let [name, value] of Object.entries(caller.meta)) {
+            for (let [name, value] of metaEntries) {
               if (value !== meta[name]) {
                 name = toHeaderCase(name)
                 res.setHeader('Set-Meta-' + name, JSON.stringify(value))

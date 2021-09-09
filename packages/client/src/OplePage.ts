@@ -68,6 +68,13 @@ export class OplePages<T = any, Args extends any[] = any> extends Array<T> {
     return o(this)
   }
 
+  unshift(...items: T[]) {
+    const length = super.unshift(...items)
+    // @ts-ignore
+    items.forEach(this.onLoad.emit)
+    return length
+  }
+
   async nextPage(pageSize = this.defaultPageSize) {
     const lastPage = this.pages[this.pages.length - 1]
     return lastPage.after

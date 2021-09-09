@@ -10,6 +10,7 @@ async function main() {
     if (/does not exist/.test(err.message)) {
       return app.signUp(username, password)
     }
+    throw err
   })
 
   const post = user.publish('howdy')

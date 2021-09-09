@@ -1,4 +1,11 @@
-import { auto, OplePages, setup, toDoc, toRef } from '@ople/client'
+import {
+  auto,
+  OplePages,
+  setup,
+  onceCreated,
+  toRef,
+  OpleRefLike,
+} from '@ople/client'
 import backend, {
   loadPosts,
   loadReplies,
@@ -21,7 +28,7 @@ declare module './backend' {
   }
   export interface User {
     publish: (text: string) => Post
-    reply: typeof reply
+    reply: (to: Post | Reply, text: string) => Reply
   }
 }
 
@@ -31,17 +38,23 @@ export const app = setup(() => {
   const posts = new OplePages(loadPosts)
 
   function setupReplies(target: Post | Reply) {
-    const replies = new OplePages(loadReplies, toRef(target))
+    const replies = new OplePages(loadReplies, toRef(target), {
+      data: [], // Prevent initial load.
+    })
     replies.onLoad(reply => {
-      backend.cache.put(reply)
-      reply.replies = setupReplies(target)
+      onceCreated(reply, () => {
+        reply.replies = setupReplies(target)
+        backend.cache.put(reply)
+      })
     })
     return replies
   }
 
   posts.onLoad(post => {
-    backend.cache.put(post)
-    post.replies = setupReplies(post)
+    onceCreated(post, () => {
+      post.replies = setupReplies(post)
+      backend.cache.put(post)
+    })
   })
 
   auto(() => {
@@ -59,11 +72,16 @@ export const app = setup(() => {
       })
       user.publish = text => {
         const post = publish({ text })
-        posts.pages[0].data.unshift(post)
-        posts.onLoad.emit(post)
+        post.author = toRef(user)
+        posts.unshift(post)
         return post
       }
-      user.reply = reply
+      user.reply = (to, text) => {
+        const rep = reply({ text }, toRef(to))
+        rep.author = toRef(user)
+        to.replies.unshift(rep)
+        return rep
+      }
       return user
     })
 

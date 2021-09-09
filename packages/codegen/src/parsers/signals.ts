@@ -4,9 +4,8 @@ import { warn } from '../warnings'
 
 export type OpleSignal = {
   name: string
-  signature: string
-  referencedTypes: Set<Node>
   node: MethodSignature
+  referencedTypes: Set<Node>
 }
 
 export function parseSignals(source: SourceFile) {
@@ -23,36 +22,16 @@ export function parseSignals(source: SourceFile) {
       }
 
       const name = member.getName()
-      const params = member.getParameters()
       const referencedTypes = new Set<Node>()
 
-      params.forEach(node => {
+      for (const node of member.getParameters()) {
         findReferencedTypes(node, referencedTypes)
-      })
-
-      const paramsText = params.map(param => param.getText())
-      const firstParamType = params[0]?.getTypeNode()
-      const targetType =
-        firstParamType &&
-        firstParamType.getText().match(/^OpleRef(?:|<(.+?)>)$/)?.[1]
+      }
 
       signals.push({
         name,
-        signature:
-          printJSDocs(member) +
-          name +
-          `(handler: (${paramsText.join(
-            ', '
-          )}) => boolean | void): OpleListener` +
-          (targetType
-            ? `\n` +
-              name +
-              `(target: ${targetType}, handler: (${paramsText
-                .slice(1)
-                .join(', ')}) => boolean | void): OpleListener`
-            : ``),
-        referencedTypes,
         node: member,
+        referencedTypes,
       })
     }
   } else {

@@ -1,6 +1,5 @@
 import { Encoder, use } from 'nason/src/index'
 import arrayType from 'nason/src/types/array'
-import objectType from 'nason/src/types/object'
 import stringType from 'nason/src/types/string'
 import { Nason, Packer, DocumentPacker } from './types'
 
@@ -40,25 +39,17 @@ const encodeDocument = <T extends object>({
   unpack,
 }: DocumentPacker<T>): Encoder<T> => ({
   test,
-  encode(handle, encode) {
+  encode(doc, encode) {
     if (!pack) {
       throw Error('Document packing not supported')
     }
-    const packed = pack(handle)
-    const packedType: Encoder<any> = Array.isArray(packed)
-      ? arrayType
-      : objectType
-    this.encode = handle => packedType.encode(pack(handle), encode)
-    return packedType.encode(packed, encode)
+    return arrayType.encode(pack(doc), encode)
   },
   decode(bytes, decode) {
     if (!unpack) {
       throw Error('Document unpacking not supported')
     }
-    const isArray = bytes[0] === 5
-    const packedType: Encoder<any> = isArray ? arrayType : objectType
-    this.decode = bytes => unpack(packedType.decode(bytes, decode))
-    return this.decode(bytes, decode)
+    return unpack(arrayType.decode(bytes, decode) as any)
   },
 })
 

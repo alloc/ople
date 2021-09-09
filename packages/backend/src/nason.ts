@@ -22,7 +22,7 @@ export const nason = makeNason<OpleRef, OpleTime, OpleDate, OpleDocument>([
   },
   {
     test: isOpleDocument,
-    pack: record => [record.ref, record.ts, record.data],
+    pack: doc => [doc.ref, doc.ts, doc.data],
   },
 ])
 

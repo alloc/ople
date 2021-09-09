@@ -6,7 +6,7 @@ import { wrapPager } from './pager'
 export { db, read, write } from 'ople-db'
 
 const wrapCreator = (create: Function) => (...args: any[]) => {
-  const doc: OpleDocument = create()
+  const doc: OpleDocument = create(...args)
   // Pack the document into a tuple to avoid the creation
   // of a new document on the client side.
   return [doc.ref, doc.data, doc.ts]

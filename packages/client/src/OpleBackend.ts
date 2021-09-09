@@ -19,7 +19,6 @@ import {
 } from './OpleBatch'
 import {
   applyPatch,
-  initRef,
   toDoc,
   takeChanges,
   toRef,
@@ -36,15 +35,20 @@ export interface OpleBackend<
     get<Ref extends OpleRef>(
       ref: Ref
     ): Ref extends OpleRef<infer T> ? T | null : never
-    /** Put a remote object in the cache. It must have a ref. */
+    /** Put a remote object in the cache. */
     put(data: object): void
+    /** Remove a remote object from the cache. */
+    delete(data: object): void
   }
   get<Ref extends OpleRef>(
     ref: Ref,
     force?: boolean
   ): Promise<Ref extends OpleRef<infer T> ? T : never>
   call: Agent['call']
-  emit<P extends keyof Signals>(name: P, ...args: SignalArgs<Signals[P]>): void
+  emit<P extends keyof Signals>(
+    name: P & string,
+    ...args: SignalArgs<Signals[P]>
+  ): void
   functions: Functions
   signals: Signals
 }
@@ -151,11 +155,11 @@ export function defineBackend<
   }
 
   const coding = getEncoder(
-    packedRef => {
+    function unpackRef(packedRef) {
       const [collection, id] = packedRef.split('/')
       return new OpleRef(id, collection, backend)
     },
-    ([ref, ts, data]) => {
+    function unpackDocument([ref, ts, data]) {
       const doc = documents.get(ref)
       if (doc) {
         applyPatch(doc, data, ts)
@@ -176,7 +180,7 @@ export function defineBackend<
       if (call[0][0] == '@') {
         return enqueueMethodCall(batch, call as OpleMethodCall)
       }
-      const trace = Error() // @hide
+      const trace = Error()
       const replyId = uid()
       batch.calls.push([...call, replyId])
       return new Promise((resolve, reject) => {
@@ -268,15 +272,19 @@ export function defineBackend<
       get: (ref): any => documents.get(ref) || null,
       put(data) {
         const doc = toDoc(data)
-        invariant(doc && doc.ref, 'Ref must exist')
+        invariant(doc && doc.ref, 'Object passed to `cache.put` has no ref')
         documents.put(doc)
+      },
+      delete(data) {
+        const doc = toDoc(data)
+        invariant(doc && doc.ref, 'Object passed to `cache.delete` has no ref')
+        documents.delete(doc)
       },
     },
     async get(ref, force): Promise<any> {
       return (!force && documents.get(ref)) || agent.call('@get', [ref])
     },
     call: agent.call,
-    collection: getCollection,
     functions: makeFunctionMap(name => agent.call.bind(agent, name) as any),
     signals: makeFunctionMap(
       makeSignalFactory<Signals>(addListener, removeListener)

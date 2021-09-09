@@ -91,6 +91,7 @@ export function processBatch(
   batchQueues[callerId] = batchPromise
   return batchPromise
     .catch(error => {
+      console.log(error)
       if (error.batch == batch)
         reject(
           callerId,

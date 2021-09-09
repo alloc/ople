@@ -20,13 +20,14 @@ import {
 } from './common'
 import { OpleFunction } from './parsers/functions'
 import { tokenize } from './tokenize'
+import { OpleSignal } from './parsers/signals'
 
 /**
  * Generate the module that calls `defineBackend`
  * on the frontend.
  */
 export function printClientModule(parser: OpleParser, backendUrl: string) {
-  const { collections, exportedTypes } = parser
+  const { exportedTypes } = parser
   const referencedTypes = new Set<Node>()
 
   exportedTypes.forEach(type => {
@@ -39,7 +40,7 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
   const signals = Object.values(parser.signals)
   const signalTypes = signals.map(signal => {
     mergeIntoSet(referencedTypes, signal.referencedTypes)
-    return signal.signature
+    return printSignalType(signal)
   })
 
   const opleClientId = '@ople/client'
@@ -209,6 +210,30 @@ export function printClientModule(parser: OpleParser, backendUrl: string) {
 
     ${printedTypes.join('\n\n')}
   `
+}
+
+function printSignalType(signal: OpleSignal) {
+  const params = signal.node.getParameters()
+  const paramsText = params.map(param => param.getText())
+  const firstParamType = params[0]?.getTypeNode()
+  const targetType =
+    firstParamType &&
+    tokenize(firstParamType.getText(), tsLang)
+      .map(token => (token == 'OpleRef' ? 'OpleRefLike' : token))
+      .join('')
+
+  return (
+    printJSDocs(signal.node) +
+    signal.name +
+    `(handler: (${paramsText.join(', ')}) => boolean | void): OpleListener` +
+    (targetType
+      ? `\n` +
+        signal.name +
+        `(target: ${targetType}, handler: (${paramsText
+          .slice(1)
+          .join(', ')}) => boolean | void): OpleListener`
+      : ``)
+  )
 }
 
 function printSignature(sign: Signature, fun: OpleFunction) {

@@ -15,15 +15,7 @@ exposeCreators({
   publish(props: { text: string }) {
     return createPost(caller.user, props.text)
   },
-  reply(props: {
-    text: string
-    post?: OpleRef<Post>
-    parent?: OpleRef<Reply>
-  }) {
-    const to = props.parent || props.post
-    if (!to) {
-      throw `Cannot reply to nothing`
-    }
+  reply(props: { text: string }, to: OpleRef<Post> | OpleRef<Reply>) {
     const reply = createReply(caller.user, props.text, to)
     const receiver = read(() => db.get(to).author)
     if (!receiver.equals(caller.user)) {

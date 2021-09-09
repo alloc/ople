@@ -19,7 +19,9 @@ export function makeCreator<
     if (value !== undefined || keys.includes(key)) {
       return value
     }
-    throw Error(`Cannot access "${key}" before the document exists.`)
+    if (typeof key !== 'symbol') {
+      throw Error(`Cannot access "${key}" before the document exists.`)
+    }
   }
 
   return (props: any, ...args: Args) => {

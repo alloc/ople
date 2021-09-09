@@ -6,7 +6,8 @@ export { OplePages } from './OplePage'
 
 // Advanced use
 export * from './OpleBackend'
-export { setEffect } from './OpleContext'
+export * from './OpleContext'
+export { onceCreated } from './OpleDocument'
 export { makeCreator } from './creator'
 export { makeSignal } from './signals'
 export { attachAuto } from './auto'
@@ -18,6 +19,5 @@ export * from 'wana'
 // Types
 export type { OpleRef } from './OpleRef'
 export type { OpleDocument, OpleRefLike } from './OpleDocument'
-export type { OpleEffect } from './OpleContext'
 export type { OpleListener } from './signals'
 export type { OplePage, OplePager } from './OplePage'

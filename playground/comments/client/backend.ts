@@ -8,7 +8,7 @@ interface Functions {
   loadPosts(pageOptions?: OplePage.Options): Promise<OplePage<Post>>
   loadReplies(parentRef: OpleRefLike<Reply> | OpleRefLike<Post>, pageOptions?: OplePage.Options): Promise<OplePage<Reply>>
   publish(props: { text: string; }): Promise<Post>
-  reply(props: { text: string; post?: OpleRefLike<Post> | undefined; parent?: OpleRefLike<Reply> | undefined; }): Promise<Reply>
+  reply(props: { text: string; }, to: OpleRefLike<Reply> | OpleRefLike<Post>): Promise<Reply>
   signUp(name: string, password: string): Promise<User>
   login(name: string, password: string): Promise<User>
   logout(): Promise<void>
@@ -18,7 +18,7 @@ interface Functions {
 
 interface Signals {
   onReply(handler: (ref: OpleRef<Post> | OpleRef<Reply>, reply: Reply) => boolean | void): OpleListener
-  onReply(target: Post> | OpleRef<Reply, handler: (reply: Reply) => boolean | void): OpleListener
+  onReply(target: OpleRefLike<Post> | OpleRefLike<Reply>, handler: (reply: Reply) => boolean | void): OpleListener
 }
 
 declare const console: any
@@ -36,7 +36,7 @@ const { functions, signals } = backend
 export const loadPosts = functions.loadPosts
 export const loadReplies = functions.loadReplies
 export const publish = makeCreator(functions.publish, "text")
-export const reply = makeCreator(functions.reply, "text,post,parent")
+export const reply = makeCreator(functions.reply, "text")
 export const signUp = functions.signUp
 export const login = functions.login
 export const logout = functions.logout

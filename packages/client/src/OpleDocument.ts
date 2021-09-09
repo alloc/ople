@@ -1,7 +1,15 @@
 import { is, PlainObject } from '@alloc/is'
 import invariant from 'tiny-invariant'
 import { ChangeObserver, no, o, shallowChanges } from 'wana'
-import { getOple, setEffect, setOnceEffect, OpleEffect } from './OpleContext'
+import { setOnceEffect } from '.'
+import { setHidden } from './common'
+import {
+  getOple,
+  setEffect,
+  setSharedEffect,
+  OpleEffect,
+  withOple,
+} from './OpleContext'
 import { OpleRef } from './OpleRef'
 import { OpleTime } from './values'
 
@@ -58,10 +66,9 @@ export function toDoc<T extends Data, U>(
 
 /** @internal */
 export function toDoc(data: any, fallback?: any) {
-  invariant(getOple(), 'Must be in an Ople context')
   const doc = data[$doc]
   if (doc) {
-    trackChanges(doc)
+    getOple() && trackChanges(doc)
     return doc
   }
   invariant(arguments.length > 1, 'Document not found')
@@ -79,6 +86,7 @@ class OpleDocument<T extends Data = any> {
   protected _changed: Set<string>
 
   constructor(data: T, readonly ref: OpleRef | null = null) {
+    setHidden(data, $doc, this)
     this.data = o(data) as T
 
     // All keys are dirty on new objects.
@@ -194,7 +202,7 @@ export { Document as OpleDocument }
 /** Track which keys have changed while the current `Ople` context is active. */
 function trackChanges(doc: OpleDocument) {
   let observer: ChangeObserver | undefined
-  setOnceEffect(doc, active => {
+  setSharedEffect(doc, active => {
     if (active) {
       observer = shallowChanges(doc.data, change => {
         if (isPatching) return
@@ -240,7 +248,7 @@ export function initDocument(data: any, ref?: OpleRef, ts?: OpleTime) {
 
 /** Apply a remote patch without triggering a `@push` call */
 export function applyPatch(doc: any, patch: any, ts: OpleTime) {
-  invariant(isDocument(doc))
+  invariant(isDocument(doc), 'Object passed to `applyPatch` is not a document')
   doc.lastModified = ts
   isPatching = true
   Object.assign(doc.data, patch)
@@ -249,13 +257,13 @@ export function applyPatch(doc: any, patch: any, ts: OpleTime) {
 
 /** Mark a changed property for next `@push` batch. */
 export function markChanged(doc: any, key: string) {
-  invariant(isDocument(doc))
+  invariant(isDocument(doc), 'Object passed to `markChanged` is not a document')
   doc._changed.add(key)
 }
 
 /** Take any buffered changes and reset the `isModified` flag. */
 export function takeChanges(doc: any) {
-  invariant(isDocument(doc))
+  invariant(isDocument(doc), 'Object passed to `takeChanges` is not a document')
   const data = no(doc.data)
   const changes: Record<string, any> = {}
   for (const key of doc._changed) {
@@ -263,4 +271,25 @@ export function takeChanges(doc: any) {
   }
   doc._changed.clear()
   return changes
+}
+
+/**
+ * Call the given listener once `data` has a ref.
+ *
+ * If a ref already exists, the listener is called immediately.
+ */
+export function onceCreated(data: object, listener: () => void) {
+  const doc = toDoc(data)
+  invariant(doc, 'Object passed to `whenCreated` has no document')
+  if (doc.ref) {
+    return listener()
+  }
+  const ople = getOple()
+  doc.save().then(() => {
+    if (!ople || ople.active) {
+      listener()
+    } else {
+      withOple(ople, setOnceEffect, [listener, listener])
+    }
+  })
 }

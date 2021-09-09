@@ -7,27 +7,27 @@ import { Ople } from './Ople'
 
 export function makeSignal<T>(): OpleSignal<T> {
   const listeners = new Set<OpleListener>()
-  function s(listener: any) {
+  function signal(listener: any) {
     invariant(!listener.context, 'Handler already in use')
     setEffect(listener, active => {
       if (active) {
-        s.size++
+        signal.size++
         listeners.add(listener)
       } else {
         listeners.delete(listener)
-        s.size--
+        signal.size--
       }
     })
     listener.context = getOple()
     listener.dispose = disposeListener
     return listener
   }
-  s.size = 0
-  s.emit = (...args: any[]) =>
+  signal.size = 0
+  signal.emit = (arg: any) =>
     listeners.forEach(listener => {
-      withOple(listener.context!, listener, args)
+      withOple(listener.context!, listener, [arg])
     })
-  return s
+  return signal
 }
 
 export interface SignalFactory<Signals extends object> {
