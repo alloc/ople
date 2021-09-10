@@ -55,6 +55,7 @@ proc parseOpleRef(p: var OpleParser): OpleData =
   else:
     id = case id
       of "collections": "ople_collections"
+      of "indexes": "ople_indexes"
       else: raiseCustomParseErr(p, "expected native collection, got '$1'" % [id])
   eat(p, tkCurlyRi)
   newOpleRef id, collection

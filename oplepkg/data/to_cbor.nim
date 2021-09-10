@@ -58,3 +58,8 @@ proc writeCbor*(stream: Stream, data: OpleData, kind: OpleDataKind) =
 
 proc writeCbor*(stream: Stream, data: OpleData) =
   stream.writeCbor data, data.kind
+
+proc serializeDocument*(props: OpleObject): string =
+  let stream = newStringStream()
+  stream.writeCbor props
+  stream.data

@@ -1,8 +1,10 @@
 {.experimental: "notnil".}
 import nimdbx
+from strutils import split
 import strformat
+import ../data/[to_cbor,from_cbor]
+import ../database
 import ../query
-import ./document
 
 proc toIndexKey(data: OpleData): Collatable =
   case data.kind
@@ -23,19 +25,32 @@ proc toIndexKey(data: OpleData): Collatable =
         result.add val.bool
       of ople_null:
         result.addNull()
-      else: 
+      else:
         raise newException(Defect, "Index keys must be an integer, string, boolean, or array")
   of ople_null:
     discard
   else:
     raise newException(Defect, "Index keys must be an integer, string, boolean, or array")
 
-proc getIndex*(query: OpleQuery, collectionRef: OpleRef, name: string): Collection =
-  query.database.getOpenCollection &"index::{collectionRef.id}::{name}"
+proc identifyIndex*(collectionRef: OpleRef, name: string): string =
+  &"index::{collectionRef.id}::{name}"
 
-proc createIndex*(query: OpleQuery, collectionRef: OpleRef, name: string, collate: OpleCallback): Index {.discardable.} =
-  let collection = query.database.openCollection(collectionRef.id)
-  collection.openIndex(name) do (id, dataPtr: DataOut, emit: EmitFunc) -> void:
+proc getIndexCollection*(query: OpleQuery, collectionRef: OpleRef, name: string): Collection =
+  query.database.getOpenCollection identifyIndex(collectionRef, name)
+
+proc createIndex*(query: OpleQuery, collectionRef: OpleRef, name: string, collate: OpleCallback): Collection not nil =
+  let indexes = query.getWritableSchema ople_indexes
+  let indexId = collectionRef.id & "::" & name
+
+  if indexes.get(indexId).exists:
+    query.fail "instance already exists", "Index already exists."
+
+  var props: OpleObject
+  props["ts"] = \(query.now.toUnixFloat * 1e6)
+  props["data"] = \{ "source": \collectionRef }
+  indexes.put indexId, serializeDocument(props)
+
+  proc indexer(id, dataPtr: DataOut, emit: EmitFunc) =
     {.cast(noSideEffect).}:
       let data = parseDocument $dataPtr
       let indexKey = collate(newOpleObject(data)).toIndexKey
@@ -44,6 +59,14 @@ proc createIndex*(query: OpleQuery, collectionRef: OpleRef, name: string, collat
         indexValue.add $id
         emit(indexKey, indexValue)
 
-proc createIndex*(params: OpleObject) {.query.} =
-  query.createIndex(params["source"].ref, params["name"].string, params["collate"].invoke)
-  return \nil
+  let collection = query.database.openCollection(collectionRef.id)
+  discard collection.openIndex(name, indexer)
+
+  cast[Collection not nil](
+    query.getIndexCollection(collectionRef, name)
+  )
+
+proc deleteIndex*(query: OpleQuery, indexId: string): OpleData =
+  let splitId = indexId.split "::"
+  let indexes = query.getSchema ople_indexes
+  query.

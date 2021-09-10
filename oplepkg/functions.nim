@@ -50,6 +50,7 @@ addFunction "exists", hasDocument
 addFunction "create", newDocument
 addFunction "replace", setDocumentData
 addFunction "update", updateDocument
+addFunction "delete", deleteDocument
 
 #
 # Collections
@@ -67,7 +68,7 @@ addFunction "create_collection", proc (params: OpleObject) {.query.} =
 #
 # Indexes
 #
-addFunction "create_index", createIndex
+# addFunction "create_index", createIndex
 
 #
 # Sets

@@ -43,9 +43,9 @@ proc newOpleRef*(node: CborNode): OpleData =
 proc newOpleString*(node: CborNode): OpleData =
   if node.isTagged:
     let tag = int64(node.tag)
-    if tag == cborOpleRef: 
+    if tag == cborOpleRef:
       return newOpleRef(node)
-    if tag == cborOpleDate: 
+    if tag == cborOpleDate:
       return newOpleDate(node.text)
   else:
     return newOpleString(node.text)
@@ -62,3 +62,7 @@ proc newOpleData*(node: CborNode): OpleData =
   elif node.isNull: newOpleNull()
   else:
     raise newException(Defect, "unknown cbor type: " & $node.kind)
+
+proc parseDocument*(data: string): OpleObject =
+  for key, value in parseCbor(data).map:
+    result[key.text] = newOpleData(value)

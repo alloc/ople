@@ -22,7 +22,7 @@ proc documentProps(cursor: Cursor): OpleObject {.inline.} =
 proc document*(cursor: Cursor, documentRef: OpleRef): OpleDocument {.inline.} =
   let props = cursor.documentProps
   documentRef.toDocument(
-    props["data"].object, 
+    props["data"].object,
     props["ts"].float
   )
 
@@ -45,14 +45,21 @@ proc getCollection(query: OpleQuery, source: OpleCall): CollectionSnapshot =
   of qIndexedRefs:
     let collectionRef = source.arguments[0].ref
     let collatorId = source.arguments[1].string
-    var collection = query.getIndex(collectionRef, collatorId)
-    if not collection.isNil:
-      return collection.with(query.snapshot)
-    return query.createIndex(
+
+    var collection = query.getIndexCollection(
       collectionRef,
       collatorId,
-      source.arguments[2].invoke
-    ).with(query.snapshot)
+    )
+
+    if collection.isNil:
+      let collate = source.arguments[2].invoke
+      collection = query.createIndex(
+        collectionRef,
+        collatorId,
+        collate,
+      )
+
+    collection.with(query.snapshot)
 
   else:
     let collectionRef = source.arguments[0].ref
@@ -71,7 +78,7 @@ proc makeCursor*(query: OpleQuery, source: OpleCall): OpleCursor =
       pageResult = query.pageResult.get
       limit = pageParams.getOrDefault("size", \64).int
       reverse = pageParams.getOrDefault("reverse", \false).bool
-    
+
     if pageParams.hasKey("ts"):
       raise newException(Defect, "'ts' param of Paginate is not implemented")
     if pageParams.hasKey("before"):

@@ -11,6 +11,7 @@ export const db: OpleDatabase = {
   ref: (id: string, collection: any) =>
     new OpleRef(id, new OpleRef(collection, OpleRef.Native.collections)),
   get: q.get,
+  getIndexes: () => new OpleSet({ indexes: null }),
   getCollections: () => new OpleSet({ collections: null }),
   getCollection: (name: string) => new OpleCollection(name),
   hasCollection: name =>
@@ -35,6 +36,7 @@ export interface OpleDatabase {
 
   get: typeof q.get
 
+  getIndexes(): OpleSet<OpleRef>
   getCollections(): OpleSet<OpleRef>
 
   /** Get a collection that was created statically. */
@@ -61,6 +63,8 @@ export interface OpleDatabase {
     ref: OpleRef<T>,
     options: { data?: OpleInput<Partial<T>> } & OpleDocument.Options,
   ): OpleDocument<T>
+
+  delete<T extends object | null>(ref: OpleRef<T>): OpleDocument<T>
 }
 
 /**

@@ -31,10 +31,10 @@ proc transaction*(query: OpleQuery): Transaction =
   result = query.t.get()
 
 proc newQuery*(
-  expression: OpleData, 
-  callbacks: OpleCallbacks, 
-  database: Database, 
-  snapshot: Snapshot, 
+  expression: OpleData,
+  callbacks: OpleCallbacks,
+  database: Database,
+  snapshot: Snapshot,
   now: Time,
 ): OpleQuery =
   result = OpleQuery(
@@ -131,3 +131,13 @@ macro query*(fn: untyped): untyped =
       else: newLetStmt(param[0], init)
 
   return fn
+
+proc exportDocument*(docRef: OpleRef, props: OpleObject): OpleData =
+  ## Wrap a parsed document with OpleData so it can be used in a query.
+  let data = props.getOrDefault("data", \nil)
+  let ts = props["ts"]
+  return \{
+    "ref": \docRef,
+    "data": data,
+    "ts": ts,
+  }

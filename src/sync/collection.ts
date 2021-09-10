@@ -101,7 +101,7 @@ export class OpleCollection<
 
   sortBy(collator: Collator) {
     return new OpleSet<OpleRef<T>>({
-      indexed: this._ref,
+      indexed_refs: this._ref,
       collator: collator.id,
       collate: wrapCallback(collator.collate),
     })

@@ -2,6 +2,7 @@ import std/json
 import tables
 import times
 import ../data
+import ../database
 
 proc `%`*(data: OpleData): JsonNode
 
@@ -24,17 +25,14 @@ proc newJObject(call: OpleCall): JsonNode =
   for key, val in call.fieldPairs:
     when val is OpleData:
       node.fields[key] = newJNode(val)
-  
+
   %{ "@set": node }
 
 proc `%`*(r: OpleRef): JsonNode =
   var node = newJObject()
   node.fields["id"] = %r.id
-  if r.collection == "collections":
-    node.fields["collection"] = %newOpleRef("collections", "")
-  elif r.collection != "":
-    node.fields["collection"] = %newOpleRef(r.collection, "collections")
-
+  if r.collection != "":
+    node.fields["collection"] = %toCollectionRef(r.collection)
   %{ "@ref": node }
 
 proc `%`*(obj: OpleObject): JsonNode =
@@ -58,7 +56,7 @@ proc `%`*(data: OpleData): JsonNode =
   of ople_error: newJObject(data.error, data.debugPath)
   of ople_page: %data.page
   of ople_set: newJObject(data.set.source)
-  else: 
+  else:
     raise newException(Defect, $data.kind & " cannot be serialized to JSON")
 
 proc stringify*(data: OpleData): string =

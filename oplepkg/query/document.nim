@@ -2,54 +2,40 @@
 import nimdbx
 import tables
 import times
-import ../data/from_cbor
+import ../data/to_cbor
+import ../database
 import ../query
 import ../ref
 import ./collection
 
-proc parseDocument*(data: string): OpleObject =
-  for key, value in parseCbor(data).map:
-    result[key.text] = newOpleData(value)
-
-proc getDocument*(query: OpleQuery, col: Collection not nil, id: string): OpleObject =
-  let doc = col.with(query.snapshot).get id
-  if not doc.exists:
-    query.fail "instance not found", "Document not found."
-  return parseDocument $doc
-
-proc getDocument*(query: OpleQuery, docRef: OpleRef): OpleObject =
-  let col = query.getCollection(docRef.collection)
-  return query.getDocument(col, docRef.id)
-
 template newDocumentId*(query: OpleQuery): string =
   $newSnowflakeId(query.now)
 
-proc hasDocument*(docRef: OpleRef) {.query.} =
+proc hasDocument*(query: OpleQuery, docRef: OpleRef): bool =
   let col = query.getCollection(docRef.collection)
   let doc = col.with(query.snapshot).get docRef.id
-  return \doc.exists
+  return doc.exists
+
+proc hasDocument*(docRef: OpleRef) {.query.} =
+  return \query.hasDocument(docRef)
+
+proc newDocument*(query: OpleQuery, docRef: OpleRef, props: var OpleObject, unsafe = false) =
+  let col = query.getCollection(docRef.collection).with(query.transaction)
+  if unsafe or not col.get(docRef.id).exists:
+    props["ts"] = \(query.now.toUnixFloat * 1e6)
+    col.put(docRef.id, serializeDocument props)
+  else:
+    query.fail "instance already exists", "Document already exists."
 
 # TODO: validate props
 proc newDocument*(colRef: OpleRef, props: var OpleObject) {.query.} =
-  let col = query.getCollection(colRef.id)
   let docId = query.newDocumentId()
-  props["ts"] = \(query.now.toUnixFloat * 1e6)
-  col.with(query.transaction).put docId, serializeDocument(props)
-  return \{
-    "ref": newOpleRef(docId, colRef.id),
-    "data": props.getOrDefault("data", \nil),
-    "ts": props["ts"],
-  }
+  let docRef = OpleRef(id: docId, collection: colRef.id)
+  query.newDocument docRef, props, true
+  exportDocument docRef, props
 
 proc getDocument*(docRef: OpleRef) {.query.} =
-  let props = query.getDocument(docRef)
-  let data = props.getOrDefault("data", \nil)
-  let ts = props["ts"]
-  return \{
-    "ref": \docRef,
-    "data": data,
-    "ts": ts,
-  }
+  exportDocument docRef, query.getDocument(docRef)
 
 proc setDocumentData*(docRef: OpleRef, data: OpleObject) {.query.} =
   let col = query.getCollection(docRef.collection)
@@ -57,11 +43,18 @@ proc setDocumentData*(docRef: OpleRef, data: OpleObject) {.query.} =
   props["data"] = \data
   props["ts"] = \(query.now.toUnixFloat * 1e6)
   col.with(query.transaction).put docRef.id, serializeDocument(props)
-  return \{
-    "ref": \docRef,
-    "data": props["data"],
-    "ts": props["ts"],
-  }
+  exportDocument docRef, props
+
+proc deleteDocument*(docRef: OpleRef) {.query.} =
+  case docRef.collection
+  of $ople_collections:
+    result = query.deleteCollection docRef.id
+  of $ople_indexes:
+    result = query.deleteIndex docRef.id
+  else:
+    result = query.getDocument(arguments)
+    let col = query.getCollection(docRef.collection)
+    col.with(query.transaction).del docRef.id
 
 proc updateDocument*(docRef: OpleRef, params: OpleObject) {.query.} =
   let col = query.getCollection(docRef.collection)
