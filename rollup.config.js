@@ -24,8 +24,7 @@ const resolvePlugin = nodeResolve({
   extensions: ['.ts', '.js'],
 })
 
-const enabledPackages = /agent|backend|client|codegen|dev|nason/
-//  /agent|backend|client|dev|init|pushpin|transform|tnetstring/
+const enabledPackages = /agent|backend|client|codegen|dev|init|nason|pushpin|tnetstring|transform/
 
 crawl('.', {
   only: ['packages/*/package.json'],

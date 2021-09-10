@@ -4,7 +4,6 @@ specifiers:
   '@babel/core': ^7.15.0
   '@ople/backend': link:../backend
   '@ople/client': link:../client
-  '@ople/dev': link:../dev
   '@ople/init': link:../init
   '@types/resolve': ^1.17.1
   array-flatten: ^3.0.0
@@ -36,7 +35,6 @@ devDependencies:
   '@babel/core': 7.15.0
   '@ople/backend': link:../backend
   '@ople/client': link:../client
-  '@ople/dev': link:../dev
   '@ople/init': link:../init
   '@types/resolve': 1.20.1
 
