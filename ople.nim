@@ -25,9 +25,6 @@ proc now(): ref Time =
   new(result)
   result[] = getTime()
 
-proc napiCreate(data: OpleData): napi_value =
-  napiCreate data.stringify()
-
 proc prepareCallbacks(map: napi_value): OpleCallbacks =
   result = newTable[string, OpleCallback]()
   let callbacks = result
@@ -44,8 +41,11 @@ init proc(exports: Module) =
     let callbacks = prepareCallbacks args[1]
     let queryExpr = parseOpleData(queryExprStr, callbacks)
     let query = newQuery(queryExpr, callbacks, db, this.snapshot, this.now)
-    let queryResult = query.eval()
-    return napiCreate queryResult
+    try:
+      let queryResult = query.eval()
+      return napiCreate stringify queryResult
+    except OpleFailure:
+      return napiCreate stringify query.error
 
   fn(0, finishSnapshot):
     this.snapshot.finish()

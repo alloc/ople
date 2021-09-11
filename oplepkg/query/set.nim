@@ -5,7 +5,7 @@ import ./cursor
 import ./document
 
 proc paginate*(s: OpleSet) {.query.} =
-  let page = query.pageResult.get
+  let page = get query.pageResult
   for data in s.cursor:
     page.data.add(data)
   newOplePage(page)
@@ -24,7 +24,7 @@ proc map*(cb: OpleCallback, s: OpleSet) {.query.} =
     none(OpleData)
 
 proc first*(s: OpleSet) {.query.} =
-  s.cursor().get \nil
+  get s.cursor(), \nil
 
 # The reverse query is specially handled in eval.nim
 # because it needs to be applied before its argument

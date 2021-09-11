@@ -55,6 +55,6 @@ function toSet(data: any) {
   return new OpleSet(data)
 }
 
-function toError({ code, description, position }: any) {
-  return new OpleQueryError(code, description, position)
+function toError({ code, description, position, stack }: any) {
+  return new OpleQueryError(code, description, position, stack)
 }

@@ -6,7 +6,7 @@ import ../data/[to_cbor,from_cbor]
 import ../database
 import ../query
 
-proc toIndexKey(data: OpleData): Collatable =
+proc toIndexKey(data: OpleData, nested = false): Collatable =
   case data.kind
   of ople_int:
     result.add data.int
@@ -18,18 +18,10 @@ proc toIndexKey(data: OpleData): Collatable =
   of ople_bool:
     result.add data.bool
   of ople_array:
+    if nested:
+      raise newException(Defect, "Index keys cannot use nested arrays")
     for val in data.array:
-      case val.kind
-      of ople_int:
-        result.add val.int
-      of ople_string:
-        result.add val.string
-      of ople_bool:
-        result.add val.bool
-      of ople_null:
-        result.addNull()
-      else:
-        raise newException(Defect, "Index keys must be an integer, string, boolean, or array")
+      result.add toIndexKey(val)
   of ople_null:
     discard
   else:

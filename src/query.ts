@@ -92,7 +92,6 @@ export class OpleQuery {
     const resultStr = snapshot.execSync(query, callbacks)
     const result = OpleJSON.parse(resultStr)
     if (result && result.constructor == OpleQueryError) {
-      popStackFrames(result, 6)
       throw result
     }
     return result
@@ -113,7 +112,7 @@ export function makeExpression<T extends string>(
   ...args: T extends keyof OpleQueries ? Parameters<OpleQueries[T]> : any[]
 ): OpleExpression {
   const expr: { [key: string]: any } = {}
-  const params = queryMap[callee]
+  const params = queryMap[callee] || [callee.replace(/([A-Z])/g, '_$1')]
   for (let i = 0; i < args.length; i++) {
     expr[params[i]] = args[i]
   }

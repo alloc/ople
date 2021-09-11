@@ -56,7 +56,6 @@ type
       `array`*: OpleArray
     of ople_error:
       error*: OpleError
-      debugPath*: seq[string]
     of ople_page:
       page*: OplePage
     of ople_set:
@@ -96,9 +95,14 @@ type
     parameters*: seq[string]
     body*: OpleCall
 
+  OpleFailure* = object of CatchableError
+    code*: string
+
   OpleError* = ref object of RootObj
     code*: string
     description*: string
+    position*: seq[string]
+    stack*: string
 
   OpleArray* = seq[OpleData]
 
@@ -180,8 +184,17 @@ proc newOpleObject*(data: Table[string, OpleData]): auto =
 proc newOpleArray*(data: seq[OpleData]): auto =
   OpleData(kind: ople_array, `array`: data)
 
-proc newOpleError*(error: OpleError, debugPath: seq[string]): auto =
-  OpleData(kind: ople_error, error: error, debugPath: debugPath)
+proc stack(e: ref Exception): string =
+  let frames = e.getStackTraceEntries()
+  for i in countdown(frames.len - 2, 0):
+    let frame = frames[i]
+    result = result & "\n    at " &
+      $frame.procname & " (" &
+      $frame.filename & ":" &
+      $frame.line & ")"
+
+proc newOpleError*(e: ref OpleFailure, debugPath: seq[string]): OpleError =
+  OpleError(code: e.code, description: e.msg, position: debugPath, stack: e.stack)
 
 proc newOplePage*(page: OplePage): auto =
   OpleData(kind: ople_page, page: page)

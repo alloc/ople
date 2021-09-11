@@ -1,5 +1,4 @@
 import sequtils
-import strutils
 import tables
 import ./functions
 import ./query
@@ -52,7 +51,7 @@ proc eval*(query: OpleQuery, call: OpleCall): OpleData =
     query.pageResult = some OplePage(data: newSeq[OpleData]())
 
   if query.pageParams.isSome and call.callee == qReverse:
-    query.pageParams.get["reverse"] = \true
+    get(query.pageParams)["reverse"] = \true
 
   # Evaluate any nested calls.
   var arguments: OpleArray
@@ -84,8 +83,6 @@ proc eval*(query: OpleQuery, expression: OpleData): OpleData =
   if hasDebugId:
     query.debugPath.add expression.debugId
 
-  # echo "eval: " & query.debugPath.join(".") & " [" & $expression.kind & "]"
-
   try:
     return case expression.kind
       of ople_call: query.eval expression.call
@@ -94,8 +91,10 @@ proc eval*(query: OpleQuery, expression: OpleData): OpleData =
       of ople_set: query.eval expression.set
       else: expression
 
-  except OpleFailure:
-    return newOpleError(query.error, query.debugPath)
+  except OpleFailure as e:
+    if query.error == nil:
+      query.error = newOpleError(e, query.debugPath)
+    raise e
 
   finally:
     if hasDebugId:

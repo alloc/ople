@@ -1,4 +1,4 @@
-import { OpleInput } from './convert'
+import { DeepFreeze, OpleInput, OpleResult } from './convert'
 import { notImplemented } from './errors'
 import { OpleDocument } from './sync/types'
 import { q } from './sync/transaction'
@@ -12,6 +12,10 @@ export class OpleRef<T extends object | null = any> {
 
   get isCollection(): boolean {
     return this.collection?.id == 'collections'
+  }
+
+  get data(): DeepFreeze<OpleResult<T>> {
+    return (this.get() as any).data
   }
 
   equals(ref: any): boolean {

@@ -1,10 +1,8 @@
 import {
   Project,
   Node,
-  ClassDeclaration,
   InterfaceDeclaration,
   MethodSignature,
-  Symbol,
   Type,
 } from 'ts-morph'
 import path from 'path'
@@ -62,20 +60,22 @@ const generatedLines = [
   `export const queryMap: { [callee: string]: string[] } = {`,
 ]
 
+const usedNames = new Set<string>()
 for (const query of queries) {
   const name = query.getName()
-  if (name.startsWith('__@')) {
+  if (name.startsWith('__@') || usedNames.has(name)) {
     continue
   }
   const props: string[] = []
-  console.log(name)
   props.push(fixCasing(name))
+  console.log(name)
   try {
     const [method] = query.getDeclarations() as [MethodSignature]
     for (const param of method.getParameters().slice(1)) {
       props.push(fixCasing(param.getName()))
     }
     generatedLines.push(`  ${name}: ${JSON.stringify(props)},`)
+    usedNames.add(name)
   } catch (err: any) {
     console.error(`Failed to parse query "${name}". ${err.stack}`)
   }

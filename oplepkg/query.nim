@@ -6,8 +6,6 @@ import ./error
 export data
 
 type
-  OpleFailure* = ref object of CatchableError
-
   OpleQuery* = ref object
     now*: Time
     error*: OpleError
@@ -22,13 +20,14 @@ type
     t: Option[Transaction]
 
 proc fail*(query: OpleQuery, code: string, description: string) {.noreturn.} =
-  query.error = OpleError(code: code, description: description)
-  raise OpleFailure()
+  let exc = newException(OpleFailure, description)
+  exc.code = code
+  raise exc
 
 proc transaction*(query: OpleQuery): Transaction =
   if query.t.isNone:
     query.fail "read only", "cannot write in a readonly query"
-  result = query.t.get()
+  result = get query.t
 
 proc newQuery*(
   expression: OpleData,

@@ -1,5 +1,5 @@
 import { OpleCallback } from '../sync/callback'
-import { OpleSet } from '../sync/set'
+import { OpleSet, OpleRefSet } from '../sync/set'
 import { OpleDate, OpleRef, OpleTime } from '../values'
 
 export function jsonReplacer(key: string, value: any) {
@@ -22,6 +22,7 @@ export function jsonReplacer(key: string, value: any) {
     case OpleDate:
       return replaceDate(value)
     case OpleSet:
+    case OpleRefSet:
       return replaceSet(value)
     case OpleCallback:
       return replaceCallback(value)

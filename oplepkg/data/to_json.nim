@@ -3,6 +3,7 @@ import tables
 import times
 import ../data
 import ../database
+import ../error
 
 proc `%`*(data: OpleData): JsonNode
 
@@ -17,10 +18,10 @@ proc `%`(arr: OpleArray): JsonNode =
 # proc `%`*(page: OplePage): JsonNode =
 #   %*{ "data": doc.data, "before": doc.before, "after": doc.after }
 
-proc newJObject(error: OpleError, debugPath: seq[string]): JsonNode =
-  %{ "@error": %{ "position": %debugPath, "code": %error.code, "description": %error.description } }
+proc `%`(e: OpleError): JsonNode =
+  %{ "@error": %{ "position": %e.position, "code": %e.code, "description": %e.description, "stack": %e.stack } }
 
-proc newJObject(call: OpleCall): JsonNode =
+proc `%`(call: OpleCall): JsonNode =
   var node = newJObject()
   for key, val in call.fieldPairs:
     when val is OpleData:
@@ -53,11 +54,15 @@ proc `%`*(data: OpleData): JsonNode =
   of ople_document: %data.document
   of ople_object: %data.object
   of ople_array: %data.array
-  of ople_error: newJObject(data.error, data.debugPath)
+  of ople_error: %data.error
   of ople_page: %data.page
-  of ople_set: newJObject(data.set.source)
+  of ople_set: %data.set.source
   else:
     raise newException(Defect, $data.kind & " cannot be serialized to JSON")
+
+proc stringify*(error: OpleError): string =
+  let json = %error
+  $json
 
 proc stringify*(data: OpleData): string =
   let json = %data

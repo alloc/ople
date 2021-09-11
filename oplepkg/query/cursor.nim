@@ -27,7 +27,7 @@ proc document*(cursor: Cursor, documentRef: OpleRef): OpleDocument {.inline.} =
   )
 
 proc document*(cursor: Cursor, documentRef: Option[OpleData]): OpleDocument {.inline.} =
-  cursor.document documentRef.get.ref
+  cursor.document get(documentRef).ref
 
 proc getCollection(query: OpleQuery, source: OpleCall): CollectionSnapshot =
   case source.callee
@@ -73,8 +73,8 @@ proc makeCursor*(query: OpleQuery, source: OpleCall): OpleCursor =
 
   if query.pageParams.isSome:
     let
-      pageParams = query.pageParams.get
-      pageResult = query.pageResult.get
+      pageParams = get query.pageParams
+      pageResult = get query.pageResult
       limit = pageParams.getOrDefault("size", \64).int
       reverse = pageParams.getOrDefault("reverse", \false).bool
 
