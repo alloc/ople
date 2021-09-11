@@ -1,19 +1,19 @@
 import ./data
 
-template badRef*(kind: string, name: string): string =
+proc badRef*(kind: string, name: string): string {.inline.} =
   "Ref refers to undefined " & kind & " '" & name & "'"
 
-template badCollectionRef*(name: string): string =
+proc badCollectionRef*(name: string): string {.inline.} =
   badRef "collection", name
 
-template badFunctionRef*(name: string): string =
+proc badFunctionRef*(name: string): string {.inline.} =
   badRef "function", name
 
-template unknownFunction*(name: string): string =
+proc unknownFunction*(name: string): string {.inline.} =
   "Undefined function '" & name & "'"
 
-template invalidKind*(expected: OpleDataKind, actual: OpleDataKind): string =
+proc invalidKind*(expected: OpleDataKind, actual: OpleDataKind): string {.inline.} =
   expected.errorRepr & " expected, " & actual.errorRepr & " received"
 
-template invalidArity*(arity: int): string =
+proc invalidArity*(arity: int): string {.inline.} =
   "Expected at least " & $arity & " argument" & (if arity == 1: "" else: "s")

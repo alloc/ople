@@ -2,7 +2,7 @@ import { OpleInput, OpleResult } from '../convert'
 import { OpleRef } from '../values'
 import { wrapCallback } from './callback'
 import { OpleCollections } from './database'
-import { OplePagination, OpleSet } from './set'
+import { OplePagination, OpleRefSet, OpleSet } from './set'
 import { q } from './transaction'
 import type { Collator, OpleDocument, OplePage } from './types'
 
@@ -27,7 +27,7 @@ export class OpleCollection<
   T extends object | null = any,
   Name extends string = string,
 > {
-  private _ref: OpleRef
+  private _ref: OpleRef<CollectionMeta<Name>>
 
   /**
    * Equivalent to `Collection` in FaunaDB
@@ -50,7 +50,7 @@ export class OpleCollection<
 
   /** Get the document refs in this collection */
   get refs() {
-    return new OpleSet<OpleRef<T>>({ documents: this._ref })
+    return new OpleRefSet<T>({ documents: this._ref })
   }
 
   /** Read the documents in this collection */
@@ -100,7 +100,7 @@ export class OpleCollection<
   }
 
   sortBy(collator: Collator) {
-    return new OpleSet<OpleRef<T>>({
+    return new OpleRefSet<T>({
       indexed_refs: this._ref,
       collator: collator.id,
       collate: wrapCallback(collator.collate),
@@ -123,6 +123,11 @@ export class OpleCollection<
     options: { data?: OpleInput<Partial<T>> } & OpleDocument.Options,
   ) {
     return q.update(coerceToRef(ref, this._ref), options)
+  }
+
+  /** Delete the collection and its documents. */
+  delete() {
+    return q.delete(this._ref)
   }
 
   // createIndex(name: string, toSortKey: (data: T) => Collatable | Collatable[]) {

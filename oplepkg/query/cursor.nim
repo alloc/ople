@@ -1,9 +1,9 @@
 {.experimental: "notnil".}
 import nimdbx
+import ../data/from_cbor
 import ../database
 import ../query
 import ./collection
-import ./document
 import ./index
 
 const
@@ -22,7 +22,7 @@ proc documentProps(cursor: Cursor): OpleObject {.inline.} =
 proc document*(cursor: Cursor, documentRef: OpleRef): OpleDocument {.inline.} =
   let props = cursor.documentProps
   documentRef.toDocument(
-    props["data"].object,
+    props["data"].toObject(),
     props["ts"].float
   )
 
@@ -46,9 +46,8 @@ proc getCollection(query: OpleQuery, source: OpleCall): CollectionSnapshot =
     let collectionRef = source.arguments[0].ref
     let collatorId = source.arguments[1].string
 
-    var collection = query.getIndexCollection(
-      collectionRef,
-      collatorId,
+    var collection = cast[Collection not nil](
+      query.getIndexCollection(collectionRef, collatorId)
     )
 
     if collection.isNil:

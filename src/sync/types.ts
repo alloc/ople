@@ -5,7 +5,7 @@ export * from '../values'
 
 export type { OpleArray, OpleArrayLike } from './array'
 export type { OpleCursor, OplePage } from './page'
-export type { OpleSet, OplePagination } from './set'
+export type { OpleSet, OpleRefSet, OplePagination } from './set'
 
 /** A document result with a proxy that allows direct `data` access. */
 export type OpleDocument<T extends object | null = any> = unknown &

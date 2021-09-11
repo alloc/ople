@@ -48,7 +48,7 @@ proc newQuery*(
     else: none(Transaction),
   )
 
-template expectArity*(query: OpleQuery, arguments: OpleArray, arity: int) =
+proc expectArity*(query: OpleQuery, arguments: OpleArray, arity: int) {.inline.} =
   if arity > arguments.len:
     query.fail "invalid arity", invalidArity(arity)
 
@@ -61,7 +61,7 @@ proc expectKind*(query: OpleQuery, data: OpleData, kind: OpleDataKind): OpleData
     query.fail "invalid argument", invalidKind(kind, data.kind)
   return data
 
-template expectArgument*(query: OpleQuery, arguments: OpleArray, index: int, kind: OpleDataKind): OpleData =
+proc expectArgument*(query: OpleQuery, arguments: OpleArray, index: int, kind: OpleDataKind): OpleData {.inline.} =
   query.expectKind(query.expectArgument(arguments, index), kind)
 
 proc getArgument*(arguments: OpleArray, index: int): OpleData =
@@ -132,12 +132,17 @@ macro query*(fn: untyped): untyped =
 
   return fn
 
+proc exportDocument*(doc: OpleDocument): OpleData =
+  return \{
+    "ref": \doc.ref,
+    "data": \doc.data,
+    "ts": \doc.ts,
+  }
+
 proc exportDocument*(docRef: OpleRef, props: OpleObject): OpleData =
   ## Wrap a parsed document with OpleData so it can be used in a query.
-  let data = props.getOrDefault("data", \nil)
-  let ts = props["ts"]
   return \{
     "ref": \docRef,
-    "data": data,
-    "ts": ts,
+    "data": props.getOrDefault("data", \nil),
+    "ts": props["ts"],
   }

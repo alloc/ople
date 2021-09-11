@@ -3,9 +3,6 @@ import ./data/types
 
 export types
 
-var emptyTable: OpleObject
-let emptyOpleObject* = emptyTable
-
 template `\`*(arg: pointer): OpleData =
   assert(arg.isNil)
   OpleData(kind: ople_null)

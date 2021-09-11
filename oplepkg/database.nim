@@ -1,3 +1,4 @@
+{.experimental: "notnil".}
 import nimdbx
 import strutils
 import ./query
@@ -22,16 +23,16 @@ proc isSchemaRef*(docRef: OpleRef): bool =
   except:
     false
 
-template getSchema*(query: OpleQuery, schema: OpleSchema): Collection =
+proc getSchema*(query: OpleQuery, schema: OpleSchema): Collection not nil =
   query.database.openCollection $schema
 
-template getReadableSchema*(query: OpleQuery, schema: OpleSchema): CollectionSnapshot =
+proc getReadableSchema*(query: OpleQuery, schema: OpleSchema): CollectionSnapshot {.inline.} =
   query.getSchema(schema).with(query.snapshot)
 
-template getWritableSchema*(query: OpleQuery, schema: OpleSchema): CollectionTransaction =
+proc getWritableSchema*(query: OpleQuery, schema: OpleSchema): CollectionTransaction {.inline.} =
   query.getSchema(schema).with(query.transaction)
 
-proc newCollectionRef*(collection: string): OpleRef =
+proc toCollectionRef*(collection: string): OpleRef =
   ## Convert a collection name into an OpleRef.
   var id, scope: string
 

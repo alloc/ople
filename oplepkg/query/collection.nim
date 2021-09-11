@@ -27,14 +27,18 @@ proc newCollection*(query: OpleQuery, params: OpleObject) =
   props["history_days"] = params.getOrDefault("history_days", \30)
   collections.put name, serializeDocument(props)
 
-proc deleteCollection*(query: OpleQuery, name: string): OpleData =
+# TODO: delete associated indexes
+proc deleteCollection*(query: OpleQuery, name: string): OpleDocument =
   let collections = query.getWritableSchema ople_collections
   let doc = collections.get name
   if not doc.exists:
     query.fail "instance not found", "Document not found."
+  let col = query.database.getOpenCollection name
+  if not col.isNil:
+    col.with(query.transaction).deleteCollection()
   collections.del name
-  exportDocument(
-    newCollectionRef(name),
+  toDocument(
+    toCollectionRef(name),
     parseDocument $doc
   )
 

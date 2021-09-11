@@ -24,6 +24,14 @@ export class OpleRef<T extends object | null = any> {
     )
   }
 
+  get() {
+    return q.get(this as OpleRef<T>)
+  }
+
+  getIfExists() {
+    return q.exists(this) ? q.get(this as OpleRef<T>) : null
+  }
+
   /**
    * Update the document's data and (optionally) its metadata.
    */
@@ -40,6 +48,10 @@ export class OpleRef<T extends object | null = any> {
   /** @internal */
   update(data: OpleInput<Partial<T>> | null, options?: OpleDocument.Options) {
     return q.update(this, data ? { data, ...options } : options!)
+  }
+
+  delete() {
+    return q.delete(this)
   }
 
   toString() {

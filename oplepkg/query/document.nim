@@ -7,8 +7,9 @@ import ../database
 import ../query
 import ../ref
 import ./collection
+import ./index
 
-template newDocumentId*(query: OpleQuery): string =
+proc newDocumentId*(query: OpleQuery): string {.inline.} =
   $newSnowflakeId(query.now)
 
 proc hasDocument*(query: OpleQuery, docRef: OpleRef): bool =
@@ -45,20 +46,24 @@ proc setDocumentData*(docRef: OpleRef, data: OpleObject) {.query.} =
   col.with(query.transaction).put docRef.id, serializeDocument(props)
   exportDocument docRef, props
 
-proc deleteDocument*(docRef: OpleRef) {.query.} =
+proc deleteDocument*(query: OpleQuery, docRef: OpleRef): OpleDocument =
   case docRef.collection
   of $ople_collections:
     result = query.deleteCollection docRef.id
   of $ople_indexes:
     result = query.deleteIndex docRef.id
   else:
-    result = query.getDocument(arguments)
     let col = query.getCollection(docRef.collection)
+    result = toDocument(docRef, query.getDocument(col, docRef.id))
     col.with(query.transaction).del docRef.id
+
+proc deleteDocument*(docRef: OpleRef) {.query.} =
+  exportDocument query.deleteDocument docRef
 
 proc updateDocument*(docRef: OpleRef, params: OpleObject) {.query.} =
   let col = query.getCollection(docRef.collection)
   var props = query.getDocument(col, docRef.id)
+  props["ts"] = \(query.now.toUnixFloat * 1e6)
 
   # TODO: support other params
   if params.hasKey("data"):
@@ -72,13 +77,8 @@ proc updateDocument*(docRef: OpleRef, params: OpleObject) {.query.} =
         for key, val in newData.object:
           data[][key] = val
 
-  props["ts"] = \(query.now.toUnixFloat * 1e6)
   col.with(query.transaction).put docRef.id, serializeDocument(props)
-  return \{
-    "ref": \docRef,
-    "data": props["data"],
-    "ts": props["ts"],
-  }
+  exportDocument docRef, props
 
 proc mergeProperties*(oldProps: OpleObject, newProps: OpleObject): OpleObject =
   discard

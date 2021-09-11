@@ -2,7 +2,7 @@ import { OpleRef } from '../values'
 import { OpleCollection, OpleDocument } from './types'
 import { q } from './transaction'
 import { OpleInput } from '../convert'
-import { OpleSet } from './set'
+import { OpleRefSet } from './set'
 
 // These collection names are reserved by FaunaDB.
 const reservedCollectionNames = ['events', 'set', 'self', 'documents', '_']
@@ -11,8 +11,8 @@ export const db: OpleDatabase = {
   ref: (id: string, collection: any) =>
     new OpleRef(id, new OpleRef(collection, OpleRef.Native.collections)),
   get: q.get,
-  getIndexes: () => new OpleSet({ indexes: null }),
-  getCollections: () => new OpleSet({ collections: null }),
+  getIndexes: () => new OpleRefSet({ indexes: null }),
+  getCollections: () => new OpleRefSet({ collections: null }),
   getCollection: (name: string) => new OpleCollection(name),
   hasCollection: name =>
     q.exists(new OpleRef(name, OpleRef.Native.collections)),
@@ -24,6 +24,7 @@ export const db: OpleDatabase = {
   },
   replace: (ref, data) => q.replace(ref, { data }),
   update: q.update,
+  delete: q.delete,
 }
 
 export interface OpleDatabase {
@@ -36,8 +37,8 @@ export interface OpleDatabase {
 
   get: typeof q.get
 
-  getIndexes(): OpleSet<OpleRef>
-  getCollections(): OpleSet<OpleRef>
+  getIndexes(): OpleRefSet
+  getCollections(): OpleRefSet
 
   /** Get a collection that was created statically. */
   getCollection<Name extends keyof OpleDocuments>(

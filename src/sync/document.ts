@@ -41,6 +41,10 @@ export class OpleDocument<T extends object | null = any> {
     return Object.assign(this, { data: self.data, ts: self.ts })
   }
 
+  delete() {
+    return this.ref.delete()
+  }
+
   /** Enforces type nominality */
   private _document!: { data: T }
 }

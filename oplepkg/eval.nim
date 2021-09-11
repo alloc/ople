@@ -101,5 +101,5 @@ proc eval*(query: OpleQuery, expression: OpleData): OpleData =
     if hasDebugId:
       discard query.debugPath.pop()
 
-template eval*(query: OpleQuery): OpleData =
+proc eval*(query: OpleQuery): OpleData {.inline.} =
   query.eval(query.expression)

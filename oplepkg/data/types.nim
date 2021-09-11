@@ -108,7 +108,22 @@ type
 
   OpleCallbacks* = TableRef[string, OpleCallback]
 
-template isNull*(data: OpleData): bool =
+var emptyTable: OpleObject
+let emptyOpleObject* = emptyTable
+
+proc toObject*(data: OpleData): OpleObject =
+  ## Coerce an OpleData into an OpleObject.
+  ## If `data` is not an object, an empty object is returned.
+  if data.kind == ople_object: data.object
+  else: emptyOpleObject
+
+proc toDocument*(r: OpleRef, data: OpleObject, ts: float64): OpleDocument =
+  OpleDocument(`ref`: r, data: data, ts: ts)
+
+proc toDocument*(r: OpleRef, props: OpleObject): OpleDocument {.inline.} =
+  toDocument(r, props["data"].toObject, props["ts"].float)
+
+proc isNull*(data: OpleData): bool {.inline.} =
   data.kind == ople_null
 
 proc newOpleNull*(): auto =
@@ -152,9 +167,6 @@ proc newOpleRef*(data: OpleRef): auto =
 
 proc newOpleRef*(id: string, collection: string): auto =
   OpleData(kind: ople_ref, `ref`: OpleRef(id: id, collection: collection))
-
-proc toDocument*(r: OpleRef, data: OpleObject, ts: float64): OpleDocument =
-  OpleDocument(`ref`: r, data: data, ts: ts)
 
 proc newOpleDocument*(doc: OpleDocument): auto =
   OpleData(kind: ople_document, document: doc)

@@ -12,6 +12,9 @@ proc toIndexKey(data: OpleData): Collatable =
     result.add data.int
   of ople_string:
     result.add data.string
+  of ople_ref:
+    let r = data.ref
+    result.add r.id & "/" & r.collection
   of ople_bool:
     result.add data.bool
   of ople_array:
@@ -38,17 +41,20 @@ proc identifyIndex*(collectionRef: OpleRef, name: string): string =
 proc getIndexCollection*(query: OpleQuery, collectionRef: OpleRef, name: string): Collection =
   query.database.getOpenCollection identifyIndex(collectionRef, name)
 
+var indexCache: Table[string, Index]
+
 proc createIndex*(query: OpleQuery, collectionRef: OpleRef, name: string, collate: OpleCallback): Collection not nil =
   let indexes = query.getWritableSchema ople_indexes
   let indexId = collectionRef.id & "::" & name
 
-  if indexes.get(indexId).exists:
+  if indexCache.hasKey(indexId):
     query.fail "instance already exists", "Index already exists."
 
-  var props: OpleObject
-  props["ts"] = \(query.now.toUnixFloat * 1e6)
-  props["data"] = \{ "source": \collectionRef }
-  indexes.put indexId, serializeDocument(props)
+  if not indexes.get(indexId).exists:
+    var props: OpleObject
+    props["ts"] = \(query.now.toUnixFloat * 1e6)
+    props["data"] = \{ "source": \collectionRef }
+    indexes.put indexId, serializeDocument(props)
 
   proc indexer(id, dataPtr: DataOut, emit: EmitFunc) =
     {.cast(noSideEffect).}:
@@ -60,13 +66,29 @@ proc createIndex*(query: OpleQuery, collectionRef: OpleRef, name: string, collat
         emit(indexKey, indexValue)
 
   let collection = query.database.openCollection(collectionRef.id)
-  discard collection.openIndex(name, indexer)
+  let index = collection.openIndex(name, indexer)
+  indexCache[indexId] = index
 
   cast[Collection not nil](
     query.getIndexCollection(collectionRef, name)
   )
 
-proc deleteIndex*(query: OpleQuery, indexId: string): OpleData =
-  let splitId = indexId.split "::"
-  let indexes = query.getSchema ople_indexes
-  query.
+proc deleteIndex*(query: OpleQuery, indexId: string): OpleDocument =    
+  let indexes = query.getWritableSchema ople_indexes
+  let doc = indexes.get indexId
+  if not doc.exists:
+    query.fail "instance not found", "Index not found."
+
+  indexes.del indexId
+
+  let index = indexCache.getOrDefault(indexId, nil)
+  if not index.isNil:
+    deleteIndex index, query.transaction
+    indexCache.del indexId
+
+  let collection = indexId.split("::")[0]
+  toDocument(
+    toCollectionRef(collection),
+    parseDocument $doc
+  )
+

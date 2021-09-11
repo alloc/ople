@@ -8,6 +8,7 @@ import {
   OpleDocument,
   OplePage,
   OpleRef,
+  OpleRefSet,
   OpleSet,
   OpleTime,
 } from './sync/types'
@@ -47,6 +48,10 @@ export interface OpleQueries extends OpleFunctions {
     ref: OpleRef<T>,
     params: { data?: OpleInput<Partial<T>> } & OpleDocument.Options,
   ): OpleDocument<T>
+
+  delete<T extends object | null>(ref: OpleRef<T>): OpleDocument<T>
+  delete<T extends object | null>(set: OpleRefSet<T>): OpleSet<OpleDocument<T>>
+  delete(set: OpleRefSet): OpleSet<OpleDocument>
 
   paginate<T>(
     set: OpleSet,

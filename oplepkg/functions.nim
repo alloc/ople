@@ -43,6 +43,15 @@ addFunction "get", proc (arg: OpleData) {.query.} =
   else:
     query.fail "invalid_argument", "expected a Ref or Set"
 
+addFunction "delete", proc (arg: OpleData) {.query.} =
+  case arg.kind
+  of ople_ref:
+    query.deleteDocument(arguments)
+  of ople_set:
+    query.delete(arguments)
+  else:
+    query.fail "invalid_argument", "expected a Ref or Set"
+
 #
 # Documents
 #
@@ -50,7 +59,6 @@ addFunction "exists", hasDocument
 addFunction "create", newDocument
 addFunction "replace", setDocumentData
 addFunction "update", updateDocument
-addFunction "delete", deleteDocument
 
 #
 # Collections

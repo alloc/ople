@@ -1,4 +1,4 @@
-import { makeExpression, makeQuery, OpleExpression } from '../query'
+import { makeExpression, OpleExpression } from '../query'
 import { queriesByType } from '../queryMap'
 import { OpleRef, OpleTime } from '../values'
 import type { OpleArrayLike } from './array'
@@ -23,22 +23,19 @@ export type OplePagination = {
 export class OpleSet<T = any> {
   constructor(protected expr: OpleExpression, protected source?: OpleSet) {}
 
-  get documents(): T extends OpleRef<infer U>
-    ? OpleSet<OpleDocument<U>>
-    : never {
-    return new OpleSet(makeExpression('documents', this), this) as any
-  }
-
   paginate(opts: OplePagination = {}): OplePage<T> {
     return q.paginate(this, opts.ts, opts.before, opts.after, opts.size)
   }
 
-  map<U>(map: (value: T) => U): OpleSet<U> {
-    return new OpleSet(makeExpression('map', wrapCallback(map), this), this)
+  map<U>(map: (value: T) => U): OpleSet<U>
+  map<U extends object | null>(map: (value: T) => OpleRef<U>): OpleRefSet<U>
+  map(map: (value: T) => any): OpleSet {
+    return new OpleRefSet(makeExpression('map', wrapCallback(map), this), this)
   }
 
-  filter(filter: (value: T) => boolean): OpleSet<T> {
-    return new OpleSet(
+  filter(filter: (value: T) => boolean): OpleSet<T>
+  filter(filter: (value: T) => boolean): OpleSet {
+    return new OpleRefSet(
       makeExpression('filter', wrapCallback(filter), this),
       this,
     )
@@ -49,7 +46,7 @@ export class OpleSet<T = any> {
   }
 
   reverse() {
-    return new OpleSet(makeExpression('reverse', this), this)
+    return new OpleSet<T>(makeExpression('reverse', this), this)
   }
 }
 
@@ -75,3 +72,23 @@ queriesByType.array.forEach(callee => {
     return execSync(callee, this.expr, ...args)
   }
 })
+
+export class OpleRefSet<T extends object | null = any> extends OpleSet<
+  OpleRef<T>
+> {
+  constructor(expr: OpleExpression, source?: OpleSet) {
+    super(expr, source)
+  }
+
+  get documents(): OpleSet<OpleDocument<T>> {
+    return new OpleSet(makeExpression('documents', this), this)
+  }
+
+  delete() {
+    return new OpleSet<OpleDocument<T>>(makeExpression('delete', this), this)
+  }
+}
+
+export interface OpleRefSet<T extends object | null = any> {
+  filter(filter: (value: OpleRef<T>) => boolean): OpleRefSet<T>
+}
