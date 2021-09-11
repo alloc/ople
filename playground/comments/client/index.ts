@@ -57,10 +57,6 @@ export const app = setup(() => {
     })
   })
 
-  auto(() => {
-    console.log('posts:', Array.from(posts))
-  })
-
   const wrapUser = (user: User) =>
     setup(() => {
       onReply((to, reply) => {

@@ -194,8 +194,7 @@ class OpleDocument<T extends Data = any> {
 const Document = OpleDocument
 
 /** Manages an object in the database. */
-type Document<T extends Data = any> = string &
-  Omit<OpleDocument<T>, 'takeChanges' | 'onCreate'>
+type Document<T extends Data = any> = string & OpleDocument<T>
 
 export { Document as OpleDocument }
 

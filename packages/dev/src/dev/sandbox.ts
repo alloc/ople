@@ -105,6 +105,9 @@ declare const TextDecoder: any
 const createGlobalScope = (global?: any) => ({
   console,
   process,
+  setImmediate,
+  setInterval,
+  setTimeout,
   Buffer,
   TextDecoder,
   TextEncoder,

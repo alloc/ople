@@ -30,6 +30,13 @@ export interface Reply {
 
 openCollection<Reply>('replies')
 
+interface Like {
+  author: OpleRef<User>
+  target: OpleRef
+}
+
+openCollection<Like>('likes')
+
 // Server-sent messages
 export interface Signals {
   onReply(ref: OpleRef<Post> | OpleRef<Reply>, reply: Reply): void

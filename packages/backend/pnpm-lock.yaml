@@ -10,7 +10,7 @@ specifiers:
   ansi-italic: ^0.1.1
   create-server: npm:@cush/create-server@^1.0.4
   lodge: ^0.1.4
-  md5-hex: ^4.0.0
+  md5-hex: ^3.0.0
   ople-db: link:../../vendor/ople-db
   raw-body: ^2.4.1
   tnetstring: link:../tnetstring
@@ -26,7 +26,7 @@ dependencies:
   ansi-italic: 0.1.1
   create-server: /@cush/create-server/1.0.4
   lodge: 0.1.7
-  md5-hex: 4.0.0
+  md5-hex: 3.0.1
   ople-db: link:../../vendor/ople-db
   raw-body: 2.4.1
   tnetstring: link:../tnetstring
@@ -207,9 +207,9 @@ packages:
       has-flag: 3.0.0
     dev: false
 
-  /md5-hex/4.0.0:
-    resolution: {integrity: sha512-di38zHPn4Tz8LCb5Lz8SpLb/20Hv23aPXpF4Bq1mR5r9JuCZQ/JpcDUxFfZF9Ur5GiUvqS5NQOkR+fm5cYZ0IQ==}
-    engines: {node: '>=12'}
+  /md5-hex/3.0.1:
+    resolution: {integrity: sha512-BUiRtTtV39LIJwinWBjqVsU9xhdnz7/i889V859IBFpuqGAj6LuOvHv5XLbgZ2R7ptJoJaEcxkv88/h25T7Ciw==}
+    engines: {node: '>=8'}
     dependencies:
       blueimp-md5: 2.18.0
     dev: false

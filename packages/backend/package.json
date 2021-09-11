@@ -14,7 +14,7 @@
     "ansi-italic": "^0.1.1",
     "create-server": "npm:@cush/create-server@^1.0.4",
     "lodge": "^0.1.4",
-    "md5-hex": "^4.0.0",
+    "md5-hex": "^3.0.0",
     "ople-db": "link:../../vendor/ople-db",
     "raw-body": "^2.4.1",
     "tnetstring": "link:../tnetstring",

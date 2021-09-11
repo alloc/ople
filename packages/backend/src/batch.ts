@@ -64,6 +64,8 @@ export function processBatch(
                 resolve(callerId, replyId, result)
               },
               error => {
+                console.error(`\n"${calleeId}" threw an error`)
+                console.error(error)
                 reject(callerId, replyId, error)
               }
             )
@@ -73,6 +75,7 @@ export function processBatch(
       await callPromise
       resolve(callerId, batchId, null)
     } catch (error: any) {
+      console.error(error)
       if (is.error(error)) {
         onError(error, batch[callIndex])
         error =
@@ -91,7 +94,6 @@ export function processBatch(
   batchQueues[callerId] = batchPromise
   return batchPromise
     .catch(error => {
-      console.log(error)
       if (error.batch == batch)
         reject(
           callerId,

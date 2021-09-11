@@ -92,13 +92,21 @@ const metaFile = editJsonFile('ople_data/metadata.json')
 setImmediate(() => {
   const metaData = metaFile.data
   const prevCollators: string[] = metaData.collators || []
-  const nextCollators = Object.keys(collators)
   const missingCollators = prevCollators.filter(id => !collators[id])
-  const unknownCollators = nextCollators.filter(
-    id => !prevCollators.includes(id)
-  )
-  metaData.collators = nextCollators
+
   write(() => {
-    db.getIndexes
+    // Delete indexes for missing collators.
+    db.getIndexes()
+      .filter(ref => {
+        const name = ref.id.split('::')[1]
+        return name !== '' && missingCollators.includes(name)
+      })
+      .delete()
+
+    // Initialize indexes, so they react to changes.
+    provideCollators(collators)
   })
+
+  metaData.collators = Object.keys(collators)
+  metaFile.save()
 })

@@ -2,6 +2,33 @@ import { Post, Reply, User } from '../db'
 
 const likes = newCollator<Reply>(reply => reply.likes)
 
+type Likeable = { likes: number }
+
+exposeFunctions({
+  like(target: OpleRef<Likeable>, liked = true) {
+    const author = caller.user
+    validateAuthor(author)
+    write(() => {
+      if (!target.exists) {
+        throw `Cannot like nothing`
+      }
+      const likes = db.getCollection('likes')
+      const existingLike = likes.find(
+        like => like.author.equals(author) && like.target.equals(target)
+      )
+      if (liked == Boolean(existingLike)) return
+      if (existingLike) {
+        existingLike.delete()
+      } else {
+        likes.create({ target, author })
+      }
+      target.update({
+        likes: target.data.likes + (liked ? 1 : -1),
+      })
+    })
+  },
+})
+
 exposePagers({
   loadPosts() {
     return db.getCollection('posts').documents

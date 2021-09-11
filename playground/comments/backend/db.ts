@@ -18,11 +18,13 @@ declare module "@ople/backend" {
     users: User
     posts: Post
     replies: Reply
+    likes: Like
   }
   export interface OpleCollections {
     users: any
     posts: any
     replies: any
+    likes: any
   }
   export interface CallerMeta {
     admin?: boolean
@@ -42,4 +44,9 @@ export interface Reply {
   parent?: OpleRef<Reply>
   post: OpleRef<Post>
   likes: number
+}
+
+interface Like {
+  author: OpleRef<User>
+  target: OpleRef
 }

@@ -21,8 +21,10 @@ function onError(err: any) {
     let text = err.message
     if (text !== (text = text.replace('Invariant failed: ', ''))) {
       type = 'Invariant'
-    } else if (text !== (text = text.replace('TypeError: ', ''))) {
-      type = 'TypeError'
+    } else if (/^\w*Error: /.test(text)) {
+      const colonIndex = text.indexOf(':')
+      type = text.slice(0, colonIndex)
+      text = text.slice(colonIndex + 2)
     }
     console.error(
       bold(red(type)) +
