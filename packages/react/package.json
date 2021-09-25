@@ -1,6 +1,8 @@
 {
   "name": "@ople/react",
-  "source": "src/index.ts",
+  "main": "dist/ople-react.js",
+  "module": "dist/ople-react.mjs",
+  "typings": "src/index.ts",
   "devDependencies": {
     "@ople/client": "link:../client",
     "@types/react": "^17.0.19",

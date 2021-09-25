@@ -5,27 +5,40 @@ import { getOple, setEffect, withOple } from './OpleContext'
 import { toRef } from './OpleDocument'
 import { Ople } from './Ople'
 
-export function makeSignal<T>(): OpleSignal<T> {
+export function makeSignal<T = void>(): OpleSignal<T> {
   const listeners = new Set<OpleListener>()
   function signal(listener: any) {
     invariant(!listener.context, 'Handler already in use')
-    setEffect(listener, active => {
-      if (active) {
-        signal.size++
-        listeners.add(listener)
-      } else {
-        listeners.delete(listener)
+    if (getOple()) {
+      setEffect(listener, active => {
+        if (active) {
+          signal.size++
+          listeners.add(listener)
+        } else {
+          listeners.delete(listener)
+          signal.size--
+        }
+      })
+      listener.context = getOple()
+      listener.dispose = disposeListener
+    } else {
+      signal.size++
+      listeners.add(listener)
+      listener.dispose = () => {
         signal.size--
+        listeners.delete(listener)
       }
-    })
-    listener.context = getOple()
-    listener.dispose = disposeListener
+    }
     return listener
   }
   signal.size = 0
-  signal.emit = (arg: any) =>
+  signal.emit = (arg?: any) =>
     listeners.forEach(listener => {
-      withOple(listener.context!, listener, [arg])
+      withOple(listener.context || null, listener, [arg])
+    })
+  signal.dispose = () =>
+    listeners.forEach(listener => {
+      listener.dispose()
     })
   return signal
 }
@@ -73,11 +86,17 @@ type SignalArgs<T> = [T] extends [Any]
   : [value: T]
 
 export interface OpleSignal<T = any> {
-  (listener: (...args: SignalArgs<T>) => boolean | void): OpleListener
+  (listener: OpleSignal.Handler<T>): OpleListener
   /** Notify all active listeners */
   emit(...args: SignalArgs<T>): void
   /** The number of active listeners */
   size: number
+  /** Dispose all listeners */
+  dispose(): void
+}
+
+export namespace OpleSignal {
+  export type Handler<T = any> = (...args: SignalArgs<T>) => void
 }
 
 /** The listener of a signal. */

@@ -10,11 +10,12 @@ export function setup<T extends Record<string, any>>(
 }
 
 export class Ople<T extends Record<string, any> | void = any> {
-  active = true
+  active: boolean
   effects = new Map<object, OpleEffect>()
   exports: T
 
-  constructor(init: () => T) {
+  constructor(init: () => T, active = true) {
+    this.active = active
     this.exports = withOple(this, init)
   }
 

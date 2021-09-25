@@ -1,3 +1,4 @@
+import { Disposable } from '@alloc/types'
 import invariant from 'tiny-invariant'
 import type { Ople } from './Ople'
 
@@ -104,4 +105,12 @@ export function setSharedEffect(owner: object, effect: OpleEffect | null) {
       sharedEffects.delete(owner)
     }
   }
+}
+
+/** Run an effect whenever the Ople context is deactivated. */
+export function onDeactivate(effect: () => void): Disposable {
+  invariant(current, 'Must be in an Ople context')
+  const { effects } = current
+  effects.set(effect, active => !active && effect())
+  return { dispose: () => effects.delete(effect) }
 }

@@ -1,4 +1,5 @@
 export { auto } from './auto'
+export { watch } from './watch'
 export { Ople, setup } from './Ople'
 export { toDoc, toRef, trackChanges } from './OpleDocument'
 export { OpleDate, OpleTime } from './values'
@@ -19,5 +20,5 @@ export * from 'wana'
 // Types
 export type { OpleRef } from './OpleRef'
 export type { OpleDocument, OpleRefLike } from './OpleDocument'
-export type { OpleListener } from './signals'
+export type { OpleSignal, OpleListener } from './signals'
 export type { OplePage, OplePager } from './OplePage'

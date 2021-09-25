@@ -1,6 +1,6 @@
 import invariant from 'tiny-invariant'
 import { Auto, mountAuto, AutoConfig } from 'wana'
-import { getOple, setEffect, withOple } from './OpleContext'
+import { getOple, setEffect, setOnceEffect, withOple } from './OpleContext'
 
 /**
  * Invoke the given function immediately and whenever the
@@ -12,13 +12,17 @@ import { getOple, setEffect, withOple } from './OpleContext'
 export function auto(effect: () => void, config: AutoConfig = {}) {
   const auto = new Auto(config)
 
-  const parent = getOple()
-  if (parent) {
-    effect = (withOple as any).bind(null, parent, effect)
-    attachAuto(auto)
+  const ople = getOple()
+  if (ople) {
+    effect = (withOple as any).bind(null, ople, effect)
+    setOnceEffect(auto, () => {
+      attachAuto(auto)
+      auto.run(effect)
+    })
+  } else {
+    auto.run(effect)
   }
 
-  auto.run(effect)
   return auto
 }
 
