@@ -19,6 +19,11 @@ export class Ople<T extends Record<string, any> | void = any> {
     this.exports = withOple(this, init)
   }
 
+  /** Get a bound `deactivate` function to assign somewhere. */
+  get dispose() {
+    return this.deactivate.bind(this)
+  }
+
   activate() {
     if (!this.active) {
       this.active = true

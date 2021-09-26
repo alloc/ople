@@ -5,7 +5,7 @@ import type { Ople } from './Ople'
 let current: Ople | null = null
 
 /** Unsafely access the `Ople` context (if one exists) */
-export const getOple = () => current!
+export const getOple = <T = any>(): Ople<T> => current!
 
 /** Use `state` as the Ople context until `effect` returns */
 export function withOple<In extends any[], Out>(
