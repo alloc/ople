@@ -1,14 +1,16 @@
 import { is } from '@alloc/is'
 import { Any, Disposable } from '@alloc/types'
 import invariant from 'tiny-invariant'
-import { getOple, setEffect, withOple } from './OpleContext'
+import { getOple, setDisposer, setEffect, withOple } from './OpleContext'
 import { toRef } from './OpleDocument'
 import { Ople } from './Ople'
 
 export function makeSignal<T = void>(): OpleSignal<T> {
   const listeners = new Set<OpleListener>()
   function signal(listener: any) {
-    invariant(!listener.context, 'Handler already in use')
+    if (listener.context) {
+      listener = listener.bind(null)
+    }
     if (getOple()) {
       setEffect(listener, active => {
         if (active) {
@@ -21,6 +23,7 @@ export function makeSignal<T = void>(): OpleSignal<T> {
       })
       listener.context = getOple()
       listener.dispose = disposeListener
+      setDisposer(listener, listener)
     } else {
       signal.size++
       listeners.add(listener)
@@ -63,7 +66,9 @@ export function makeSignalFactory<Signals extends object>(
       target = arg
       invariant(toRef(target), 'Target ref must exist')
     }
-    invariant(!listener.context, 'Handler already in use')
+    if (listener.context) {
+      listener = listener.bind(null)
+    }
     setEffect(listener, active => {
       if (active) {
         listener.target = target
@@ -75,6 +80,7 @@ export function makeSignalFactory<Signals extends object>(
     })
     listener.context = getOple()
     listener.dispose = disposeListener
+    setDisposer(listener, listener)
     return listener
   }
 }
@@ -114,11 +120,19 @@ export interface OpleListener extends Disposable {
    * This property only exists when listening.
    */
   context?: Ople
+  /**
+   * Called when the listener is disposed.
+   */
+  onDispose?: () => void
 }
 
 function disposeListener(this: OpleListener) {
   if (this.context) {
-    withOple(this.context, setEffect, [this, null])
+    withOple(this.context, () => {
+      setEffect(this, null)
+      setDisposer(this, null)
+    })
     this.context = undefined
   }
+  this.onDispose?.()
 }

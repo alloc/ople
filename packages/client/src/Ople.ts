@@ -1,27 +1,59 @@
 import { Disposable } from '@alloc/types'
 import { withOple, OpleEffect } from './OpleContext'
 
-export function setup<T extends Record<string, any>>(
+export function setup<T extends Record<string, any> | void>(
   init: () => T
-): T & Disposable {
-  const ople = new Ople<T & Disposable>(init as any)
-  ople.exports.dispose = ople.deactivate.bind(ople)
-  return ople.exports
+): T extends void ? Ople<void> : T & Disposable
+
+export function setup(init: () => Record<string, any> | void) {
+  const ople = new Ople<any>(init)
+  if (ople.exports) {
+    const { exports, dispose } = ople
+    exports.dispose = dispose
+    return exports
+  }
+  return ople
 }
 
 export class Ople<T extends Record<string, any> | void = any> {
   active: boolean
-  effects = new Map<object, OpleEffect>()
   exports: T
+  effects = new Map<object, OpleEffect>()
+  disposers?: Map<object, Disposable | Function>
+  parent?: Ople
 
   constructor(init: () => T, active = true) {
     this.active = active
     this.exports = withOple(this, init)
   }
 
-  /** Get a bound `deactivate` function to assign somewhere. */
+  /**
+   * Call this instead of `deactivate` if you never plan on calling
+   * `activate` on this object ever again. It ensures any external
+   * resources are cleaned up (eg: a DOM listener).
+   */
   get dispose() {
-    return this.deactivate.bind(this)
+    return () => {
+      // Disable any active effects.
+      this.deactivate()
+
+      const { parent, disposers } = this
+
+      // Detach from any attached Ople contexts.
+      if (parent) {
+        this.parent = undefined
+        parent.effects.delete(this)
+        parent.disposers?.delete(this)
+      }
+
+      // Dispose any external resources.
+      if (disposers) {
+        this.disposers = undefined
+        disposers.forEach(disposer =>
+          isDisposable(disposer) ? disposer.dispose() : disposer()
+        )
+      }
+    }
   }
 
   activate() {
@@ -41,4 +73,8 @@ export class Ople<T extends Record<string, any> | void = any> {
       })
     }
   }
+}
+
+function isDisposable(arg: any): arg is { dispose(): void } {
+  return typeof arg.dispose == 'function'
 }

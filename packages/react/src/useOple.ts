@@ -8,27 +8,22 @@ export function useOple<Result>(init: () => Result): Result
 
 export function useOple<Args extends any[], Result>(
   init: (...args: NoInfer<Args>) => Result,
-  deps: Args
+  args: Args
 ): Result
 
-export function useOple<Args extends any[], Result>(
-  init: (...args: Args) => Result,
-  deps: Args = [] as any
-) {
+export function useOple(init: Function, args: any[] = []) {
   const ople = useMemo(
     () =>
-      new Ople<Result>(
-        deps.length ? (init as Function).bind(null, ...deps) : init,
+      new Ople(
+        args.length ? init.bind(null, ...args) : init,
         false // Don't activate until mounted.
       ),
-    deps
+    args
   )
 
   useEffect(() => {
     ople.activate()
-    return () => {
-      ople.deactivate()
-    }
+    return ople.dispose
   }, [ople])
 
   return ople.exports

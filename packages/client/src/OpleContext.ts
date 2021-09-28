@@ -22,6 +22,24 @@ export function withOple<In extends any[], Out>(
   }
 }
 
+/**
+ * Run an effect when the current Ople context is disposed,
+ * or remove a disposer by passing `null`. Only one disposer
+ * per `owner` argument is allowed.
+ */
+export function setDisposer(
+  owner: object,
+  disposer: Disposable | (() => void) | null
+) {
+  invariant(current, 'Must be in an Ople context')
+  if (disposer) {
+    current.disposers ||= new Map()
+    current.disposers.set(owner, disposer)
+  } else {
+    current.disposers?.delete(owner)
+  }
+}
+
 /** Pass `true` to enable the effect. Pass `false` to disable. */
 export type OpleEffect = (active: boolean) => void
 

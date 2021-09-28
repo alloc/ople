@@ -10,7 +10,7 @@ class OpleRef<T extends Data = any> {
   ) {}
 
   get(force?: boolean): Promise<T> {
-    return this.backend.get(this as any, force)
+    return this.backend.get(this as any, force) as any
   }
 
   toString() {

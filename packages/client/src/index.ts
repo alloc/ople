@@ -11,6 +11,7 @@ export * from './OpleContext'
 export { onceCreated } from './OpleDocument'
 export { makeCreator } from './creator'
 export { makeSignal } from './signals'
+export { attach } from './attach'
 export { attachAuto } from './auto'
 export { OpleProtocol } from '@ople/agent'
 
