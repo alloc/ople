@@ -15,13 +15,13 @@ specifiers:
   rollup: ^2.56.3
   rollup-plugin-dts: ^4.0.0
   rollup-plugin-esbuild: ^2.6.1
-  typescript: ^4.4.2
+  typescript: ^4.5.0-beta
 
 devDependencies:
   '@alloc/prettier-config': 1.0.0
   '@rollup/plugin-node-resolve': 11.1.1_rollup@2.56.3
   '@rollup/plugin-sucrase': 4.0.0_rollup@2.56.3
-  '@rollup/plugin-typescript': 8.2.5_rollup@2.56.3+typescript@4.4.2
+  '@rollup/plugin-typescript': 8.2.5_c06b7d1d00d2b8cfb9251a9c2f53142b
   '@types/jest': 25.2.3
   codecov: 3.8.1
   esbuild: 0.8.44
@@ -30,9 +30,9 @@ devDependencies:
   prettier: 2.2.1
   recrawl-sync: 2.2.1
   rollup: 2.56.3
-  rollup-plugin-dts: 4.0.0_rollup@2.56.3+typescript@4.4.2
+  rollup-plugin-dts: 4.0.0_c06b7d1d00d2b8cfb9251a9c2f53142b
   rollup-plugin-esbuild: 2.6.1_esbuild@0.8.44+rollup@2.56.3
-  typescript: 4.4.2
+  typescript: 4.5.0-beta
 
 packages:
 
@@ -469,7 +469,7 @@ packages:
       sucrase: 3.20.1
     dev: true
 
-  /@rollup/plugin-typescript/8.2.5_rollup@2.56.3+typescript@4.4.2:
+  /@rollup/plugin-typescript/8.2.5_c06b7d1d00d2b8cfb9251a9c2f53142b:
     resolution: {integrity: sha512-QL/LvDol/PAGB2O0S7/+q2HpSUNodpw7z6nGn9BfoVCPOZ0r4EALrojFU29Bkoi2Hr2jgTocTejJ5GGWZfOxbQ==}
     engines: {node: '>=8.0.0'}
     peerDependencies:
@@ -480,7 +480,7 @@ packages:
       '@rollup/pluginutils': 3.1.0_rollup@2.56.3
       resolve: 1.20.0
       rollup: 2.56.3
-      typescript: 4.4.2
+      typescript: 4.5.0-beta
     dev: true
 
   /@rollup/pluginutils/3.1.0_rollup@2.56.3:
@@ -3161,7 +3161,7 @@ packages:
       glob: 7.1.6
     dev: true
 
-  /rollup-plugin-dts/4.0.0_rollup@2.56.3+typescript@4.4.2:
+  /rollup-plugin-dts/4.0.0_c06b7d1d00d2b8cfb9251a9c2f53142b:
     resolution: {integrity: sha512-tgUC8CxVgtlLDVloUEA9uACVaxjJHuYxlDSTp1LdCexA0bJx+RuMi45RjdLG9RTCgZlV5YBh3O7P2u6dS1KlnA==}
     engines: {node: '>=v12.22.5'}
     peerDependencies:
@@ -3170,7 +3170,7 @@ packages:
     dependencies:
       magic-string: 0.25.7
       rollup: 2.56.3
-      typescript: 4.4.2
+      typescript: 4.5.0-beta
     optionalDependencies:
       '@babel/code-frame': 7.14.5
     dev: true
@@ -3652,8 +3652,8 @@ packages:
       prelude-ls: 1.1.2
     dev: true
 
-  /typescript/4.4.2:
-    resolution: {integrity: sha512-gzP+t5W4hdy4c+68bfcv0t400HVJMMd2+H9B7gae1nQlBzCqvrXX+6GL/b3GAgyTH966pzrZ70/fRjwAtZksSQ==}
+  /typescript/4.5.0-beta:
+    resolution: {integrity: sha512-7PvWhki2lwukaR9osVhFnNzxaE4LM+gC94dlwcvS+Tqz8+U65va7FbKo02bT+/MFlnMPM8bsPUXvHiMD/Mg3Jg==}
     engines: {node: '>=4.2.0'}
     hasBin: true
     dev: true

@@ -5,6 +5,10 @@
     },
     "vendor/wana": {
       "url": "https://github.com/alloc/wana"
+    },
+    "vendor/ople-db": {
+      "url": "https://github.com/alloc/ople",
+      "head": "db"
     }
   }
 }

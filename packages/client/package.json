@@ -20,7 +20,7 @@
     "tiny-invariant": "^1.1.0",
     "ts-deferred": "^1.0.4",
     "uid": "^2.0.0",
-    "wana": "^0.13.1"
+    "wana": "^0.14.0"
   },
   "keywords": [
     "ople",
