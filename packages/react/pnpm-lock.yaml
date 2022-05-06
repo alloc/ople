@@ -4,6 +4,10 @@ specifiers:
   '@ople/client': link:../client
   '@types/react': ^17.0.19
   react: ^17.0.2
+  use-memo-one: ^1.1.2
+
+dependencies:
+  use-memo-one: 1.1.2_react@17.0.2
 
 devDependencies:
   '@ople/client': link:../client
@@ -55,3 +59,11 @@ packages:
       loose-envify: 1.4.0
       object-assign: 4.1.1
     dev: true
+
+  /use-memo-one/1.1.2_react@17.0.2:
+    resolution: {integrity: sha512-u2qFKtxLsia/r8qG0ZKkbytbztzRb317XCkT7yP8wxL0tZ/CzK2G+WWie5vWvpyeP7+YoPIwbJoIHJ4Ba4k0oQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0
+    dependencies:
+      react: 17.0.2
+    dev: false

@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
+import { useMemoOne } from 'use-memo-one'
 import { Ople } from '@ople/client'
 
 // https://github.com/microsoft/TypeScript/issues/14829#issuecomment-504042546
@@ -12,7 +13,7 @@ export function useOple<Args extends any[], Result>(
 ): Result
 
 export function useOple(init: Function, args: any[] = []) {
-  const ople = useMemo(
+  const ople = useMemoOne(
     () =>
       new Ople(
         args.length ? init.bind(null, ...args) : init,

@@ -11,5 +11,8 @@
   "peerDependencies": {
     "@ople/client": "*",
     "react": "*"
+  },
+  "dependencies": {
+    "use-memo-one": "^1.1.2"
   }
 }
