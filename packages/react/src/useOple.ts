@@ -23,9 +23,23 @@ export function useOple(init: Function, args: any[] = []) {
   )
 
   useEffect(() => {
-    ople.activate()
-    return ople.dispose
+    if (!disposeQueue.delete(ople)) {
+      ople.activate()
+    }
+    return disposeSoon.bind(null, ople)
   }, [ople])
 
   return ople.exports
+}
+
+// Avoid immediately calling `ople.dispose` on unmount, since it might
+// be a false positive caused by Fast Refresh.
+const disposeQueue = new Set<Ople>()
+const disposeSoon = (ople: Ople) => {
+  disposeQueue.add(ople)
+  setTimeout(() => {
+    if (disposeQueue.delete(ople)) {
+      ople.dispose()
+    }
+  }, 100)
 }
